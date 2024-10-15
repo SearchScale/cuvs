@@ -63,8 +63,15 @@ public class CagraIndex {
 		float[][] dataset;
 		CuVSResources res;
 		
+		byte[] bytes;
+		
 		public Builder(CuVSResources res){
 			this.res = res;
+		}
+		
+		public Builder fromBytes(byte[] bytes) {
+			this.bytes = bytes;
+			return this;
 		}
 		
 		public Builder withDataset(float[][] dataset) {
@@ -78,7 +85,11 @@ public class CagraIndex {
 		}
 		
 		public CagraIndex build(){
-			return new CagraIndex(params, dataset, res);
+			if (bytes != null) {
+				return new CagraIndex(bytes, res);
+			} else {
+				return new CagraIndex(params, dataset, res);
+			}
 		}
 	}
 	
