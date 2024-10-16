@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ai.rapids.cuvs</groupId>
+    <artifactId>api-sys</artifactId>
+    <version>0.1</version>
+    <name>api-sys</name>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.googlecode.cmake-maven-project</groupId>
+                <artifactId>cmake-maven-plugin</artifactId>
+                <version>3.27.7-b1</version>
+                <executions>
+                    <execution>
+                        <id>cmake-generate</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePath>
+                                .
+                            </sourcePath>
+                            <targetPath>
+                                build
+                            </targetPath>
+                            <generator></generator>
+                            <environmentVariables>
+                                <CMAKE_CUDA_ARCHITECTURES>NATIVE</CMAKE_CUDA_ARCHITECTURES>
+                            </environmentVariables>
+                            <options></options>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cmake-build</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <sourcePath>
+                                build
+                            </sourcePath>
+                            <targetPath>
+                                build
+                            </targetPath>
+                            <generator></generator>
+                            <environmentVariables>
+                                <!-- Modify the number of threads below manually as you need, for now -->
+                                <CMAKE_BUILD_PARALLEL_LEVEL>16</CMAKE_BUILD_PARALLEL_LEVEL>
+                                <CMAKE_CUDA_ARCHITECTURES>NATIVE</CMAKE_CUDA_ARCHITECTURES>
+                            </environmentVariables>
+                            <options>
+                                <option>--build</option>
+                            </options>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>attach-artifacts</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <configuration>
+                            <artifacts>
+                                <artifact>
+                                    <file>${basedir}/build/libcuvs_wrapper.so</file>
+                                    <type>so</type>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+</project>
