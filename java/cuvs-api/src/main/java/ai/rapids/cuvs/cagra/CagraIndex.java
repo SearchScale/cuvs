@@ -1,6 +1,8 @@
 package ai.rapids.cuvs.cagra;
 
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Map;
 
 public class CagraIndex {
 	
@@ -8,6 +10,8 @@ public class CagraIndex {
 	private final float[][] dataset;
 	private final CuVSResources res;
 	private CagraIndexReference ref;
+	
+	private Map<Integer, Integer> mapping; // nocommit (this should be int[], not a mapping)
 
 	// Constructor that takes build params and dataset, creates an index
 	private CagraIndex(CagraIndexParams params, float[][] dataset, CuVSResources res) {
@@ -19,12 +23,12 @@ public class CagraIndex {
 	}
 
 	// Constructor that takes pre-built cagra index as bytes, deserializes them into an index
-	private CagraIndex(byte[] bytes, CuVSResources res) {
+	private CagraIndex(InputStream in, CuVSResources res) {
 		this.params = null;
 		this.dataset = null;
 		this.res = res;
 
-		this.ref = deserialize(bytes); 
+		this.ref = deserialize(in); 
 	}
 
 	// actual build method
@@ -37,12 +41,16 @@ public class CagraIndex {
 		// use ref to search, return search results
 		return null;
 	}
+
+	public PointerToDataset getDataset() {
 		
-	public InputStream serialize() {
-		return null;
 	}
 	
-	private CagraIndexReference deserialize(byte[] bytes) {
+	public void serialize(OutputStream out) {
+		
+	}
+	
+	private CagraIndexReference deserialize(InputStream in) {
 		return null;
 	}
 
@@ -63,14 +71,14 @@ public class CagraIndex {
 		float[][] dataset;
 		CuVSResources res;
 		
-		byte[] bytes;
+		InputStream in;
 		
 		public Builder(CuVSResources res){
 			this.res = res;
 		}
 		
-		public Builder fromBytes(byte[] bytes) {
-			this.bytes = bytes;
+		public Builder from(InputStream in) {
+			this.in = in;
 			return this;
 		}
 		
@@ -85,8 +93,8 @@ public class CagraIndex {
 		}
 		
 		public CagraIndex build(){
-			if (bytes != null) {
-				return new CagraIndex(bytes, res);
+			if (in != null) {
+				return new CagraIndex(in, res);
 			} else {
 				return new CagraIndex(params, dataset, res);
 			}
