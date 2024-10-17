@@ -5,11 +5,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+cuvsResources_t create_resource() {
+  cuvsResources_t res;  
+  int rx = cuvsResourcesCreate(&res);
+  return res;
+}
                        
-cuvsResources_t build_index(float *dataset, long rows, long dimension, cuvsResources_t res) {
-    
-  cuvsResourcesCreate(&res);
-
+cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsResources_t res) {
+  
   DLManagedTensor dataset_tensor;
   dataset_tensor.dl_tensor.data = dataset;
   dataset_tensor.dl_tensor.device.device_type = kDLCUDA;
@@ -35,8 +38,6 @@ cuvsResources_t build_index(float *dataset, long rows, long dimension, cuvsResou
 void search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, long dimension, cuvsResources_t res) {
 
   int64_t n_cols = dimension;
-  cuvsResourcesCreate(&res);
-
   uint32_t *neighbors;
   float *distances, *queries_d;
   cuvsRMMAlloc(res, (void**) &queries_d, sizeof(float) * n_queries * n_cols);
@@ -89,7 +90,7 @@ void search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queri
   cudaMemcpy(neighbors_h, neighbors, sizeof(uint32_t) * n_queries * topk, cudaMemcpyDefault);
   cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
 
-  printf("Query 0 neighbor indices: =[%d, %d]\n", neighbors_h[0], neighbors_h[1]);
-  printf("Query 0 neighbor distances: =[%f, %f]\n", distances_h[0], distances_h[1]);
+  printf("Query 0 neighbor indices: [%d, %d]\n", neighbors_h[0], neighbors_h[1]);
+  printf("Query 0 neighbor distances: [%f, %f]\n", distances_h[0], distances_h[1]);
     
 }

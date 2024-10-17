@@ -4,11 +4,11 @@ import java.lang.foreign.MemorySegment;
 
 public class CagraIndexReference {
 
-  public MemorySegment indexS;
+  public MemorySegment indexMemorySegment;
 
-  public CagraIndexReference(MemorySegment indexS) {
+  public CagraIndexReference(MemorySegment indexMemorySegment) {
     super();
-    this.indexS = indexS;
+    this.indexMemorySegment = indexMemorySegment;
   }
 
 }
