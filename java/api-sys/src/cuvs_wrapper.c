@@ -5,6 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+struct results {
+  int test;
+  int *neighbors_h;
+  float *distances_h;
+};
+
 cuvsResources_t create_resource() {
   cuvsResources_t res;  
   int rx = cuvsResourcesCreate(&res);
@@ -35,7 +41,7 @@ cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsReso
   return index;
 }
 
-void search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, long dimension, cuvsResources_t res) {
+struct results *search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, long dimension, cuvsResources_t res) {
 
   int64_t n_cols = dimension;
   uint32_t *neighbors;
@@ -92,5 +98,12 @@ void search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queri
 
   printf("Query 0 neighbor indices: [%d, %d]\n", neighbors_h[0], neighbors_h[1]);
   printf("Query 0 neighbor distances: [%f, %f]\n", distances_h[0], distances_h[1]);
-    
+  
+  struct results ry, *rsltp;
+  ry.test = 5;
+  ry.neighbors_h = neighbors_h;
+  ry.distances_h = distances_h;
+  rsltp = &ry;
+  
+  return rsltp;
 }

@@ -16,9 +16,23 @@ public class ExampleApp {
 
     CuVSResources res = new CuVSResources();
 
+    /*
+     * CagraIndex index = new CagraIndex.Builder(res) 
+     * //.withDataset(new float[][]{{0f, 0f}, {1f, 1f}}) 
+     * .withDatasetWithMapping(new float[][]{{0f, 0f}, {1f, 1f}}, Map<Integer, Integer> map) 
+     * .withIndexParams(new CagraIndexParams())
+     * .build();
+     */
+
+    // index.serialize();
+
+    // InputStream fin = new FileInputStream(new File("abc.cag"); // load a .cag file from disk
+    // CagraIndex index = new CagraIndex.Builder(res).from(fin).build();
+
     CagraIndex index = new CagraIndex.Builder(res).withDataset(dataset).withIndexParams(new CagraIndexParams()).build();
 
     SearchResult results = index.search(new CagraSearchParams(), queries);
+    // System.out.println(results);
 
   }
 }

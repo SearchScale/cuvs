@@ -2,6 +2,7 @@ package ai.rapids.cuvs.cagra;
 
 import java.io.File;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
@@ -12,6 +13,7 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
+import java.util.Map;
 
 public class CagraIndex {
 
@@ -19,6 +21,8 @@ public class CagraIndex {
   private final float[][] dataset;
   private final CuVSResources res;
   private CagraIndexReference ref;
+
+  private Map<Integer, Integer> mapping; // nocommit (this should be int[], not a mapping)
 
   Linker linker;
   Arena arena;
@@ -36,12 +40,12 @@ public class CagraIndex {
     this.ref = build();
   }
 
-  private CagraIndex(byte[] bytes, CuVSResources res) throws Throwable {
+  private CagraIndex(InputStream in, CuVSResources res) throws Throwable {
     this.params = null;
     this.dataset = null;
     this.res = res;
     this.init();
-    this.ref = deserialize(bytes);
+    this.ref = deserialize(in);
   }
 
   private void init() throws Throwable {
@@ -56,8 +60,9 @@ public class CagraIndex {
             linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS));
 
     searchMH = linker.downcallHandle(bridge.findOrThrow("search_index"),
-        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("int"),
-            linker.canonicalLayouts().get("long"), linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS));
+        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+            linker.canonicalLayouts().get("int"), linker.canonicalLayouts().get("long"),
+            linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS));
   }
 
   private MemorySegment getMemorySegment(float[][] data) {
@@ -88,15 +93,17 @@ public class CagraIndex {
   }
 
   public SearchResult search(CagraSearchParams params, float[][] queries) throws Throwable {
-    searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(queries), 2, 4L, 2L, res.resource);
+
+    MemorySegment rMS = (MemorySegment) searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(queries), 2, 4L,
+        2L, res.resource);
+
     return null;
   }
 
-  public InputStream serialize() {
-    return null;
+  public void serialize(OutputStream out) {
   }
 
-  private CagraIndexReference deserialize(byte[] bytes) {
+  private CagraIndexReference deserialize(InputStream in) {
     return null;
   }
 
@@ -104,8 +111,8 @@ public class CagraIndex {
     return params;
   }
 
-  public float[][] getDataset() {
-    return dataset;
+  public PointerToDataset getDataset() {
+    return null;
   }
 
   public CuVSResources getResources() {
@@ -117,14 +124,14 @@ public class CagraIndex {
     float[][] dataset;
     CuVSResources res;
 
-    byte[] bytes;
+    InputStream in;
 
     public Builder(CuVSResources res) {
       this.res = res;
     }
 
-    public Builder fromBytes(byte[] bytes) {
-      this.bytes = bytes;
+    public Builder from(InputStream in) {
+      this.in = in;
       return this;
     }
 
@@ -139,8 +146,8 @@ public class CagraIndex {
     }
 
     public CagraIndex build() throws Throwable {
-      if (bytes != null) {
-        return new CagraIndex(bytes, res);
+      if (in != null) {
+        return new CagraIndex(in, res);
       } else {
         return new CagraIndex(params, dataset, res);
       }
