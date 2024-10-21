@@ -32,7 +32,9 @@ public class CagraIndex {
   SymbolLookup bridge;
   MemorySegment dataMS;
 
-  private CagraIndex(CagraIndexParams params, float[][] dataset, CuVSResources res) throws Throwable {
+  private CagraIndex(CagraIndexParams params, float[][] dataset, Map<Integer, Integer> map, CuVSResources res)
+      throws Throwable {
+    this.mapping = map;
     this.params = params;
     this.dataset = dataset;
     this.init();
@@ -123,6 +125,7 @@ public class CagraIndex {
     private CagraIndexParams params;
     float[][] dataset;
     CuVSResources res;
+    Map<Integer, Integer> map;
 
     InputStream in;
 
@@ -140,6 +143,11 @@ public class CagraIndex {
       return this;
     }
 
+    public Builder withMapping(Map<Integer, Integer> map) {
+      this.map = map;
+      return this;
+    }
+
     public Builder withIndexParams(CagraIndexParams params) {
       this.params = params;
       return this;
@@ -149,7 +157,7 @@ public class CagraIndex {
       if (in != null) {
         return new CagraIndex(in, res);
       } else {
-        return new CagraIndex(params, dataset, res);
+        return new CagraIndex(params, dataset, map, res);
       }
     }
   }
