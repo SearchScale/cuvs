@@ -17,6 +17,10 @@ public class CuVSResources {
   private SymbolLookup bridge;
   public MemorySegment resource;
 
+  /**
+   * 
+   * @throws Throwable
+   */
   public CuVSResources() throws Throwable {
     linker = Linker.nativeLinker();
     arena = Arena.ofConfined();

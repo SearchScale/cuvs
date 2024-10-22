@@ -40,8 +40,8 @@ public class ExampleApp {
         .from(fin)
         .build();
     
-    SearchResult results = index.search(new CagraSearchParams(), queries);
-    // System.out.println(results);
+    SearchResult rslt = index.search(new CagraSearchParams(), queries);
+    System.out.println(rslt.results);
 
   }
 }

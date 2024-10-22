@@ -5,12 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct results {
-  int test;
-  int *neighbors_h;
-  float *distances_h;
-};
-
 cuvsResources_t create_resource() {
   cuvsResources_t res;  
   int rx = cuvsResourcesCreate(&res);
@@ -41,7 +35,8 @@ cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsReso
   return index;
 }
 
-struct results *search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, long dimension, cuvsResources_t res) {
+void search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, long dimension, 
+    cuvsResources_t res, int *neighbors_h, float *distances_h) {
 
   int64_t n_cols = dimension;
   uint32_t *neighbors;
@@ -90,20 +85,8 @@ struct results *search_index(cuvsCagraIndex_t index, float *queries, int topk, l
 
   int rs = cuvsCagraSearch(res, search_params, index, &queries_tensor, &neighbors_tensor,
                   &distances_tensor);
-                  
-  uint32_t *neighbors_h = (uint32_t *)malloc(sizeof(uint32_t) * n_queries * topk);
-  float *distances_h = (float *)malloc(sizeof(float) * n_queries * topk);
+
   cudaMemcpy(neighbors_h, neighbors, sizeof(uint32_t) * n_queries * topk, cudaMemcpyDefault);
   cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
 
-  printf("Query 0 neighbor indices: [%d, %d]\n", neighbors_h[0], neighbors_h[1]);
-  printf("Query 0 neighbor distances: [%f, %f]\n", distances_h[0], distances_h[1]);
-  
-  struct results ry, *rsltp;
-  ry.test = 5;
-  ry.neighbors_h = neighbors_h;
-  ry.distances_h = distances_h;
-  rsltp = &ry;
-  
-  return rsltp;
 }

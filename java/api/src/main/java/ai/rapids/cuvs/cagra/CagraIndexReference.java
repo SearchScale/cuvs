@@ -6,6 +6,10 @@ public class CagraIndexReference {
 
   public MemorySegment indexMemorySegment;
 
+  /**
+   * 
+   * @param indexMemorySegment
+   */
   public CagraIndexReference(MemorySegment indexMemorySegment) {
     super();
     this.indexMemorySegment = indexMemorySegment;
