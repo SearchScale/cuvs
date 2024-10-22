@@ -79,13 +79,12 @@ public class CagraIndex {
 
     indexMH = linker.downcallHandle(bridge.findOrThrow("build_index"),
         FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("long"),
-            linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS));
+            linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
     searchMH = linker.downcallHandle(bridge.findOrThrow("search_index"),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("int"),
             linker.canonicalLayouts().get("long"), linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS,
-            ValueLayout.ADDRESS.withTargetLayout(linker.canonicalLayouts().get("int")),
-            ValueLayout.ADDRESS.withTargetLayout(linker.canonicalLayouts().get("float"))));
+            ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
   }
 
@@ -121,8 +120,14 @@ public class CagraIndex {
   private CagraIndexReference build() throws Throwable {
     long rows = dataset.length;
     long cols = dataset[0].length;
+    MemoryLayout rvML = linker.canonicalLayouts().get("int");
+    MemorySegment rvMS = arena.allocate(rvML);
+
     ref = new CagraIndexReference(
-        (MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols, res.resource));
+        (MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols, res.resource, rvMS));
+
+    System.out.println("Build call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
+
     return ref;
   }
 
@@ -139,9 +144,14 @@ public class CagraIndex {
     SequenceLayout distancesSL = MemoryLayout.sequenceLayout(50, linker.canonicalLayouts().get("float"));
     MemorySegment neighborsMS = arena.allocate(neighborsSL);
     MemorySegment distancesMS = arena.allocate(distancesSL);
+    MemoryLayout rvML = linker.canonicalLayouts().get("int");
+    MemorySegment rvMS = arena.allocate(rvML);
 
     searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(queries), 2, 4L, 2L, res.resource, neighborsMS,
-        distancesMS);
+        distancesMS, rvMS);
+
+    System.out.println("Search call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
+
     return new SearchResult(neighborsSL, distancesSL, neighborsMS, distancesMS, 2);
   }
 

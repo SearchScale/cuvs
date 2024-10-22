@@ -23,7 +23,6 @@ public class ExampleApp {
 
     CuVSResources res = new CuVSResources();
 
-
     // creating a new index
     CagraIndex index = new CagraIndex.Builder(res)
         .withDataset(dataset)
