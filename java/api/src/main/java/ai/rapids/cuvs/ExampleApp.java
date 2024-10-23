@@ -8,6 +8,7 @@ import java.util.Map;
 
 import ai.rapids.cuvs.cagra.CagraIndex;
 import ai.rapids.cuvs.cagra.CagraIndexParams;
+import ai.rapids.cuvs.cagra.CagraIndexParams.CuvsCagraGraphBuildAlgo;
 import ai.rapids.cuvs.cagra.CagraSearchParams;
 import ai.rapids.cuvs.cagra.CuVSResources;
 import ai.rapids.cuvs.cagra.SearchResult;
@@ -22,12 +23,17 @@ public class ExampleApp {
         { 0.05198065f, 0.5789965f } };
 
     CuVSResources res = new CuVSResources();
+    
+    CagraIndexParams cagraIndexParams = new CagraIndexParams.Builder()
+        .withIntermediateGraphDegree(10)
+        .withBuildAlgo(CuvsCagraGraphBuildAlgo.IVF_PQ)
+        .build();
 
     // creating a new index
     CagraIndex index = new CagraIndex.Builder(res)
         .withDataset(dataset)
         .withMapping(map)
-        .withIndexParams(new CagraIndexParams())
+        .withIndexParams(cagraIndexParams)
         .build();
 
     // saving the index on to the disk.

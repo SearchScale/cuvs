@@ -26,13 +26,11 @@ DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code)
 
 }
                        
-cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsResources_t res, int *rv) {
+cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsResources_t res, int *rv,
+    cuvsCagraIndexParams_t index_params) {
   
   int64_t dataset_shape[2] = {rows, dimension};
   DLManagedTensor dataset_tensor = prepare_tensor(dataset, dataset_shape, kDLFloat);
-
-  cuvsCagraIndexParams_t index_params;
-  cuvsCagraIndexParamsCreate(&index_params);
 
   cuvsCagraIndex_t index;
   cuvsCagraIndexCreate(&index);

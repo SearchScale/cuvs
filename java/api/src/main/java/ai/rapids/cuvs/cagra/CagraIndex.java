@@ -79,7 +79,7 @@ public class CagraIndex {
 
     indexMH = linker.downcallHandle(bridge.findOrThrow("build_index"),
         FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("long"),
-            linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+            linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
     searchMH = linker.downcallHandle(bridge.findOrThrow("search_index"),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("int"),
@@ -124,7 +124,7 @@ public class CagraIndex {
     MemorySegment rvMS = arena.allocate(rvML);
 
     ref = new CagraIndexReference(
-        (MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols, res.resource, rvMS));
+        (MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols, res.resource, rvMS, params.cagraIndexParamsMS));
 
     System.out.println("Build call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
