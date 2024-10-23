@@ -11,6 +11,19 @@
 
     <build>
         <plugins>
+
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.4.0</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>build</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -59,7 +72,8 @@
                             </targetPath>
                             <generator></generator>
                             <environmentVariables>
-                                <!-- Modify the number of threads below manually as you need, for now -->
+                                <!-- Modify the number of threads below manually
+                                as you need, for now -->
                                 <CMAKE_BUILD_PARALLEL_LEVEL>16</CMAKE_BUILD_PARALLEL_LEVEL>
                                 <CMAKE_CUDA_ARCHITECTURES>NATIVE</CMAKE_CUDA_ARCHITECTURES>
                             </environmentVariables>
