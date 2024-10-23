@@ -18,7 +18,8 @@ import java.util.Map;
 
 public class CagraIndex {
 
-  private CagraIndexParams params;
+  private CagraIndexParams indexParams;
+  private CagraSearchParams searchParams;
   private final float[][] dataset;
   private final CuVSResources res;
   private CagraIndexReference ref;
@@ -36,16 +37,17 @@ public class CagraIndex {
 
   /**
    * 
-   * @param params
+   * @param indexParams
    * @param dataset
    * @param map
    * @param res
    * @throws Throwable
    */
-  private CagraIndex(CagraIndexParams params, float[][] dataset, Map<Integer, Integer> map, CuVSResources res)
-      throws Throwable {
+  private CagraIndex(CagraIndexParams indexParams, CagraSearchParams searchParams, float[][] dataset,
+      Map<Integer, Integer> map, CuVSResources res) throws Throwable {
     this.mapping = map;
-    this.params = params;
+    this.indexParams = indexParams;
+    this.searchParams = searchParams;
     this.dataset = dataset;
     this.init();
     this.res = res;
@@ -59,7 +61,7 @@ public class CagraIndex {
    * @throws Throwable
    */
   private CagraIndex(InputStream in, CuVSResources res) throws Throwable {
-    this.params = null;
+    this.indexParams = null;
     this.dataset = null;
     this.res = res;
     this.init();
@@ -84,7 +86,7 @@ public class CagraIndex {
     searchMH = linker.downcallHandle(bridge.findOrThrow("search_index"),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("int"),
             linker.canonicalLayouts().get("long"), linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS,
-            ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+            ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
   }
 
@@ -123,8 +125,8 @@ public class CagraIndex {
     MemoryLayout rvML = linker.canonicalLayouts().get("int");
     MemorySegment rvMS = arena.allocate(rvML);
 
-    ref = new CagraIndexReference(
-        (MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols, res.resource, rvMS, params.cagraIndexParamsMS));
+    ref = new CagraIndexReference((MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols,
+        res.resource, rvMS, indexParams.cagraIndexParamsMS));
 
     System.out.println("Build call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
@@ -148,7 +150,7 @@ public class CagraIndex {
     MemorySegment rvMS = arena.allocate(rvML);
 
     searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(queries), 2, 4L, 2L, res.resource, neighborsMS,
-        distancesMS, rvMS);
+        distancesMS, rvMS, searchParams.cagraSearchParamsMS);
 
     System.out.println("Search call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
@@ -176,7 +178,7 @@ public class CagraIndex {
    * @return
    */
   public CagraIndexParams getParams() {
-    return params;
+    return indexParams;
   }
 
   /**
@@ -196,7 +198,8 @@ public class CagraIndex {
   }
 
   public static class Builder {
-    private CagraIndexParams params;
+    private CagraIndexParams indexParams;
+    private CagraSearchParams searchParams;
     float[][] dataset;
     CuVSResources res;
     Map<Integer, Integer> map;
@@ -246,8 +249,18 @@ public class CagraIndex {
      * @param params
      * @return
      */
-    public Builder withIndexParams(CagraIndexParams params) {
-      this.params = params;
+    public Builder withIndexParams(CagraIndexParams indexParams) {
+      this.indexParams = indexParams;
+      return this;
+    }
+
+    /**
+     * 
+     * @param params
+     * @return
+     */
+    public Builder withSearchParams(CagraSearchParams searchParams) {
+      this.searchParams = searchParams;
       return this;
     }
 
@@ -260,7 +273,7 @@ public class CagraIndex {
       if (in != null) {
         return new CagraIndex(in, res);
       } else {
-        return new CagraIndex(params, dataset, map, res);
+        return new CagraIndex(indexParams, searchParams, dataset, map, res);
       }
     }
   }

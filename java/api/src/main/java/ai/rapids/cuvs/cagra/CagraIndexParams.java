@@ -15,6 +15,12 @@ import ai.rapids.cuvs.panama.cuvsCagraIndexParams;
 */
 public class CagraIndexParams {
 
+  Arena arena;
+  int intermediate_graph_degree;
+  int graph_degree;
+  CuvsCagraGraphBuildAlgo build_algo;
+  int nn_descent_niter;
+
   public enum CuvsCagraGraphBuildAlgo {
     AUTO_SELECT(0), IVF_PQ(1), NN_DESCENT(2);
 
@@ -27,48 +33,64 @@ public class CagraIndexParams {
 
   public MemorySegment cagraIndexParamsMS;
 
-  public CagraIndexParams(Arena arena, int igd, int gd, CuvsCagraGraphBuildAlgo ba, int nndn) {
+  public CagraIndexParams(Arena arena, int intermediate_graph_degree, int graph_degree,
+      CuvsCagraGraphBuildAlgo build_algo, int nn_descent_niter) {
+    this.arena = arena;
+    this.intermediate_graph_degree = intermediate_graph_degree;
+    this.graph_degree = graph_degree;
+    this.build_algo = build_algo;
+    this.nn_descent_niter = nn_descent_niter;
+    this.set();
+  }
+
+  private void set() {
     cagraIndexParamsMS = cuvsCagraIndexParams.allocate(arena);
-    cuvsCagraIndexParams.intermediate_graph_degree(cagraIndexParamsMS, igd);
-    cuvsCagraIndexParams.graph_degree(cagraIndexParamsMS, gd);
-    cuvsCagraIndexParams.build_algo(cagraIndexParamsMS, ba.label);
-    cuvsCagraIndexParams.nn_descent_niter(cagraIndexParamsMS, nndn);
+    cuvsCagraIndexParams.intermediate_graph_degree(cagraIndexParamsMS, intermediate_graph_degree);
+    cuvsCagraIndexParams.graph_degree(cagraIndexParamsMS, graph_degree);
+    cuvsCagraIndexParams.build_algo(cagraIndexParamsMS, build_algo.label);
+    cuvsCagraIndexParams.nn_descent_niter(cagraIndexParamsMS, nn_descent_niter);
+  }
+
+  @Override
+  public String toString() {
+    return "CagraIndexParams [intermediate_graph_degree=" + intermediate_graph_degree + ", graph_degree=" + graph_degree
+        + ", build_algo=" + build_algo + ", nn_descent_niter=" + nn_descent_niter + "]";
   }
 
   public static class Builder {
 
-    int igd = 128;
-    int gd = 64;
-    CuvsCagraGraphBuildAlgo ba = CuvsCagraGraphBuildAlgo.IVF_PQ;
-    int nndn = 20;
     Arena arena;
+    int intermediate_graph_degree = 128;
+    int graph_degree = 64;
+    CuvsCagraGraphBuildAlgo build_algo = CuvsCagraGraphBuildAlgo.IVF_PQ;
+    int nn_descent_niter = 20;
 
     public Builder() {
       this.arena = Arena.ofConfined();
     }
 
-    public Builder withIntermediateGraphDegree(int igd) {
-      this.igd = igd;
+    public Builder withIntermediateGraphDegree(int intermediate_graph_degree) {
+      this.intermediate_graph_degree = intermediate_graph_degree;
       return this;
     }
 
-    public Builder withGraphDegree(int gd) {
-      this.gd = gd;
+    public Builder withGraphDegree(int graph_degree) {
+      this.graph_degree = graph_degree;
       return this;
     }
 
-    public Builder withBuildAlgo(CuvsCagraGraphBuildAlgo ba) {
-      this.ba = ba;
+    public Builder withBuildAlgo(CuvsCagraGraphBuildAlgo build_algo) {
+      this.build_algo = build_algo;
       return this;
     }
 
-    public Builder withNNDescentNiter(int nndn) {
-      this.nndn = nndn;
+    public Builder withNNDescentNiter(int nn_descent_niter) {
+      this.nn_descent_niter = nn_descent_niter;
       return this;
     }
 
     public CagraIndexParams build() throws Throwable {
-      return new CagraIndexParams(arena, igd, gd, ba, nndn);
+      return new CagraIndexParams(arena, intermediate_graph_degree, graph_degree, build_algo, nn_descent_niter);
     }
 
   }

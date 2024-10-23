@@ -40,8 +40,8 @@ cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsReso
 }
 
 void search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, long dimension, 
-    cuvsResources_t res, int *neighbors_h, float *distances_h, int *rv) {
-
+    cuvsResources_t res, int *neighbors_h, float *distances_h, int *rv, cuvsCagraSearchParams_t search_params1) {
+        
   uint32_t *neighbors;
   float *distances, *queries_d;
   cuvsRMMAlloc(res, (void**) &queries_d, sizeof(float) * n_queries * dimension);

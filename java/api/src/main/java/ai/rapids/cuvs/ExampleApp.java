@@ -28,12 +28,22 @@ public class ExampleApp {
         .withIntermediateGraphDegree(10)
         .withBuildAlgo(CuvsCagraGraphBuildAlgo.IVF_PQ)
         .build();
+    
+    System.out.println(cagraIndexParams);
+    
+    CagraSearchParams cagraSearchParams = new CagraSearchParams
+        .Builder()
+        .withMaxQueries(15)
+        .build();
+    
+    System.out.println(cagraSearchParams);
 
     // creating a new index
     CagraIndex index = new CagraIndex.Builder(res)
         .withDataset(dataset)
         .withMapping(map)
         .withIndexParams(cagraIndexParams)
+        .withSearchParams(cagraSearchParams)
         .build();
 
     // saving the index on to the disk.
@@ -45,7 +55,8 @@ public class ExampleApp {
         .from(fin)
         .build();
     
-    SearchResult rslt = index.search(new CagraSearchParams(), queries);
+    
+    SearchResult rslt = index.search(cagraSearchParams, queries);
     System.out.println(rslt.results);
 
   }
