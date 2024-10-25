@@ -51,6 +51,22 @@ public class CagraIndexParams {
     cuvsCagraIndexParams.nn_descent_niter(cagraIndexParamsMS, nn_descent_niter);
   }
 
+  public int getIntermediate_graph_degree() {
+    return intermediate_graph_degree;
+  }
+
+  public int getGraph_degree() {
+    return graph_degree;
+  }
+
+  public CuvsCagraGraphBuildAlgo getBuild_algo() {
+    return build_algo;
+  }
+
+  public int getNn_descent_niter() {
+    return nn_descent_niter;
+  }
+
   @Override
   public String toString() {
     return "CagraIndexParams [intermediate_graph_degree=" + intermediate_graph_degree + ", graph_degree=" + graph_degree

@@ -100,6 +100,58 @@ public class CagraSearchParams {
     cuvsCagraSearchParams.rand_xor_mask(cagraSearchParamsMS, rand_xor_mask);
   }
 
+  public int getMax_queries() {
+    return max_queries;
+  }
+
+  public int getItopk_size() {
+    return itopk_size;
+  }
+
+  public int getMax_iterations() {
+    return max_iterations;
+  }
+
+  public CuvsCagraSearchAlgo getAlgo() {
+    return algo;
+  }
+
+  public int getTeam_size() {
+    return team_size;
+  }
+
+  public int getSearch_width() {
+    return search_width;
+  }
+
+  public int getMin_iterations() {
+    return min_iterations;
+  }
+
+  public int getThread_block_size() {
+    return thread_block_size;
+  }
+
+  public CuvsCagraHashMode getHashmap_mode() {
+    return hashmap_mode;
+  }
+
+  public int getHashmap_min_bitlen() {
+    return hashmap_min_bitlen;
+  }
+
+  public float getHashmap_max_fill_rate() {
+    return hashmap_max_fill_rate;
+  }
+
+  public int getNum_random_samplings() {
+    return num_random_samplings;
+  }
+
+  public long getRand_xor_mask() {
+    return rand_xor_mask;
+  }
+
   @Override
   public String toString() {
     return "CagraSearchParams [max_queries=" + max_queries + ", itopk_size=" + itopk_size + ", max_iterations="
