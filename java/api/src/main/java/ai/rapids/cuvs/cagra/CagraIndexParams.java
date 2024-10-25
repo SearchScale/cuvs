@@ -80,6 +80,7 @@ public class CagraIndexParams {
     int graph_degree = 64;
     CuvsCagraGraphBuildAlgo build_algo = CuvsCagraGraphBuildAlgo.IVF_PQ;
     int nn_descent_niter = 20;
+    int writerThreads = 1;
 
     public Builder() {
       this.arena = Arena.ofConfined();
@@ -102,6 +103,11 @@ public class CagraIndexParams {
 
     public Builder withNNDescentNiter(int nn_descent_niter) {
       this.nn_descent_niter = nn_descent_niter;
+      return this;
+    }
+    
+    public Builder withWriterThreads(int writerThreads) {
+      this.writerThreads = writerThreads;
       return this;
     }
 

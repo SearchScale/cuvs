@@ -10,6 +10,7 @@ import ai.rapids.cuvs.cagra.CagraIndex;
 import ai.rapids.cuvs.cagra.CagraIndexParams;
 import ai.rapids.cuvs.cagra.CagraIndexParams.CuvsCagraGraphBuildAlgo;
 import ai.rapids.cuvs.cagra.CagraSearchParams;
+import ai.rapids.cuvs.cagra.CuVSQuery;
 import ai.rapids.cuvs.cagra.CuVSResources;
 import ai.rapids.cuvs.cagra.SearchResult;
 
@@ -27,6 +28,7 @@ public class ExampleApp {
     CagraIndexParams cagraIndexParams = new CagraIndexParams.Builder()
         .withIntermediateGraphDegree(10)
         .withBuildAlgo(CuvsCagraGraphBuildAlgo.IVF_PQ)
+        .withWriterThreads(1)
         .build();
 
     System.out.println(cagraIndexParams);
@@ -41,9 +43,8 @@ public class ExampleApp {
     // creating a new index
     CagraIndex index = new CagraIndex.Builder(res)
         .withDataset(dataset)
-        .withMapping(map) // TODO: Get clarity on this
+        .withMapping(map)
         .withIndexParams(cagraIndexParams)
-        .withSearchParams(cagraSearchParams)
         .build();
 
     // saving the index on to the disk.
@@ -54,20 +55,15 @@ public class ExampleApp {
     CagraIndex index2 = new CagraIndex.Builder(res)
         .from(fin)
         .build();
-    
-    // TODO: What about IVF-PQ/FLAT etc.
-    
-    #SearchResult rslt = index.search(cagraSearchParams, queries);
-    #System.out.println(rslt.results);
 
     
-    cuVSQuery query = new CagraQuery.Builder()
-        .withParams(cagraSearchParams)
-        .withPreFilter()
+    CuVSQuery query = new CuVSQuery.Builder()
+        .withSearchParams(cagraSearchParams)
         .withQueryVectors(queries)
         .build();
     
-    index.search(query);
+    SearchResult rslt = index.search(query);
+    System.out.println(rslt.results);
 
   }
 }

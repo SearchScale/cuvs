@@ -19,7 +19,6 @@ import java.util.Map;
 public class CagraIndex {
 
   private CagraIndexParams indexParams;
-  private CagraSearchParams searchParams;
   private final float[][] dataset;
   private final CuVSResources res;
   private CagraIndexReference ref;
@@ -35,7 +34,6 @@ public class CagraIndex {
   MethodHandle deserializeMH;
   MemorySegment dataMS;
   SymbolLookup bridge;
-
   
   /**
    * 
@@ -45,11 +43,10 @@ public class CagraIndex {
    * @param res
    * @throws Throwable
    */
-  private CagraIndex(CagraIndexParams indexParams, CagraSearchParams searchParams, float[][] dataset,
+  private CagraIndex(CagraIndexParams indexParams, float[][] dataset,
       Map<Integer, Integer> map, CuVSResources res) throws Throwable {
     this.mapping = map;
     this.indexParams = indexParams;
-    this.searchParams = searchParams;
     this.dataset = dataset;
     this.init();
     this.res = res;
@@ -162,11 +159,11 @@ public class CagraIndex {
   /**
    * 
    * @param params
-   * @param queries
+   * @param queryVectors
    * @return
    * @throws Throwable
    */
-  public SearchResult search(CagraSearchParams params, float[][] queries) throws Throwable {
+  public SearchResult search(CuVSQuery query) throws Throwable {
 
     SequenceLayout neighborsSL = MemoryLayout.sequenceLayout(50, linker.canonicalLayouts().get("int"));
     SequenceLayout distancesSL = MemoryLayout.sequenceLayout(50, linker.canonicalLayouts().get("float"));
@@ -175,8 +172,8 @@ public class CagraIndex {
     MemoryLayout rvML = linker.canonicalLayouts().get("int");
     MemorySegment rvMS = arena.allocate(rvML);
 
-    searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(queries), 2, 4L, 2L, res.resource, neighborsMS,
-        distancesMS, rvMS, searchParams.cagraSearchParamsMS);
+    searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(query.queryVectors), 2, 4L, 2L, res.resource, neighborsMS,
+        distancesMS, rvMS, query.searchParams.cagraSearchParamsMS);
 
     System.out.println("Search call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
@@ -230,7 +227,6 @@ public class CagraIndex {
 
   public static class Builder {
     private CagraIndexParams indexParams;
-    private CagraSearchParams searchParams;
     float[][] dataset;
     CuVSResources res;
     Map<Integer, Integer> map;
@@ -287,16 +283,6 @@ public class CagraIndex {
 
     /**
      * 
-     * @param params
-     * @return
-     */
-    public Builder withSearchParams(CagraSearchParams searchParams) {
-      this.searchParams = searchParams;
-      return this;
-    }
-
-    /**
-     * 
      * @return
      * @throws Throwable
      */
@@ -304,7 +290,7 @@ public class CagraIndex {
       if (in != null) {
         return new CagraIndex(in, res);
       } else {
-        return new CagraIndex(indexParams, searchParams, dataset, map, res);
+        return new CagraIndex(indexParams, dataset, map, res);
       }
     }
   }
