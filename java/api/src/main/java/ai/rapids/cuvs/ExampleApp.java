@@ -57,8 +57,17 @@ public class ExampleApp {
     
     // TODO: What about IVF-PQ/FLAT etc.
     
-    SearchResult rslt = index.search(cagraSearchParams, queries);
-    System.out.println(rslt.results);
+    #SearchResult rslt = index.search(cagraSearchParams, queries);
+    #System.out.println(rslt.results);
+
+    
+    cuVSQuery query = new CagraQuery.Builder()
+        .withParams(cagraSearchParams)
+        .withPreFilter()
+        .withQueryVectors(queries)
+        .build();
+    
+    index.search(query);
 
   }
 }
