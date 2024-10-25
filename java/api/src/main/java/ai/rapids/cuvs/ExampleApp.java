@@ -23,25 +23,25 @@ public class ExampleApp {
         { 0.05198065f, 0.5789965f } };
 
     CuVSResources res = new CuVSResources();
-    
+
     CagraIndexParams cagraIndexParams = new CagraIndexParams.Builder()
         .withIntermediateGraphDegree(10)
         .withBuildAlgo(CuvsCagraGraphBuildAlgo.IVF_PQ)
         .build();
-    
+
     System.out.println(cagraIndexParams);
-    
+
     CagraSearchParams cagraSearchParams = new CagraSearchParams
         .Builder()
         .withMaxQueries(15)
         .build();
-    
+
     System.out.println(cagraSearchParams);
 
     // creating a new index
     CagraIndex index = new CagraIndex.Builder(res)
         .withDataset(dataset)
-        .withMapping(map)
+        .withMapping(map) // TODO: Get clarity on this
         .withIndexParams(cagraIndexParams)
         .withSearchParams(cagraSearchParams)
         .build();
@@ -55,6 +55,7 @@ public class ExampleApp {
         .from(fin)
         .build();
     
+    // TODO: What about IVF-PQ/FLAT etc.
     
     SearchResult rslt = index.search(cagraSearchParams, queries);
     System.out.println(rslt.results);

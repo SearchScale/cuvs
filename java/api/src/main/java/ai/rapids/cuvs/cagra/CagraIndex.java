@@ -31,10 +31,12 @@ public class CagraIndex {
   MethodHandle cresMH;
   MethodHandle indexMH;
   MethodHandle searchMH;
-  MethodHandle testMH;
-  SymbolLookup bridge;
+  MethodHandle serializeMH;
+  MethodHandle deserializeMH;
   MemorySegment dataMS;
+  SymbolLookup bridge;
 
+  
   /**
    * 
    * @param indexParams
@@ -87,7 +89,31 @@ public class CagraIndex {
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("int"),
             linker.canonicalLayouts().get("long"), linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS,
             ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    
+    serializeMH = linker.downcallHandle(bridge.findOrThrow("serialize_index"),
+        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    
+    deserializeMH = linker.downcallHandle(bridge.findOrThrow("deserialize_index"),
+        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
+  }
+  
+  /**
+   * Java String -> C char*
+   * 
+   * @param str
+   * @return MemorySegment
+   */
+  public MemorySegment getStringSegment(StringBuilder str) {
+    str.append('\0');
+    MemoryLayout sq = MemoryLayout.sequenceLayout(str.length(), linker.canonicalLayouts().get("char"));
+    MemorySegment fln = arena.allocate(sq);
+
+    for (int i = 0; i < str.length(); i++) {
+      VarHandle flnVH = sq.varHandle(PathElement.sequenceElement(i));
+      flnVH.set(fln, 0L, (byte) str.charAt(i));
+    }
+    return fln;
   }
 
   /**
@@ -160,8 +186,13 @@ public class CagraIndex {
   /**
    * 
    * @param out
+   * @throws Throwable 
    */
-  public void serialize(OutputStream out) {
+  public void serialize(OutputStream out) throws Throwable {
+    MemoryLayout rvML = linker.canonicalLayouts().get("int");
+    MemorySegment rvMS = arena.allocate(rvML);
+    serializeMH.invokeExact(res.resource, ref.indexMemorySegment, rvMS, getStringSegment(new StringBuilder("/tmp/index123.cag")));
+    System.out.println("Serialize call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
   }
 
   /**

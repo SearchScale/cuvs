@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-cuvsResources_t create_resource() {
+cuvsResources_t create_resource(int *rv) {
   cuvsResources_t res;  
-  int rx = cuvsResourcesCreate(&res);
+  *rv = cuvsResourcesCreate(&res);
   return res;
 }
 
@@ -37,6 +37,14 @@ cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsReso
 
   *rv = cuvsCagraBuild(res, index_params, &dataset_tensor, index);
   return index;
+}
+
+void serialize_index(cuvsResources_t res, cuvsCagraIndex_t index, int *rv, char* filename) {
+ *rv = cuvsCagraSerialize(res, filename, index, true);
+}
+
+void deserialize_index(cuvsResources_t res, cuvsCagraIndex_t index, int *rv, char* filename) {
+ *rv = cuvsCagraDeserialize(res, filename, index);
 }
 
 void search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, long dimension, 

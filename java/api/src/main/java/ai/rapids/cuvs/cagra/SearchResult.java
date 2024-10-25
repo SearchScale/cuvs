@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class SearchResult {
 
-  public List<int[]> neighbours;
+  public List<int[]> neighbours; // TODO: Get clarity on these two.
   public List<float[][]> distances;
   public Map<Integer, Float> results;
   SequenceLayout neighboursSL;
