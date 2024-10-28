@@ -1,5 +1,5 @@
 # =============================================================================
-# Copyright (c) 2023-2024, NVIDIA CORPORATION.
+# Copyright (c) 2024, NVIDIA CORPORATION.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 # in compliance with the License. You may obtain a copy of the License at
@@ -10,27 +10,46 @@
 # is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
 # or implied. See the License for the specific language governing permissions and limitations under
 # the License.
+# =============================================================================
 
 cmake_minimum_required(VERSION 3.26.4 FATAL_ERROR)
 
-# ------------- configure rapids-cmake --------------#
-
-include(cmake/thirdparty/fetch_rapids.cmake)
+include(rapids_config.cmake)
 include(rapids-cmake)
 include(rapids-cpm)
 include(rapids-export)
 include(rapids-find)
-
-# ------------- configure project --------------#
-
-project(test_cuvs_c LANGUAGES C CXX CUDA)
-
-# ------------- configure cuvs -----------------#
-
 rapids_cpm_init()
-set(BUILD_CUVS_C_LIBRARY ON)
-include(cmake/thirdparty/get_dlpack.cmake)
-include(cmake/thirdparty/get_cuvs.cmake)
+
+project(
+  cuvs-java
+  VERSION "${RAPIDS_VERSION}"
+  LANGUAGES CXX C
+)
+
+option(FIND_CUVS_CPP "Search for existing CUVS C++ installations before defaulting to local files"
+       ON
+)
+
+if(FIND_CUVS_CPP)
+  find_package(cuvs "${RAPIDS_VERSION}" REQUIRED COMPONENTS c_api)
+  if(NOT TARGET cuvs::c_api)
+    message(
+      FATAL_ERROR
+        "Building against a preexisting libcuvs library requires the compiled libcuvs to have been built!"
+    )
+  endif()
+else()
+  set(cuvs_FOUND OFF)
+endif()
+
+if(NOT cuvs_FOUND)
+  set(BUILD_TESTS OFF)
+  set(BUILD_C_LIBRARY ON)
+  add_subdirectory(../../cpp cuvs-cpp EXCLUDE_FROM_ALL)
+endif()
+
+include(get_dlpack.cmake)
 
 ADD_LIBRARY(cuvs_wrapper SHARED src/cuvs_wrapper.c)
 target_include_directories(cuvs_wrapper PUBLIC "$<BUILD_INTERFACE:${DLPACK_INCLUDE_DIR}>")

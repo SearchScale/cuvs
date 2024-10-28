@@ -53,9 +53,7 @@
                             </targetPath>
                             <generator></generator>
                             <environmentVariables>
-                                <CMAKE_CUDA_ARCHITECTURES>NATIVE</CMAKE_CUDA_ARCHITECTURES>
                             </environmentVariables>
-                            <options></options>
                         </configuration>
                     </execution>
                     <execution>
@@ -72,10 +70,9 @@
                             </targetPath>
                             <generator></generator>
                             <environmentVariables>
-                                <!-- Modify the number of threads below manually
+                                <!-- Modify the number of threads below manually CMAKE_CUDA_ARCHITECTURES
                                 as you need, for now -->
                                 <CMAKE_BUILD_PARALLEL_LEVEL>16</CMAKE_BUILD_PARALLEL_LEVEL>
-                                <CMAKE_CUDA_ARCHITECTURES>NATIVE</CMAKE_CUDA_ARCHITECTURES>
                             </environmentVariables>
                             <options>
                                 <option>--build</option>

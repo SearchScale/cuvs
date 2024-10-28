@@ -6,7 +6,8 @@
 #include <stdlib.h>
 
 cuvsResources_t create_resource(int *rv) {
-  cuvsResources_t res;  
+  cuvsResources_t res; 
+  printf("Hello World");
   *rv = cuvsResourcesCreate(&res);
   return res;
 }

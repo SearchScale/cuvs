@@ -16,6 +16,7 @@
 function(find_and_configure_dlpack VERSION)
 
   include(${rapids-cmake-dir}/find/generate_module.cmake)
+  include(rapids-cpm)
   rapids_find_generate_module(DLPACK HEADER_NAMES dlpack.h)
 
   rapids_cpm_find(
