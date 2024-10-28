@@ -12,8 +12,8 @@ cuvsResources_t create_resource(int *rv) {
 }
 
 DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code) {
-
   DLManagedTensor tensor;
+
   tensor.dl_tensor.data = data;
   tensor.dl_tensor.device.device_type = kDLCUDA;
   tensor.dl_tensor.ndim = 2;
@@ -22,8 +22,8 @@ DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code)
   tensor.dl_tensor.dtype.lanes = 1;
   tensor.dl_tensor.shape = shape;
   tensor.dl_tensor.strides = NULL;
-  return tensor;
 
+  return tensor;
 }
                        
 cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsResources_t res, int *rv,
@@ -40,11 +40,11 @@ cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsReso
 }
 
 void serialize_index(cuvsResources_t res, cuvsCagraIndex_t index, int *rv, char* filename) {
- *rv = cuvsCagraSerialize(res, filename, index, true);
+  *rv = cuvsCagraSerialize(res, filename, index, true);
 }
 
 void deserialize_index(cuvsResources_t res, cuvsCagraIndex_t index, int *rv, char* filename) {
- *rv = cuvsCagraDeserialize(res, filename, index);
+  *rv = cuvsCagraDeserialize(res, filename, index);
 }
 
 void search_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, long dimension, 

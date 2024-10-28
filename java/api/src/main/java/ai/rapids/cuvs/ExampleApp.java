@@ -49,19 +49,18 @@ public class ExampleApp {
 
     // saving the index on to the disk.
     index.serialize(new FileOutputStream("abc.cag"));
-    
+
     // loading a cagra index from disk.
     InputStream fin = new FileInputStream(new File("abc.cag"));
     CagraIndex index2 = new CagraIndex.Builder(res)
         .from(fin)
         .build();
 
-    
     CuVSQuery query = new CuVSQuery.Builder()
         .withSearchParams(cagraSearchParams)
         .withQueryVectors(queries)
         .build();
-    
+
     SearchResult rslt = index.search(query);
     System.out.println(rslt.results);
 
