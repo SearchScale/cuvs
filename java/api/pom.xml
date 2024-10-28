@@ -100,8 +100,8 @@
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>com.searchscale.lucene.vectorsearch</groupId>
-                                    <artifactId>cuvs-searcher-cuda</artifactId>
+                                    <groupId>ai.rapids.cuvs</groupId>
+                                    <artifactId>api-sys</artifactId>
                                     <version>0.1</version>
                                     <type>so</type>
                                     <overWrite>false</overWrite>
