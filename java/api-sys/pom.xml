@@ -53,6 +53,8 @@
                             </targetPath>
                             <generator></generator>
                             <environmentVariables>
+                                <!-- CXX>/usr/local/cuda-12.3/bin/g++</CXX>
+                                <CC>/usr/local/cuda-12.3/bin/gcc</CC -->
                             </environmentVariables>
                         </configuration>
                     </execution>
@@ -72,6 +74,8 @@
                             <environmentVariables>
                                 <!-- Modify the number of threads below manually CMAKE_CUDA_ARCHITECTURES
                                 as you need, for now -->
+                                <!-- CXX>/usr/local/cuda-12.3/bin/g++</CXX>
+                                <CC>/usr/local/cuda-12.3/bin/gcc</CC -->
                                 <CMAKE_BUILD_PARALLEL_LEVEL>16</CMAKE_BUILD_PARALLEL_LEVEL>
                             </environmentVariables>
                             <options>
