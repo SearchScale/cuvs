@@ -51,7 +51,7 @@ public class ExampleApp {
     index.serialize(new FileOutputStream("/home/searchscale/abc.cag"), "/tmp/index.cag");
 
     // loading a cagra index from disk.
-    InputStream fin = new FileInputStream(new File("abc.cag"));
+    InputStream fin = new FileInputStream(new File("/home/searchscale/abc.cag"));
     CagraIndex index2 = new CagraIndex.Builder(res)
         .from(fin)
         .build();
@@ -61,8 +61,13 @@ public class ExampleApp {
         .withQueryVectors(queries)
         .build();
 
+    // Search
     SearchResult rslt = index.search(query);
     System.out.println(rslt.results);
 
+    // Search from de-serialized index
+    SearchResult rslt2 = index2.search(query);
+    System.out.println(rslt2.results);
+    
   }
 }

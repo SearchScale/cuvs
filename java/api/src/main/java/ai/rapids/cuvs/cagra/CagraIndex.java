@@ -2,6 +2,7 @@ package ai.rapids.cuvs.cagra;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.foreign.Arena;
@@ -16,6 +17,7 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.Map;
+import java.util.UUID;
 
 public class CagraIndex {
 
@@ -92,7 +94,7 @@ public class CagraIndex {
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
     deserializeMH = linker.downcallHandle(bridge.findOrThrow("deserialize_index"),
-        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
   }
 
@@ -209,9 +211,29 @@ public class CagraIndex {
    * 
    * @param in
    * @return
+   * @throws Throwable
    */
-  private CagraIndexReference deserialize(InputStream in) {
-    return null;
+  private CagraIndexReference deserialize(InputStream in) throws Throwable {
+    MemoryLayout rvML = linker.canonicalLayouts().get("int");
+    MemorySegment rvMS = arena.allocate(rvML);
+    String tmpIndexFile = "/tmp/" + UUID.randomUUID().toString() + ".cag";
+    CagraIndexReference ref = new CagraIndexReference();
+
+    File tempFile = new File(tmpIndexFile);
+    FileOutputStream out = new FileOutputStream(tempFile);
+    byte[] chunk = new byte[1024];
+    int chunkLen = 0;
+    while ((chunkLen = in.read(chunk)) != -1) {
+      out.write(chunk, 0, chunkLen);
+    }
+    deserializeMH.invokeExact(res.resource, ref.indexMemorySegment, rvMS,
+        getStringSegment(new StringBuilder(tmpIndexFile)));
+
+    in.close();
+    out.close();
+    tempFile.delete();
+
+    return ref;
   }
 
   /**
