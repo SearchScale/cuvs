@@ -1,6 +1,7 @@
 package ai.rapids.cuvs.cagra;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.foreign.Arena;
@@ -34,7 +35,7 @@ public class CagraIndex {
   MethodHandle deserializeMH;
   MemorySegment dataMS;
   SymbolLookup bridge;
-  
+
   /**
    * 
    * @param indexParams
@@ -43,8 +44,8 @@ public class CagraIndex {
    * @param res
    * @throws Throwable
    */
-  private CagraIndex(CagraIndexParams indexParams, float[][] dataset,
-      Map<Integer, Integer> map, CuVSResources res) throws Throwable {
+  private CagraIndex(CagraIndexParams indexParams, float[][] dataset, Map<Integer, Integer> map, CuVSResources res)
+      throws Throwable {
     this.mapping = map;
     this.indexParams = indexParams;
     this.dataset = dataset;
@@ -86,15 +87,15 @@ public class CagraIndex {
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("int"),
             linker.canonicalLayouts().get("long"), linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS,
             ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
-    
+
     serializeMH = linker.downcallHandle(bridge.findOrThrow("serialize_index"),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
-    
+
     deserializeMH = linker.downcallHandle(bridge.findOrThrow("deserialize_index"),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
   }
-  
+
   /**
    * Java String -> C char*
    * 
@@ -172,8 +173,8 @@ public class CagraIndex {
     MemoryLayout rvML = linker.canonicalLayouts().get("int");
     MemorySegment rvMS = arena.allocate(rvML);
 
-    searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(query.queryVectors), 2, 4L, 2L, res.resource, neighborsMS,
-        distancesMS, rvMS, query.searchParams.cagraSearchParamsMS);
+    searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(query.queryVectors), 2, 4L, 2L, res.resource,
+        neighborsMS, distancesMS, rvMS, query.searchParams.cagraSearchParamsMS);
 
     System.out.println("Search call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
@@ -183,13 +184,25 @@ public class CagraIndex {
   /**
    * 
    * @param out
-   * @throws Throwable 
+   * @param tmpFilePath
+   * @throws Throwable
    */
-  public void serialize(OutputStream out) throws Throwable {
+  public void serialize(OutputStream out, String tmpFilePath) throws Throwable {
     MemoryLayout rvML = linker.canonicalLayouts().get("int");
     MemorySegment rvMS = arena.allocate(rvML);
-    serializeMH.invokeExact(res.resource, ref.indexMemorySegment, rvMS, getStringSegment(new StringBuilder("/tmp/index123.cag")));
+    serializeMH.invokeExact(res.resource, ref.indexMemorySegment, rvMS,
+        getStringSegment(new StringBuilder(tmpFilePath)));
     System.out.println("Serialize call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
+
+    File tempFile = new File(tmpFilePath);
+    FileInputStream is = new FileInputStream(tempFile);
+    byte[] chunk = new byte[1024];
+    int chunkLen = 0;
+    while ((chunkLen = is.read(chunk)) != -1) {
+      out.write(chunk, 0, chunkLen);
+    }
+    is.close();
+    tempFile.delete();
   }
 
   /**

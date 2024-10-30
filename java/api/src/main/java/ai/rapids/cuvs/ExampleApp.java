@@ -48,7 +48,7 @@ public class ExampleApp {
         .build();
 
     // saving the index on to the disk.
-    index.serialize(new FileOutputStream("abc.cag"));
+    index.serialize(new FileOutputStream("/home/searchscale/abc.cag"), "/tmp/index.cag");
 
     // loading a cagra index from disk.
     InputStream fin = new FileInputStream(new File("abc.cag"));
