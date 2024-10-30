@@ -1,18 +1,22 @@
 package ai.rapids.cuvs.cagra;
 
 import java.util.Arrays;
+import java.util.Map;
 
 public class CuVSQuery {
 
   CagraSearchParams searchParams;
   PreFilter preFilter;
   float[][] queryVectors;
+  public Map<Integer, Integer> mapping;
 
-  public CuVSQuery(CagraSearchParams searchParams, PreFilter preFilter, float[][] queryVectors) {
+  public CuVSQuery(CagraSearchParams searchParams, PreFilter preFilter, float[][] queryVectors,
+      Map<Integer, Integer> mapping) {
     super();
     this.searchParams = searchParams;
     this.preFilter = preFilter;
     this.queryVectors = queryVectors;
+    this.mapping = mapping;
   }
 
   @Override
@@ -37,6 +41,7 @@ public class CuVSQuery {
     CagraSearchParams searchParams;
     PreFilter preFilter;
     float[][] queryVectors;
+    Map<Integer, Integer> mapping;
 
     /**
      * 
@@ -77,11 +82,21 @@ public class CuVSQuery {
 
     /**
      * 
+     * @param mapping
+     * @return
+     */
+    public Builder withMapping(Map<Integer, Integer> mapping) {
+      this.mapping = mapping;
+      return this;
+    }
+
+    /**
+     * 
      * @return
      * @throws Throwable
      */
     public CuVSQuery build() throws Throwable {
-      return new CuVSQuery(searchParams, preFilter, queryVectors);
+      return new CuVSQuery(searchParams, preFilter, queryVectors, mapping);
     }
   }
 

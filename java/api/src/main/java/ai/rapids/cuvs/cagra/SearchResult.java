@@ -14,6 +14,7 @@ public class SearchResult {
   public List<int[]> neighbours; // TODO: Get clarity on these two.
   public List<float[][]> distances;
   public Map<Integer, Float> results;
+  public Map<Integer, Integer> mapping;
   SequenceLayout neighboursSL;
   SequenceLayout distancesSL;
   MemorySegment neighboursMS;
@@ -21,13 +22,14 @@ public class SearchResult {
   int topK;
 
   public SearchResult(SequenceLayout neighboursSL, SequenceLayout distancesSL, MemorySegment neighboursMS,
-      MemorySegment distancesMS, int topK) {
+      MemorySegment distancesMS, int topK, Map<Integer, Integer> mapping) {
     super();
     this.topK = topK;
     this.neighboursSL = neighboursSL;
     this.distancesSL = distancesSL;
     this.neighboursMS = neighboursMS;
     this.distancesMS = distancesMS;
+    this.mapping = mapping;
     neighbours = new ArrayList<int[]>();
     distances = new ArrayList<float[][]>();
     results = new HashMap<Integer, Float>();
@@ -39,7 +41,8 @@ public class SearchResult {
     VarHandle distancesVH = distancesSL.varHandle(PathElement.sequenceElement());
 
     for (long i = 0; i < topK; i++) {
-      results.put((int) neighboursVH.get(neighboursMS, 0L, i), (float) distancesVH.get(distancesMS, 0L, i));
+      int id = (int) neighboursVH.get(neighboursMS, 0L, i);
+      results.put(mapping != null ? mapping.get(id) : id, (float) distancesVH.get(distancesMS, 0L, i));
     }
   }
 

@@ -16,7 +16,6 @@ import java.lang.foreign.SymbolLookup;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
-import java.util.Map;
 import java.util.UUID;
 
 public class CagraIndex {
@@ -25,8 +24,6 @@ public class CagraIndex {
   private final float[][] dataset;
   private final CuVSResources res;
   private CagraIndexReference ref;
-
-  private Map<Integer, Integer> mapping; // nocommit (this should be int[], not a mapping)
 
   Linker linker;
   Arena arena;
@@ -42,13 +39,11 @@ public class CagraIndex {
    * 
    * @param indexParams
    * @param dataset
-   * @param map
+   * @param mapping
    * @param res
    * @throws Throwable
    */
-  private CagraIndex(CagraIndexParams indexParams, float[][] dataset, Map<Integer, Integer> map, CuVSResources res)
-      throws Throwable {
-    this.mapping = map;
+  private CagraIndex(CagraIndexParams indexParams, float[][] dataset, CuVSResources res) throws Throwable {
     this.indexParams = indexParams;
     this.dataset = dataset;
     this.init();
@@ -180,7 +175,7 @@ public class CagraIndex {
 
     System.out.println("Search call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
-    return new SearchResult(neighborsSL, distancesSL, neighborsMS, distancesMS, 2);
+    return new SearchResult(neighborsSL, distancesSL, neighborsMS, distancesMS, 2, query.mapping);
   }
 
   /**
@@ -264,7 +259,6 @@ public class CagraIndex {
     private CagraIndexParams indexParams;
     float[][] dataset;
     CuVSResources res;
-    Map<Integer, Integer> map;
 
     InputStream in;
 
@@ -298,16 +292,6 @@ public class CagraIndex {
 
     /**
      * 
-     * @param map
-     * @return
-     */
-    public Builder withMapping(Map<Integer, Integer> map) {
-      this.map = map;
-      return this;
-    }
-
-    /**
-     * 
      * @param params
      * @return
      */
@@ -325,7 +309,7 @@ public class CagraIndex {
       if (in != null) {
         return new CagraIndex(in, res);
       } else {
-        return new CagraIndex(indexParams, dataset, map, res);
+        return new CagraIndex(indexParams, dataset, res);
       }
     }
   }

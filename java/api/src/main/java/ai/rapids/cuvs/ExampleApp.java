@@ -40,7 +40,6 @@ public class ExampleApp {
     // Creating a new index
     CagraIndex index = new CagraIndex.Builder(res)
         .withDataset(dataset)
-        .withMapping(map)
         .withIndexParams(cagraIndexParams)
         .build();
 
@@ -57,6 +56,7 @@ public class ExampleApp {
     CuVSQuery query = new CuVSQuery.Builder()
         .withSearchParams(cagraSearchParams)
         .withQueryVectors(queries)
+        .withMapping(map)
         .build();
 
     // Search
@@ -66,6 +66,6 @@ public class ExampleApp {
     // Search from de-serialized index
     SearchResult rslt2 = index2.search(query);
     System.out.println(rslt2.results);
-    
+
   }
 }
