@@ -20,17 +20,14 @@ import java.util.UUID;
 
 public class CuVSIndex {
 
-  private CagraIndexParams indexParams;
+  private IndexParams indexParams;
   private final float[][] dataset;
   private final CuVSResources res;
   private CagraIndexReference ref;
   private ANNAlgorithms algo;
-  
+
   public enum ANNAlgorithms {
-    BRUTEFORCE,
-    CAGRA,
-    IVF_PQ,
-    IVF_FLAT
+    BRUTEFORCE, CAGRA, IVF_PQ, IVF_FLAT
   }
 
   Linker linker;
@@ -51,7 +48,8 @@ public class CuVSIndex {
    * @param res
    * @throws Throwable
    */
-  private CuVSIndex(CagraIndexParams indexParams, float[][] dataset, CuVSResources res, ANNAlgorithms algo) throws Throwable {
+  private CuVSIndex(IndexParams indexParams, float[][] dataset, CuVSResources res, ANNAlgorithms algo)
+      throws Throwable {
     this.indexParams = indexParams;
     this.dataset = dataset;
     this.init();
@@ -156,7 +154,7 @@ public class CuVSIndex {
     MemorySegment rvMS = arena.allocate(rvML);
 
     ref = new CagraIndexReference((MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols,
-        res.resource, rvMS, indexParams.cagraIndexParamsMS));
+        res.resource, rvMS, indexParams.indexParamsMS));
 
     System.out.println("Build call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
@@ -180,7 +178,7 @@ public class CuVSIndex {
     MemorySegment rvMS = arena.allocate(rvML);
 
     searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(query.queryVectors), 2, 4L, 2L, res.resource,
-        neighborsMS, distancesMS, rvMS, query.searchParams.cagraSearchParamsMS);
+        neighborsMS, distancesMS, rvMS, query.searchParams.searchParamsMS);
 
     System.out.println("Search call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
@@ -244,7 +242,7 @@ public class CuVSIndex {
    * 
    * @return
    */
-  public CagraIndexParams getParams() {
+  public IndexParams getParams() {
     return indexParams;
   }
 
@@ -265,7 +263,7 @@ public class CuVSIndex {
   }
 
   public static class Builder {
-    private CagraIndexParams indexParams;
+    private IndexParams indexParams;
     float[][] dataset;
     CuVSResources res;
     ANNAlgorithms algo = ANNAlgorithms.CAGRA;
@@ -305,7 +303,7 @@ public class CuVSIndex {
      * @param params
      * @return
      */
-    public Builder withIndexParams(CagraIndexParams indexParams) {
+    public Builder withIndexParams(IndexParams indexParams) {
       this.indexParams = indexParams;
       return this;
     }
@@ -319,7 +317,7 @@ public class CuVSIndex {
       this.algo = algo;
       return this;
     }
-    
+
     /**
      * 
      * @return

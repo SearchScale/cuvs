@@ -22,7 +22,7 @@ import ai.rapids.cuvs.panama.cuvsCagraSearchParams;
 *     uint64_t rand_xor_mask;
 * }
 */
-public class CagraSearchParams {
+public class CagraSearchParams extends SearchParams {
 
   Arena arena;
   int maxQueries;
@@ -60,8 +60,6 @@ public class CagraSearchParams {
     }
   }
 
-  public MemorySegment cagraSearchParamsMS;
-
   public CagraSearchParams(Arena arena, int max_queries, int itopk_size, int max_iterations, CuvsCagraSearchAlgo algo,
       int team_size, int search_width, int min_iterations, int thread_block_size, CuvsCagraHashMode hashmap_mode,
       int hashmap_min_bitlen, float hashmap_max_fill_rate, int num_random_samplings, long rand_xor_mask) {
@@ -84,20 +82,20 @@ public class CagraSearchParams {
   }
 
   public void set() {
-    cagraSearchParamsMS = cuvsCagraSearchParams.allocate(arena);
-    cuvsCagraSearchParams.max_queries(cagraSearchParamsMS, maxQueries);
-    cuvsCagraSearchParams.itopk_size(cagraSearchParamsMS, itopkSize);
-    cuvsCagraSearchParams.max_iterations(cagraSearchParamsMS, maxIterations);
-    cuvsCagraSearchParams.algo(cagraSearchParamsMS, algo.label);
-    cuvsCagraSearchParams.team_size(cagraSearchParamsMS, teamSize);
-    cuvsCagraSearchParams.search_width(cagraSearchParamsMS, searchWidth);
-    cuvsCagraSearchParams.min_iterations(cagraSearchParamsMS, minIterations);
-    cuvsCagraSearchParams.thread_block_size(cagraSearchParamsMS, threadBlockSize);
-    cuvsCagraSearchParams.hashmap_mode(cagraSearchParamsMS, hashmapMode.label);
-    cuvsCagraSearchParams.hashmap_min_bitlen(cagraSearchParamsMS, hashmapMinBitlen);
-    cuvsCagraSearchParams.hashmap_max_fill_rate(cagraSearchParamsMS, hashmapMaxFillRate);
-    cuvsCagraSearchParams.num_random_samplings(cagraSearchParamsMS, numRandomSamplings);
-    cuvsCagraSearchParams.rand_xor_mask(cagraSearchParamsMS, randXorMask);
+    searchParamsMS = cuvsCagraSearchParams.allocate(arena);
+    cuvsCagraSearchParams.max_queries(searchParamsMS, maxQueries);
+    cuvsCagraSearchParams.itopk_size(searchParamsMS, itopkSize);
+    cuvsCagraSearchParams.max_iterations(searchParamsMS, maxIterations);
+    cuvsCagraSearchParams.algo(searchParamsMS, algo.label);
+    cuvsCagraSearchParams.team_size(searchParamsMS, teamSize);
+    cuvsCagraSearchParams.search_width(searchParamsMS, searchWidth);
+    cuvsCagraSearchParams.min_iterations(searchParamsMS, minIterations);
+    cuvsCagraSearchParams.thread_block_size(searchParamsMS, threadBlockSize);
+    cuvsCagraSearchParams.hashmap_mode(searchParamsMS, hashmapMode.label);
+    cuvsCagraSearchParams.hashmap_min_bitlen(searchParamsMS, hashmapMinBitlen);
+    cuvsCagraSearchParams.hashmap_max_fill_rate(searchParamsMS, hashmapMaxFillRate);
+    cuvsCagraSearchParams.num_random_samplings(searchParamsMS, numRandomSamplings);
+    cuvsCagraSearchParams.rand_xor_mask(searchParamsMS, randXorMask);
   }
 
   public int getMax_queries() {

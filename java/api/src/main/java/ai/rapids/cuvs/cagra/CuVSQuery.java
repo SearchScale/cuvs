@@ -7,13 +7,13 @@ import ai.rapids.cuvs.cagra.CuVSIndex.ANNAlgorithms;
 
 public class CuVSQuery {
 
-  CagraSearchParams searchParams;
+  SearchParams searchParams;
   PreFilter preFilter;
   float[][] queryVectors;
   public Map<Integer, Integer> mapping;
   ANNAlgorithms algo;
   
-  public CuVSQuery(CagraSearchParams searchParams, PreFilter preFilter, float[][] queryVectors,
+  public CuVSQuery(SearchParams searchParams, PreFilter preFilter, float[][] queryVectors,
       Map<Integer, Integer> mapping, ANNAlgorithms algo) {
     super();
     this.searchParams = searchParams;
@@ -29,7 +29,7 @@ public class CuVSQuery {
         + Arrays.toString(queryVectors) + "]";
   }
 
-  public CagraSearchParams getSearchParams() {
+  public SearchParams getSearchParams() {
     return searchParams;
   }
 
@@ -42,7 +42,7 @@ public class CuVSQuery {
   }
 
   public static class Builder {
-    CagraSearchParams searchParams;
+    SearchParams searchParams;
     PreFilter preFilter;
     float[][] queryVectors;
     Map<Integer, Integer> mapping;
@@ -60,7 +60,7 @@ public class CuVSQuery {
      * @param dataset
      * @return
      */
-    public Builder withSearchParams(CagraSearchParams searchParams) {
+    public Builder withSearchParams(SearchParams searchParams) {
       this.searchParams = searchParams;
       return this;
     }

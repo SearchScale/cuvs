@@ -13,7 +13,7 @@ import ai.rapids.cuvs.panama.cuvsCagraIndexParams;
 *     size_t nn_descent_niter;
 * }
 */
-public class CagraIndexParams {
+public class CagraIndexParams extends IndexParams {
 
   Arena arena;
   int intermediateGraphDegree;
@@ -31,8 +31,6 @@ public class CagraIndexParams {
     }
   }
 
-  public MemorySegment cagraIndexParamsMS;
-
   public CagraIndexParams(Arena arena, int intermediateGraphDegree, int graphDegree,
       CuvsCagraGraphBuildAlgo buildAlgo, int nnDescentNiter) {
     this.arena = arena;
@@ -44,11 +42,11 @@ public class CagraIndexParams {
   }
 
   private void set() {
-    cagraIndexParamsMS = cuvsCagraIndexParams.allocate(arena);
-    cuvsCagraIndexParams.intermediate_graph_degree(cagraIndexParamsMS, intermediateGraphDegree);
-    cuvsCagraIndexParams.graph_degree(cagraIndexParamsMS, graphDegree);
-    cuvsCagraIndexParams.build_algo(cagraIndexParamsMS, buildAlgo.label);
-    cuvsCagraIndexParams.nn_descent_niter(cagraIndexParamsMS, nnDescentNiter);
+    indexParamsMS = cuvsCagraIndexParams.allocate(arena);
+    cuvsCagraIndexParams.intermediate_graph_degree(indexParamsMS, intermediateGraphDegree);
+    cuvsCagraIndexParams.graph_degree(indexParamsMS, graphDegree);
+    cuvsCagraIndexParams.build_algo(indexParamsMS, buildAlgo.label);
+    cuvsCagraIndexParams.nn_descent_niter(indexParamsMS, nnDescentNiter);
   }
 
   public int getIntermediate_graph_degree() {
