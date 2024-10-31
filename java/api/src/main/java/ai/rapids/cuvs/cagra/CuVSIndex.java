@@ -18,12 +18,20 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.UUID;
 
-public class CagraIndex {
+public class CuVSIndex {
 
   private CagraIndexParams indexParams;
   private final float[][] dataset;
   private final CuVSResources res;
   private CagraIndexReference ref;
+  private ANNAlgorithms algo;
+  
+  public enum ANNAlgorithms {
+    BRUTEFORCE,
+    CAGRA,
+    IVF_PQ,
+    IVF_FLAT
+  }
 
   Linker linker;
   Arena arena;
@@ -43,12 +51,13 @@ public class CagraIndex {
    * @param res
    * @throws Throwable
    */
-  private CagraIndex(CagraIndexParams indexParams, float[][] dataset, CuVSResources res) throws Throwable {
+  private CuVSIndex(CagraIndexParams indexParams, float[][] dataset, CuVSResources res, ANNAlgorithms algo) throws Throwable {
     this.indexParams = indexParams;
     this.dataset = dataset;
     this.init();
     this.res = res;
     this.ref = build();
+    this.algo = algo;
   }
 
   /**
@@ -57,7 +66,7 @@ public class CagraIndex {
    * @param res
    * @throws Throwable
    */
-  private CagraIndex(InputStream in, CuVSResources res) throws Throwable {
+  private CuVSIndex(InputStream in, CuVSResources res) throws Throwable {
     this.indexParams = null;
     this.dataset = null;
     this.res = res;
@@ -259,6 +268,7 @@ public class CagraIndex {
     private CagraIndexParams indexParams;
     float[][] dataset;
     CuVSResources res;
+    ANNAlgorithms algo = ANNAlgorithms.CAGRA;
 
     InputStream in;
 
@@ -302,14 +312,24 @@ public class CagraIndex {
 
     /**
      * 
+     * @param params
+     * @return
+     */
+    public Builder withANNAlgorithm(ANNAlgorithms algo) {
+      this.algo = algo;
+      return this;
+    }
+    
+    /**
+     * 
      * @return
      * @throws Throwable
      */
-    public CagraIndex build() throws Throwable {
+    public CuVSIndex build() throws Throwable {
       if (in != null) {
-        return new CagraIndex(in, res);
+        return new CuVSIndex(in, res);
       } else {
-        return new CagraIndex(indexParams, dataset, res);
+        return new CuVSIndex(indexParams, dataset, res, algo);
       }
     }
   }

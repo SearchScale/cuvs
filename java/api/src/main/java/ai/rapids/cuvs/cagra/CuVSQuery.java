@@ -3,20 +3,24 @@ package ai.rapids.cuvs.cagra;
 import java.util.Arrays;
 import java.util.Map;
 
+import ai.rapids.cuvs.cagra.CuVSIndex.ANNAlgorithms;
+
 public class CuVSQuery {
 
   CagraSearchParams searchParams;
   PreFilter preFilter;
   float[][] queryVectors;
   public Map<Integer, Integer> mapping;
-
+  ANNAlgorithms algo;
+  
   public CuVSQuery(CagraSearchParams searchParams, PreFilter preFilter, float[][] queryVectors,
-      Map<Integer, Integer> mapping) {
+      Map<Integer, Integer> mapping, ANNAlgorithms algo) {
     super();
     this.searchParams = searchParams;
     this.preFilter = preFilter;
     this.queryVectors = queryVectors;
     this.mapping = mapping;
+    this.algo = algo;
   }
 
   @Override
@@ -42,6 +46,7 @@ public class CuVSQuery {
     PreFilter preFilter;
     float[][] queryVectors;
     Map<Integer, Integer> mapping;
+    ANNAlgorithms algo = ANNAlgorithms.CAGRA;
 
     /**
      * 
@@ -92,11 +97,21 @@ public class CuVSQuery {
 
     /**
      * 
+     * @param params
+     * @return
+     */
+    public Builder withANNAlgorithm(ANNAlgorithms algo) {
+      this.algo = algo;
+      return this;
+    }
+
+    /**
+     * 
      * @return
      * @throws Throwable
      */
     public CuVSQuery build() throws Throwable {
-      return new CuVSQuery(searchParams, preFilter, queryVectors, mapping);
+      return new CuVSQuery(searchParams, preFilter, queryVectors, mapping, algo);
     }
   }
 

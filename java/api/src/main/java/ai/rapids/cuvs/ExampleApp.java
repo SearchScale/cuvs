@@ -6,7 +6,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.Map;
 
-import ai.rapids.cuvs.cagra.CagraIndex;
+import ai.rapids.cuvs.cagra.CuVSIndex;
+import ai.rapids.cuvs.cagra.CuVSIndex.ANNAlgorithms;
 import ai.rapids.cuvs.cagra.CagraIndexParams;
 import ai.rapids.cuvs.cagra.CagraIndexParams.CuvsCagraGraphBuildAlgo;
 import ai.rapids.cuvs.cagra.CagraSearchParams;
@@ -38,8 +39,9 @@ public class ExampleApp {
         .build();
 
     // Creating a new index
-    CagraIndex index = new CagraIndex.Builder(res)
+    CuVSIndex index = new CuVSIndex.Builder(res)
         .withDataset(dataset)
+        .withANNAlgorithm(ANNAlgorithms.CAGRA)
         .withIndexParams(cagraIndexParams)
         .build();
 
@@ -48,12 +50,13 @@ public class ExampleApp {
 
     // Loading a cagra index from disk.
     InputStream fin = new FileInputStream(new File("abc.cag"));
-    CagraIndex index2 = new CagraIndex.Builder(res)
+    CuVSIndex index2 = new CuVSIndex.Builder(res)
         .from(fin)
         .build();
 
     // Query
     CuVSQuery query = new CuVSQuery.Builder()
+        .withANNAlgorithm(ANNAlgorithms.CAGRA)
         .withSearchParams(cagraSearchParams)
         .withQueryVectors(queries)
         .withMapping(map)
