@@ -27,7 +27,7 @@ public class CuVSResources {
     arena = Arena.ofConfined();
 
     File wd = new File(System.getProperty("user.dir"));
-    bridge = SymbolLookup.libraryLookup(wd.getParent() + "/api-sys/build/libcuvs_wrapper.so", arena);
+    bridge = SymbolLookup.libraryLookup(wd.getParent() + "/api-sys/libcuvs_wrapper.so", arena);
 
     cresMH = linker.downcallHandle(bridge.findOrThrow("create_resource"), FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
     
