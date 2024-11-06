@@ -28,9 +28,7 @@ public class ExampleApp {
     CuVSResources res = new CuVSResources();
 
     CagraIndexParams cagraIndexParams = new CagraIndexParams.Builder()
-        .withIntermediateGraphDegree(10)
         .withBuildAlgo(CuvsCagraGraphBuildAlgo.IVF_PQ)
-        .withWriterThreads(1)
         .build();
 
     CagraSearchParams cagraSearchParams = new CagraSearchParams

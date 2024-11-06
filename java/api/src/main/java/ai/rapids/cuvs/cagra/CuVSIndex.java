@@ -154,7 +154,7 @@ public class CuVSIndex {
     MemorySegment rvMS = arena.allocate(rvML);
 
     ref = new CagraIndexReference((MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols,
-        res.resource, rvMS, indexParams.indexParamsMS));
+        res.getResource(), rvMS, indexParams.indexParamsMS));
 
     System.out.println("Build call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
@@ -177,7 +177,7 @@ public class CuVSIndex {
     MemoryLayout rvML = linker.canonicalLayouts().get("int");
     MemorySegment rvMS = arena.allocate(rvML);
 
-    searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(query.queryVectors), 2, 4L, 2L, res.resource,
+    searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(query.queryVectors), 2, 4L, 2L, res.getResource(),
         neighborsMS, distancesMS, rvMS, query.searchParams.searchParamsMS);
 
     System.out.println("Search call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
@@ -194,7 +194,7 @@ public class CuVSIndex {
   public void serialize(OutputStream out, String tmpFilePath) throws Throwable {
     MemoryLayout rvML = linker.canonicalLayouts().get("int");
     MemorySegment rvMS = arena.allocate(rvML);
-    serializeMH.invokeExact(res.resource, ref.indexMemorySegment, rvMS,
+    serializeMH.invokeExact(res.getResource(), ref.indexMemorySegment, rvMS,
         getStringSegment(new StringBuilder(tmpFilePath)));
     System.out.println("Serialize call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
 
@@ -228,7 +228,7 @@ public class CuVSIndex {
     while ((chunkLen = in.read(chunk)) != -1) {
       out.write(chunk, 0, chunkLen);
     }
-    deserializeMH.invokeExact(res.resource, ref.indexMemorySegment, rvMS,
+    deserializeMH.invokeExact(res.getResource(), ref.indexMemorySegment, rvMS,
         getStringSegment(new StringBuilder(tmpIndexFile)));
 
     in.close();

@@ -4,6 +4,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 cuvsResources_t create_resource(int *rv) {
   cuvsResources_t res;
@@ -29,13 +30,32 @@ DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code)
 cuvsCagraIndex_t build_index(float *dataset, long rows, long dimension, cuvsResources_t res, int *rv,
     cuvsCagraIndexParams_t index_params) {
   
+  printf("GOOD1\n");
   int64_t dataset_shape[2] = {rows, dimension};
   DLManagedTensor dataset_tensor = prepare_tensor(dataset, dataset_shape, kDLFloat);
+
+  printf("GOOD2\n");
 
   cuvsCagraIndex_t index;
   cuvsCagraIndexCreate(&index);
 
+  printf("GOOD3\n");
+
+  for (int i=0; i<rows; i++) {
+    for (int j=0; j<dimension; j++) {
+      
+      float  my = (*dataset + (i*dimension+j) );
+
+      printf("%f ", my);
+
+      if (j==dimension-1) printf("\n");
+      
+    }
+  }
+
   *rv = cuvsCagraBuild(res, index_params, &dataset_tensor, index);
+    printf("GOOD4\n");
+
   return index;
 }
 

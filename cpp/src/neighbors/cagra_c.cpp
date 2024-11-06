@@ -29,6 +29,8 @@
 #include <cuvs/neighbors/cagra.h>
 #include <cuvs/neighbors/cagra.hpp>
 
+#include <stdio.h>
+
 namespace {
 
 template <typename T>
@@ -60,6 +62,8 @@ void* _build(cuvsResources_t res, cuvsCagraIndexParams params, DLManagedTensor* 
       break;
   };
 
+      printf("_build 1...\n");
+
   if (auto* cparams = params.compression; cparams != nullptr) {
     auto compression_params                        = cuvs::neighbors::vpq_params();
     compression_params.pq_bits                     = cparams->pq_bits;
@@ -71,15 +75,27 @@ void* _build(cuvsResources_t res, cuvsCagraIndexParams params, DLManagedTensor* 
     index_params.compression.emplace(compression_params);
   }
 
+      printf("_build 2...\n");
+
   if (cuvs::core::is_dlpack_device_compatible(dataset)) {
+          printf("_build 3...\n");
+
     using mdspan_type = raft::device_matrix_view<T const, int64_t, raft::row_major>;
     auto mds          = cuvs::core::from_dlpack<mdspan_type>(dataset_tensor);
+          printf("_build 4...\n");
+
     *index            = cuvs::neighbors::cagra::build(*res_ptr, index_params, mds);
   } else if (cuvs::core::is_dlpack_host_compatible(dataset)) {
+          printf("_build 4.5...\n");
+
     using mdspan_type = raft::host_matrix_view<T const, int64_t, raft::row_major>;
     auto mds          = cuvs::core::from_dlpack<mdspan_type>(dataset_tensor);
+          printf("_build 5...\n");
+
     *index            = cuvs::neighbors::cagra::build(*res_ptr, index_params, mds);
   }
+        printf("_build 6...\n");
+
   return index;
 }
 
@@ -189,16 +205,35 @@ extern "C" cuvsError_t cuvsCagraBuild(cuvsResources_t res,
                                       DLManagedTensor* dataset_tensor,
                                       cuvsCagraIndex_t index)
 {
+  printf("Got here...\n");
+
   return cuvs::core::translate_exceptions([=] {
+      printf("Got here 1...\n");
+
     auto dataset = dataset_tensor->dl_tensor;
+      printf("Got here 2...\n");
     index->dtype = dataset.dtype;
     if (dataset.dtype.code == kDLFloat && dataset.dtype.bits == 32) {
+            printf("Got here 3...\n");
+
       index->addr = reinterpret_cast<uintptr_t>(_build<float>(res, *params, dataset_tensor));
+            printf("Got here 3.5...\n");
+
     } else if (dataset.dtype.code == kDLInt && dataset.dtype.bits == 8) {
+            printf("Got here 4...\n");
+
       index->addr = reinterpret_cast<uintptr_t>(_build<int8_t>(res, *params, dataset_tensor));
+            printf("Got here 4.5...\n");
+
     } else if (dataset.dtype.code == kDLUInt && dataset.dtype.bits == 8) {
+            printf("Got here 5...\n");
+
       index->addr = reinterpret_cast<uintptr_t>(_build<uint8_t>(res, *params, dataset_tensor));
+            printf("Got here 5.5...\n");
+
     } else {
+            printf("Got here 6...\n");
+
       RAFT_FAIL("Unsupported dataset DLtensor dtype: %d and bits: %d",
                 dataset.dtype.code,
                 dataset.dtype.bits);

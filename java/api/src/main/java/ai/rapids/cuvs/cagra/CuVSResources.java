@@ -16,7 +16,7 @@ public class CuVSResources {
   private Arena arena;
   private MethodHandle cresMH;
   private SymbolLookup bridge;
-  public MemorySegment resource;
+  private MemorySegment resource;
 
   /**
    * 
@@ -34,10 +34,14 @@ public class CuVSResources {
     MemoryLayout rvML = linker.canonicalLayouts().get("int");
     MemorySegment rvMS = arena.allocate(rvML);
     
-    resource = (MemorySegment) cresMH.invokeExact(rvMS);
+    this.resource = ((MemorySegment) cresMH.invokeExact(rvMS));
     
     System.out.println("Create resource call return value: " + rvMS.get(ValueLayout.JAVA_INT, 0));
     
+  }
+
+  public MemorySegment getResource() {
+	  return resource;
   }
 
 }

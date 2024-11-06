@@ -69,8 +69,15 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.0</version>
+            <version>5.11.3</version>
         </dependency>
+        
+		<dependency>
+		    <groupId>org.testng</groupId>
+		    <artifactId>testng</artifactId>
+		    <version>7.10.2</version>
+		    <scope>test</scope>
+		</dependency>
 
     </dependencies>
 
