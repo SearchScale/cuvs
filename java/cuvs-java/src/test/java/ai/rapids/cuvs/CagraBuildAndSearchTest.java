@@ -79,15 +79,18 @@ public class CagraBuildAndSearchTest {
                 .withBuildAlgo(CagraIndexParams.CuvsCagraGraphBuildAlgo.IVF_PQ)
                 .withWriterThreads(1)
                 .build();
+        assertNotNull(cagraIndexParams, "CagraIndexParams instance should not be null.");
 
         // Create the index with the dataset
         CagraIndex index = new CagraIndex.Builder(res)
                 .withDataset(dataset)
                 .withIndexParams(cagraIndexParams)
                 .build();
+        assertNotNull(index, "CagraIndex instance should not be null.");
 
         // Configure search parameters
         CagraSearchParams cagraSearchParams = new CagraSearchParams.Builder().build();
+        assertNotNull(cagraSearchParams, "CagraSearchParams instance should not be null.");
 
         // Create a query object with the query vectors
         CuVSQuery query = new CuVSQuery.Builder()
@@ -96,7 +99,8 @@ public class CagraBuildAndSearchTest {
                 .withQueryVectors(queries)
                 .withMapping(map)
                 .build();
-
+        assertNotNull(query, "CuVSQuery instance should not be null.");
+        
         // Perform the search
         SearchResult rslt = index.search(query);
 
