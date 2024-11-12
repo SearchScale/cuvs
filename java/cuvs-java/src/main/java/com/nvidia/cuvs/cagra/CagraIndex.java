@@ -17,358 +17,318 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class CagraIndex {
 
-	private CagraIndexParams indexParams;
-	private final float[][] dataset;
-	private final CuVSResources res;
-	private CagraIndexReference ref;
+  private CagraIndexParams indexParams;
+  private final float[][] dataset;
+  private final CuVSResources res;
+  private CagraIndexReference ref;
 
-	Linker linker;
-	Arena arena;
-	MethodHandle cresMH;
-	MethodHandle indexMH;
-	MethodHandle searchMH;
-	MethodHandle serializeMH;
-	MethodHandle deserializeMH;
-	MemorySegment dataMS;
-	SymbolLookup bridge;
+  Linker linker;
+  Arena arena;
+  MethodHandle cresMH;
+  MethodHandle indexMH;
+  MethodHandle searchMH;
+  MethodHandle serializeMH;
+  MethodHandle deserializeMH;
+  MemorySegment dataMS;
+  SymbolLookup bridge;
 
-	/**
-	 * 
-	 * @param indexParams
-	 * @param dataset
-	 * @param mapping
-	 * @param res
-	 * @throws Throwable
-	 */
-	private CagraIndex(CagraIndexParams indexParams, float[][] dataset, CuVSResources res) throws Throwable {
-		this.indexParams = indexParams;
-		this.dataset = dataset;
-		this.init();
-		this.res = res;
-		this.ref = build();
-	}
+  /**
+   * 
+   * @param indexParams
+   * @param dataset
+   * @param mapping
+   * @param res
+   * @throws Throwable
+   */
+  private CagraIndex(CagraIndexParams indexParams, float[][] dataset, CuVSResources res) throws Throwable {
+    this.indexParams = indexParams;
+    this.dataset = dataset;
+    this.init();
+    this.res = res;
+    this.ref = build();
+  }
 
-	/**
-	 * 
-	 * @param in
-	 * @param res
-	 * @throws Throwable
-	 */
-	private CagraIndex(InputStream in, CuVSResources res) throws Throwable {
-		this.indexParams = new CagraIndexParams.Builder().build();
-		this.dataset = null;
-		this.res = res;
-		this.init();
-		this.ref = deserialize(in);
-	}
+  /**
+   * 
+   * @param in
+   * @param res
+   * @throws Throwable
+   */
+  private CagraIndex(InputStream in, CuVSResources res) throws Throwable {
+    this.indexParams = null;
+    this.dataset = null;
+    this.res = res;
+    this.init();
+    this.ref = deserialize(in);
+  }
 
-	/**
-	 * 
-	 * @throws Throwable
-	 */
-	private void init() throws Throwable {
-		linker = Linker.nativeLinker();
-		arena = Arena.ofConfined();
+  /**
+   * 
+   * @throws Throwable
+   */
+  private void init() throws Throwable {
+    linker = Linker.nativeLinker();
+    arena = Arena.ofConfined();
 
-		File wd = new File(System.getProperty("user.dir"));
-		bridge = SymbolLookup.libraryLookup(wd.getParent() + "/internal/libcuvs_java.so", arena);
+    File wd = new File(System.getProperty("user.dir"));
+    bridge = SymbolLookup.libraryLookup(wd.getParent() + "/internal/libcuvs_java.so", arena);
 
-		indexMH = linker.downcallHandle(bridge.find("build_index").get(),
-				FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("long"),
-						linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    indexMH = linker.downcallHandle(bridge.find("build_index").get(),
+        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("long"),
+            linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-		searchMH = linker.downcallHandle(bridge.find("search_index").get(),
-				FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("int"),
-						linker.canonicalLayouts().get("long"), linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS,
-						ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    searchMH = linker.downcallHandle(bridge.find("search_index").get(),
+        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("int"),
+            linker.canonicalLayouts().get("long"), linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS,
+            ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-		serializeMH = linker.downcallHandle(bridge.find("serialize_index").get(),
-				FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    serializeMH = linker.downcallHandle(bridge.find("serialize_index").get(),
+        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-		deserializeMH = linker.downcallHandle(bridge.find("deserialize_index").get(),
-				FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    deserializeMH = linker.downcallHandle(bridge.find("deserialize_index").get(),
+        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-	}
+  }
 
-	/**
-	 * Java String -> C char*
-	 * 
-	 * @param str
-	 * @return MemorySegment
-	 */
-	public MemorySegment getStringSegment(StringBuilder str) {
-		str.append('\0');
-		MemoryLayout sq = MemoryLayout.sequenceLayout(str.length(), linker.canonicalLayouts().get("char"));
-		MemorySegment fln = arena.allocate(sq);
+  /**
+   * Java String -> C char*
+   * 
+   * @param str
+   * @return MemorySegment
+   */
+  public MemorySegment getStringSegment(StringBuilder str) {
+    str.append('\0');
+    MemoryLayout sq = MemoryLayout.sequenceLayout(str.length(), linker.canonicalLayouts().get("char"));
+    MemorySegment fln = arena.allocate(sq);
 
-		for (int i = 0; i < str.length(); i++) {
-			VarHandle flnVH = sq.varHandle(PathElement.sequenceElement(i));
-			flnVH.set(fln, 0L, (byte) str.charAt(i));
-		}
-		return fln;
-	}
+    for (int i = 0; i < str.length(); i++) {
+      VarHandle flnVH = sq.varHandle(PathElement.sequenceElement(i));
+      flnVH.set(fln, 0L, (byte) str.charAt(i));
+    }
+    return fln;
+  }
 
-	/**
-	 * 
-	 * @param data
-	 * @return
-	 */
-	private MemorySegment getMemorySegment(float[][] data) {
-		long rows = data.length;
-		long cols = data[0].length;
+  /**
+   * 
+   * @param data
+   * @return
+   */
+  private MemorySegment getMemorySegment(float[][] data) {
+    long rows = data.length;
+    long cols = data[0].length;
 
-		MemoryLayout dataML = MemoryLayout.sequenceLayout(rows,
-				MemoryLayout.sequenceLayout(cols, linker.canonicalLayouts().get("float")));
-		MemorySegment dataMS = arena.allocate(dataML);
+    MemoryLayout dataML = MemoryLayout.sequenceLayout(rows,
+        MemoryLayout.sequenceLayout(cols, linker.canonicalLayouts().get("float")));
+    MemorySegment dataMS = arena.allocate(dataML);
 
-		for (int r = 0; r < rows; r++) {
-			for (int c = 0; c < cols; c++) {
-				VarHandle element = dataML.arrayElementVarHandle(PathElement.sequenceElement(r),
-						PathElement.sequenceElement(c));
-				element.set(dataMS, 0, 0, data[r][c]);
-			}
-		}
+    for (int r = 0; r < rows; r++) {
+      for (int c = 0; c < cols; c++) {
+        VarHandle element = dataML.arrayElementVarHandle(PathElement.sequenceElement(r),
+            PathElement.sequenceElement(c));
+        element.set(dataMS, 0, 0, data[r][c]);
+      }
+    }
 
-		return dataMS;
-	}
+    return dataMS;
+  }
 
-	/**
-	 * 
-	 * @return
-	 * @throws Throwable
-	 */
-	private CagraIndexReference build() throws Throwable {
-		long rows = dataset.length;
-		long cols = dataset[0].length;
-		MemoryLayout rvML = linker.canonicalLayouts().get("int");
-		MemorySegment rvMS = arena.allocate(rvML);
+  /**
+   * 
+   * @return
+   * @throws Throwable
+   */
+  private CagraIndexReference build() throws Throwable {
+    long rows = dataset.length;
+    long cols = dataset[0].length;
+    MemoryLayout rvML = linker.canonicalLayouts().get("int");
+    MemorySegment rvMS = arena.allocate(rvML);
 
-		ref = new CagraIndexReference((MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols,
-				res.getResource(), rvMS, indexParams.cagraIndexParamsMS));
+    ref = new CagraIndexReference((MemorySegment) indexMH.invokeExact(getMemorySegment(dataset), rows, cols,
+        res.getResource(), rvMS, indexParams.cagraIndexParamsMS));
 
-		return ref;
-	}
+    return ref;
+  }
 
-	/**
-	 * 
-	 * @param params
-	 * @param queryVectors
-	 * @return
-	 * @throws Throwable
-	 */
-	public SearchResult search(CuVSQuery query) throws Throwable {
+  /**
+   * 
+   * @param params
+   * @param queryVectors
+   * @return
+   * @throws Throwable
+   */
+  public SearchResult search(CuVSQuery query) throws Throwable {
 
-		if (indexParams == null) {
-			throw new IllegalStateException("Index parameters (indexParams) are not initialized.");
-		}
+    SequenceLayout neighborsSL = MemoryLayout.sequenceLayout(50, linker.canonicalLayouts().get("int"));
+    SequenceLayout distancesSL = MemoryLayout.sequenceLayout(50, linker.canonicalLayouts().get("float"));
+    MemorySegment neighborsMS = arena.allocate(neighborsSL);
+    MemorySegment distancesMS = arena.allocate(distancesSL);
+    MemoryLayout rvML = linker.canonicalLayouts().get("int");
+    MemorySegment rvMS = arena.allocate(rvML);
 
-		if (indexParams.getBuild_algo() == CagraIndexParams.CuvsCagraGraphBuildAlgo.BRUTE_FORCE) {
-			// Perform brute force search
-			Map<Integer, Float> bruteForceResults = performBruteForceSearch(query);
-			return new SearchResult(bruteForceResults);
-		} else {
+    searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(query.getQueries()), query.getTopK(), 4L, 2L, res.getResource(),
+        neighborsMS, distancesMS, rvMS, query.getSearchParams().cagraSearchParamsMS);
 
-			SequenceLayout neighborsSL = MemoryLayout.sequenceLayout(50, linker.canonicalLayouts().get("int"));
-			SequenceLayout distancesSL = MemoryLayout.sequenceLayout(50, linker.canonicalLayouts().get("float"));
-			MemorySegment neighborsMS = arena.allocate(neighborsSL);
-			MemorySegment distancesMS = arena.allocate(distancesSL);
-			MemoryLayout rvML = linker.canonicalLayouts().get("int");
-			MemorySegment rvMS = arena.allocate(rvML);
+    return new SearchResult(neighborsSL, distancesSL, neighborsMS, distancesMS, query.getTopK(), query.getMapping());
+  }
 
-			searchMH.invokeExact(ref.indexMemorySegment, getMemorySegment(query.getQueries()), query.getTopK(), 4L, 2L,
-					res.getResource(), neighborsMS, distancesMS, rvMS, query.getSearchParams().cagraSearchParamsMS);
+  /**
+   * 
+   * @param out
+   * @param tmpFilePath
+   * @throws Throwable
+   */
+  public void serialize(OutputStream out) throws Throwable {
+    MemoryLayout rvML = linker.canonicalLayouts().get("int");
+    MemorySegment rvMS = arena.allocate(rvML);
+    String tmpIndexFile = "/tmp/" + UUID.randomUUID().toString() + ".cag";
+    serializeMH.invokeExact(res.getResource(), ref.indexMemorySegment, rvMS,
+        getStringSegment(new StringBuilder(tmpIndexFile)));
+    File tempFile = new File(tmpIndexFile);
+    FileInputStream is = new FileInputStream(tempFile);
+    byte[] chunk = new byte[1024];
+    int chunkLen = 0;
+    while ((chunkLen = is.read(chunk)) != -1) {
+      out.write(chunk, 0, chunkLen);
+    }
+    is.close();
+    tempFile.delete();
+  }
 
-			return new SearchResult(neighborsSL, distancesSL, neighborsMS, distancesMS, query.getTopK(), query.getMapping());
+  /**
+   * 
+   * @param out
+   * @param tmpFilePath
+   * @throws Throwable
+   */
+  public void serialize(OutputStream out, String tmpFilePath) throws Throwable {
+    MemoryLayout rvML = linker.canonicalLayouts().get("int");
+    MemorySegment rvMS = arena.allocate(rvML);
+    serializeMH.invokeExact(res.getResource(), ref.indexMemorySegment, rvMS,
+        getStringSegment(new StringBuilder(tmpFilePath)));
+    File tempFile = new File(tmpFilePath);
+    FileInputStream is = new FileInputStream(tempFile);
+    byte[] chunk = new byte[1024];
+    int chunkLen = 0;
+    while ((chunkLen = is.read(chunk)) != -1) {
+      out.write(chunk, 0, chunkLen);
+    }
+    is.close();
+    tempFile.delete();
+  }
 
-		}
-	}
+  /**
+   * 
+   * @param in
+   * @return
+   * @throws Throwable
+   */
+  private CagraIndexReference deserialize(InputStream in) throws Throwable {
+    MemoryLayout rvML = linker.canonicalLayouts().get("int");
+    MemorySegment rvMS = arena.allocate(rvML);
+    String tmpIndexFile = "/tmp/" + UUID.randomUUID().toString() + ".cag";
+    CagraIndexReference ref = new CagraIndexReference();
 
-	private Map<Integer, Float> performBruteForceSearch(CuVSQuery query) {
-		Map<Integer, Float> results = new HashMap<>();
+    File tempFile = new File(tmpIndexFile);
+    FileOutputStream out = new FileOutputStream(tempFile);
+    byte[] chunk = new byte[1024];
+    int chunkLen = 0;
+    while ((chunkLen = in.read(chunk)) != -1) {
+      out.write(chunk, 0, chunkLen);
+    }
+    deserializeMH.invokeExact(res.getResource(), ref.indexMemorySegment, rvMS,
+        getStringSegment(new StringBuilder(tmpIndexFile)));
 
-		for (int datasetIndex = 0; datasetIndex < dataset.length; datasetIndex++) {
-			float distance = calculateEuclideanDistance(query.getQueries()[0], dataset[datasetIndex]);
-			results.put(datasetIndex, distance);
-		}
+    in.close();
+    out.close();
+    tempFile.delete();
 
-		return results.entrySet().stream().sorted(Map.Entry.comparingByValue()).limit(query.getTopK())
-				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-	}
+    return ref;
+  }
 
-	private float calculateEuclideanDistance(float[] vector1, float[] vector2) {
-		float sum = 0.0f;
-		for (int i = 0; i < vector1.length; i++) {
-			sum += Math.pow(vector1[i] - vector2[i], 2);
-		}
-		return (float) Math.sqrt(sum);
-	}
+  /**
+   * 
+   * @return
+   */
+  public CagraIndexParams getParams() {
+    return indexParams;
+  }
 
-	/**
-	 * 
-	 * @param out
-	 * @param tmpFilePath
-	 * @throws Throwable
-	 */
-	public void serialize(OutputStream out) throws Throwable {
-		MemoryLayout rvML = linker.canonicalLayouts().get("int");
-		MemorySegment rvMS = arena.allocate(rvML);
-		String tmpIndexFile = "/tmp/" + UUID.randomUUID().toString() + ".cag";
-		serializeMH.invokeExact(res.getResource(), ref.indexMemorySegment, rvMS,
-				getStringSegment(new StringBuilder(tmpIndexFile)));
-		File tempFile = new File(tmpIndexFile);
-		FileInputStream is = new FileInputStream(tempFile);
-		byte[] chunk = new byte[1024];
-		int chunkLen = 0;
-		while ((chunkLen = is.read(chunk)) != -1) {
-			out.write(chunk, 0, chunkLen);
-		}
-		is.close();
-		tempFile.delete();
-	}
+  /**
+   * 
+   * @return
+   */
+  public PointerToDataset getDataset() {
+    return null;
+  }
 
-	/**
-	 * 
-	 * @param out
-	 * @param tmpFilePath
-	 * @throws Throwable
-	 */
-	public void serialize(OutputStream out, String tmpFilePath) throws Throwable {
-		MemoryLayout rvML = linker.canonicalLayouts().get("int");
-		MemorySegment rvMS = arena.allocate(rvML);
-		serializeMH.invokeExact(res.getResource(), ref.indexMemorySegment, rvMS,
-				getStringSegment(new StringBuilder(tmpFilePath)));
-		File tempFile = new File(tmpFilePath);
-		FileInputStream is = new FileInputStream(tempFile);
-		byte[] chunk = new byte[1024];
-		int chunkLen = 0;
-		while ((chunkLen = is.read(chunk)) != -1) {
-			out.write(chunk, 0, chunkLen);
-		}
-		is.close();
-		tempFile.delete();
-	}
+  /**
+   * 
+   * @return
+   */
+  public CuVSResources getResources() {
+    return res;
+  }
 
-	/**
-	 * 
-	 * @param in
-	 * @return
-	 * @throws Throwable
-	 */
-	private CagraIndexReference deserialize(InputStream in) throws Throwable {
-		MemoryLayout rvML = linker.canonicalLayouts().get("int");
-		MemorySegment rvMS = arena.allocate(rvML);
-		String tmpIndexFile = "/tmp/" + UUID.randomUUID().toString() + ".cag";
-		CagraIndexReference ref = new CagraIndexReference();
+  public static class Builder {
+    private CagraIndexParams indexParams;
+    float[][] dataset;
+    CuVSResources res;
 
-		File tempFile = new File(tmpIndexFile);
-		FileOutputStream out = new FileOutputStream(tempFile);
-		byte[] chunk = new byte[1024];
-		int chunkLen = 0;
-		while ((chunkLen = in.read(chunk)) != -1) {
-			out.write(chunk, 0, chunkLen);
-		}
-		deserializeMH.invokeExact(res.getResource(), ref.indexMemorySegment, rvMS,
-				getStringSegment(new StringBuilder(tmpIndexFile)));
+    InputStream in;
 
-		in.close();
-		out.close();
-		tempFile.delete();
+    /**
+     * 
+     * @param res
+     */
+    public Builder(CuVSResources res) {
+      this.res = res;
+    }
 
-		return ref;
-	}
+    /**
+     * 
+     * @param in
+     * @return
+     */
+    public Builder from(InputStream in) {
+      this.in = in;
+      return this;
+    }
 
-	/**
-	 * 
-	 * @return
-	 */
-	public CagraIndexParams getParams() {
-		return indexParams;
-	}
+    /**
+     * 
+     * @param dataset
+     * @return
+     */
+    public Builder withDataset(float[][] dataset) {
+      this.dataset = dataset;
+      return this;
+    }
 
-	/**
-	 * 
-	 * @return
-	 */
-	public PointerToDataset getDataset() {
-		return null;
-	}
+    /**
+     * 
+     * @param params
+     * @return
+     */
+    public Builder withIndexParams(CagraIndexParams indexParams) {
+      this.indexParams = indexParams;
+      return this;
+    }
 
-	/**
-	 * 
-	 * @return
-	 */
-	public CuVSResources getResources() {
-		return res;
-	}
-
-	public static class Builder {
-		private CagraIndexParams indexParams;
-		float[][] dataset;
-		CuVSResources res;
-
-		InputStream in;
-
-		/**
-		 * 
-		 * @param res
-		 */
-		public Builder(CuVSResources res) {
-			this.res = res;
-		}
-
-		/**
-		 * 
-		 * @param in
-		 * @return
-		 */
-		public Builder from(InputStream in) {
-			this.in = in;
-			return this;
-		}
-
-		/**
-		 * 
-		 * @param dataset
-		 * @return
-		 */
-		public Builder withDataset(float[][] dataset) {
-			this.dataset = dataset;
-			return this;
-		}
-
-		/**
-		 * 
-		 * @param params
-		 * @return
-		 */
-		public Builder withIndexParams(CagraIndexParams indexParams) {
-			this.indexParams = indexParams;
-			return this;
-		}
-
-		/**
-		 * 
-		 * @return
-		 * @throws Throwable
-		 */
-		public CagraIndex build() throws Throwable {
-			if (indexParams == null) {
-				indexParams = new CagraIndexParams.Builder().build();
-			}
-			if (in != null) {
-				return new CagraIndex(in, res);
-			} else {
-
-				return new CagraIndex(indexParams, dataset, res);
-			}
-		}
-	}
+    /**
+     * 
+     * @return
+     * @throws Throwable
+     */
+    public CagraIndex build() throws Throwable {
+      if (in != null) {
+        return new CagraIndex(in, res);
+      } else {
+        return new CagraIndex(indexParams, dataset, res);
+      }
+    }
+  }
 
 }

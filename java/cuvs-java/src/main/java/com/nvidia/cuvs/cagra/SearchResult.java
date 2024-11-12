@@ -29,11 +29,6 @@ public class SearchResult {
     results = new HashMap<Integer, Float>();
     this.load();
   }
-  
-  public SearchResult(Map<Integer, Float> results) {
-	    this.results = results;
-	}
-
 
   private void load() {
     VarHandle neighboursVH = neighboursSL.varHandle(PathElement.sequenceElement());
