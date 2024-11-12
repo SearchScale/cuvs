@@ -28,7 +28,7 @@ public class ExampleApp {
 
     CagraIndexParams cagraIndexParams = new CagraIndexParams.Builder()
         .withIntermediateGraphDegree(10)
-        .withBuildAlgo(CuvsCagraGraphBuildAlgo.IVF_PQ)
+        .withBuildAlgo(CuvsCagraGraphBuildAlgo.BRUTE_FORCE)
         .withWriterThreads(1)
         .build();
 

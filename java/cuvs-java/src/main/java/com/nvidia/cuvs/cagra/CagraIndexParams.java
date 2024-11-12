@@ -23,7 +23,7 @@ public class CagraIndexParams {
   public MemorySegment cagraIndexParamsMS;
 
   public enum CuvsCagraGraphBuildAlgo {
-    AUTO_SELECT(0), IVF_PQ(1), NN_DESCENT(2);
+    AUTO_SELECT(0), IVF_PQ(1), NN_DESCENT(2), BRUTE_FORCE(3);
 
     public final int label;
 
