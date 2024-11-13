@@ -62,11 +62,11 @@ public class ExampleApp {
 
     // Search
     SearchResult rslt = index.search(query);
-    System.out.println(rslt.getResults());
+    System.out.println(rslt.getAllResults());
 
     // Search from de-serialized index
     SearchResult rslt2 = index2.search(query);
-    System.out.println(rslt2.getResults());
+    System.out.println(rslt2.getAllResults());
 
   }
 }
