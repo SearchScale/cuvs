@@ -76,19 +76,19 @@ public class CagraIndex {
     File wd = new File(System.getProperty("user.dir"));
     bridge = SymbolLookup.libraryLookup(wd.getParent() + "/internal/libcuvs_java.so", arena);
 
-    indexMH = linker.downcallHandle(bridge.find("build_index").get(),
+    indexMH = linker.downcallHandle(bridge.findOrThrow("build_index"),
         FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("long"),
             linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-    searchMH = linker.downcallHandle(bridge.find("search_index").get(),
+    searchMH = linker.downcallHandle(bridge.findOrThrow("search_index"),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, linker.canonicalLayouts().get("int"),
             linker.canonicalLayouts().get("long"), linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS,
             ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-    serializeMH = linker.downcallHandle(bridge.find("serialize_index").get(),
+    serializeMH = linker.downcallHandle(bridge.findOrThrow("serialize_index"),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-    deserializeMH = linker.downcallHandle(bridge.find("deserialize_index").get(),
+    deserializeMH = linker.downcallHandle(bridge.findOrThrow("deserialize_index"),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
   }

@@ -29,7 +29,7 @@ public class CuVSResources {
     File wd = new File(System.getProperty("user.dir"));
     bridge = SymbolLookup.libraryLookup(wd.getParent() + "/internal/libcuvs_java.so", arena);
 
-    cresMH = linker.downcallHandle(bridge.find("create_resource").get(),
+    cresMH = linker.downcallHandle(bridge.findOrThrow("create_resource"),
         FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
     MemoryLayout rvML = linker.canonicalLayouts().get("int");
