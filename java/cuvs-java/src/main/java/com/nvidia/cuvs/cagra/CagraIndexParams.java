@@ -19,7 +19,7 @@ package com.nvidia.cuvs.cagra;
 import java.lang.foreign.Arena;
 import java.lang.foreign.MemorySegment;
 
-import com.nvidia.cuvs.panama.cuvsCagraIndexParams;
+import com.nvidia.cuvs.panama.CuVSCagraIndexParams;
 
 /**
  * Supplemental parameters to build CAGRA Index.
@@ -76,12 +76,12 @@ public class CagraIndexParams {
   }
 
   private MemorySegment initMemorySegment() {
-    MemorySegment segment = cuvsCagraIndexParams.allocate(arena);
-    cuvsCagraIndexParams.intermediate_graph_degree(memorySegment, intermediateGraphDegree);
-    cuvsCagraIndexParams.graph_degree(memorySegment, graphDegree);
-    cuvsCagraIndexParams.build_algo(memorySegment, cuvsCagraGraphBuildAlgo.label);
-    cuvsCagraIndexParams.nn_descent_niter(memorySegment, nnDescentNiter);
-    return segment;
+    MemorySegment memorySegment = CuVSCagraIndexParams.allocate(arena);
+    CuVSCagraIndexParams.intermediate_graph_degree(memorySegment, intermediateGraphDegree);
+    CuVSCagraIndexParams.graph_degree(memorySegment, graphDegree);
+    CuVSCagraIndexParams.build_algo(memorySegment, cuvsCagraGraphBuildAlgo.label);
+    CuVSCagraIndexParams.nn_descent_niter(memorySegment, nnDescentNiter);
+    return memorySegment;
   }
 
   /**

@@ -153,7 +153,7 @@ public class CagraSearchParams {
    * Allocates the configured search parameters in the MemorySegment.
    */
   private MemorySegment allocateMemorySegment() {
-    MemorySegment segment = cuvsCagraSearchParams.allocate(arena);
+    MemorySegment memorySegment = cuvsCagraSearchParams.allocate(arena);
     cuvsCagraSearchParams.max_queries(memorySegment, maxQueries);
     cuvsCagraSearchParams.itopk_size(memorySegment, iTopKSize);
     cuvsCagraSearchParams.max_iterations(memorySegment, maxIterations);
@@ -167,7 +167,7 @@ public class CagraSearchParams {
     cuvsCagraSearchParams.hashmap_max_fill_rate(memorySegment, hashMapMaxFillRate);
     cuvsCagraSearchParams.num_random_samplings(memorySegment, numRandomSamplings);
     cuvsCagraSearchParams.rand_xor_mask(memorySegment, randXORMask);
-    return segment;
+    return memorySegment;
   }
 
   /**

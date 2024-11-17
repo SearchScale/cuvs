@@ -64,30 +64,27 @@ public class CagraBuildAndSearchTest {
         Map.of(1, 0.15224178f, 0, 0.59063464f, 3, 0.5986642f));
 
     // Create resource
-    CuVSResources cuvsResources = new CuVSResources();
+    CuVSResources resources = new CuVSResources();
 
     // Configure index parameters
-    CagraIndexParams cagraIndexParameters = new CagraIndexParams
-        .Builder()
+    CagraIndexParams indexParams = new CagraIndexParams.Builder()
         .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
         .build();
 
     // Create the index with the dataset
-    CagraIndex cagraIndex = new CagraIndex
-        .Builder(cuvsResources)
+    CagraIndex index = new CagraIndex.Builder(resources)
         .withDataset(dataset)
-        .withIndexParams(cagraIndexParameters)
+        .withIndexParams(indexParams)
         .build();
 
     // Saving the index on to the disk.
     String indexFileName = UUID.randomUUID().toString() + ".cag";
-    cagraIndex.serialize(new FileOutputStream(indexFileName));
+    index.serialize(new FileOutputStream(indexFileName));
 
     // Loading a CAGRA index from disk.
     File testSerializedIndexFile = new File(indexFileName);
     InputStream inputStream = new FileInputStream(testSerializedIndexFile);
-    CagraIndex deserializedCagraIndex = new CagraIndex
-        .Builder(cuvsResources)
+    CagraIndex loadedIndex = new CagraIndex.Builder(resources)
         .from(inputStream)
         .build();
     
@@ -106,18 +103,18 @@ public class CagraBuildAndSearchTest {
         .build();
 
     // Perform the search
-    SearchResults searchResults = cagraIndex.search(cuvsQuery);
+    SearchResults results = index.search(cuvsQuery);
     
     // Check results
-    log.info(searchResults.getResults().toString());
-    assertEquals(expectedQueryResults, searchResults.getResults(), "Results different than expected");
+    log.info(results.getResults().toString());
+    assertEquals(expectedQueryResults, results.getResults(), "Results different than expected");
 
     // Search from deserialized index
-    SearchResults searchResultsFromDeserializedCagraIndex = deserializedCagraIndex.search(cuvsQuery);
+    results = loadedIndex.search(cuvsQuery);
     
     // Check results
-    log.info(searchResults.getResults().toString());
-    assertEquals(expectedQueryResults, searchResultsFromDeserializedCagraIndex.getResults(), "Results different than expected");
+    log.info(results.getResults().toString());
+    assertEquals(expectedQueryResults, results.getResults(), "Results different than expected");
 
     // Cleanup
     if (testSerializedIndexFile.exists()) {

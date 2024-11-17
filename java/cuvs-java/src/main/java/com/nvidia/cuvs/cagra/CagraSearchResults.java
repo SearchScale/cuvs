@@ -25,7 +25,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import com.nvidia.cuvs.cagra.CagraSearchParams.SearchAlgo;
 import com.nvidia.cuvs.common.SearchResults;
 
 /**
