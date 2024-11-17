@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -33,14 +34,14 @@ import org.slf4j.LoggerFactory;
 
 import com.nvidia.cuvs.cagra.CagraIndex;
 import com.nvidia.cuvs.cagra.CagraIndexParams;
+import com.nvidia.cuvs.cagra.CagraQuery;
 import com.nvidia.cuvs.cagra.CagraSearchParams;
-import com.nvidia.cuvs.cagra.CuVSQuery;
-import com.nvidia.cuvs.cagra.CuVSResources;
-import com.nvidia.cuvs.cagra.SearchResult;
+import com.nvidia.cuvs.common.CuVSResources;
+import com.nvidia.cuvs.common.SearchResults;
 
 public class CagraBuildAndSearchTest {
   
-  private static Logger logger = LoggerFactory.getLogger(CagraBuildAndSearchTest.class);
+  private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
   /**
    * A basic test that checks the whole flow - from indexing to search.
@@ -68,7 +69,7 @@ public class CagraBuildAndSearchTest {
     // Configure index parameters
     CagraIndexParams cagraIndexParameters = new CagraIndexParams
         .Builder()
-        .withCuvsCagraGraphBuildAlgo(CagraIndexParams.CuvsCagraGraphBuildAlgo.NN_DESCENT)
+        .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
         .build();
 
     // Create the index with the dataset
@@ -96,7 +97,7 @@ public class CagraBuildAndSearchTest {
         .build();
 
     // Create a query object with the query vectors
-    CuVSQuery cuvsQuery = new CuVSQuery
+    CagraQuery cuvsQuery = new CagraQuery
         .Builder()
         .withTopK(3)
         .withSearchParams(cagraSearchParameters)
@@ -105,17 +106,17 @@ public class CagraBuildAndSearchTest {
         .build();
 
     // Perform the search
-    SearchResult searchResults = cagraIndex.search(cuvsQuery);
+    SearchResults searchResults = cagraIndex.search(cuvsQuery);
     
     // Check results
-    logger.info(searchResults.getResults().toString());
+    log.info(searchResults.getResults().toString());
     assertEquals(expectedQueryResults, searchResults.getResults(), "Results different than expected");
 
     // Search from deserialized index
-    SearchResult searchResultsFromDeserializedCagraIndex = deserializedCagraIndex.search(cuvsQuery);
+    SearchResults searchResultsFromDeserializedCagraIndex = deserializedCagraIndex.search(cuvsQuery);
     
     // Check results
-    logger.info(searchResults.getResults().toString());
+    log.info(searchResults.getResults().toString());
     assertEquals(expectedQueryResults, searchResultsFromDeserializedCagraIndex.getResults(), "Results different than expected");
 
     // Cleanup
