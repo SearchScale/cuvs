@@ -117,6 +117,9 @@ public class CagraIndex {
    *         index
    */
   private IndexReference build() throws Throwable {
+  	if (dataset == null || dataset.length == 0 || dataset[0].length == 0) {
+      throw new IllegalArgumentException("Dataset cannot be null or empty");
+  }
     long rows = dataset.length;
     long cols = dataset[0].length;
     MemoryLayout layout = resources.linker.canonicalLayouts().get("int");
@@ -168,6 +171,9 @@ public class CagraIndex {
    *                     bytes into
    */
   public void serialize(OutputStream outputStream) throws Throwable {
+  	if (outputStream == null) {
+      throw new IllegalArgumentException("Output stream cannot be null");
+  }
     serialize(outputStream, File.createTempFile(UUID.randomUUID().toString(), ".cag"));
   }
 
