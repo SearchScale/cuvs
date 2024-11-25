@@ -35,9 +35,10 @@ import com.nvidia.cuvs.common.Util;
  */
 public class CuVSResources {
 
-  private final Arena arena;
-  private final Linker linker;
-  private final SymbolLookup libcuvsNativeLibrary;
+  public final Arena arena;
+  public final Linker linker;
+  public final SymbolLookup libcuvsNativeLibrary;
+
   private final MethodHandle createResourceMethodHandle;
   private final MemorySegment memorySegment;
 
@@ -48,7 +49,7 @@ public class CuVSResources {
    */
   public CuVSResources() throws Throwable {
     linker = Linker.nativeLinker();
-    arena = Arena.ofConfined();
+    arena = Arena.ofShared();
 
     File nativeLibrary = Util.loadLibraryFromJar("/libcuvs_java.so");
     libcuvsNativeLibrary = SymbolLookup.libraryLookup(nativeLibrary.getAbsolutePath(), arena);

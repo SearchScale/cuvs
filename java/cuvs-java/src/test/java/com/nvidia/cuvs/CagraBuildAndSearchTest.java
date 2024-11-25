@@ -62,7 +62,7 @@ public class CagraBuildAndSearchTest {
     CuVSResources resources = new CuVSResources();
 
     // Configure index parameters
-    CagraIndexParams indexParams = new CagraIndexParams.Builder()
+    CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
         .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
         .build();
 
@@ -84,7 +84,7 @@ public class CagraBuildAndSearchTest {
         .build();
     
     // Configure search parameters
-    CagraSearchParams searchParams = new CagraSearchParams.Builder()
+    CagraSearchParams searchParams = new CagraSearchParams.Builder(resources)
         .build();
 
     // Create a query object with the query vectors
