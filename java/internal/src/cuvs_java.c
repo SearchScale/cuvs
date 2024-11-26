@@ -32,7 +32,7 @@ DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code,
 
   tensor.dl_tensor.data = data;
   tensor.dl_tensor.device.device_type = kDLCUDA;
-  tensor.dl_tensor.ndim = dimensions;
+  tensor.dl_tensor.ndim = 2;
   tensor.dl_tensor.dtype.code = code;
   tensor.dl_tensor.dtype.bits = 32;
   tensor.dl_tensor.dtype.lanes = 1;
