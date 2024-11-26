@@ -16,7 +16,8 @@
 
 package com.nvidia.cuvs;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,14 +101,14 @@ public class CagraBuildAndSearchTest {
     
     // Check results
     log.info(results.getResults().toString());
-    assertEquals(expectedResults, results.getResults(), "Results different than expected");
+    assertEquals("Results different than expected", expectedResults, results.getResults());
 
     // Search from deserialized index
     results = loadedIndex.search(cuvsQuery);
     
     // Check results
     log.info(results.getResults().toString());
-    assertEquals(expectedResults, results.getResults(), "Results different than expected");
+    assertEquals("Results different than expected", expectedResults, results.getResults());
 
     // Cleanup
     if (indexFile.exists()) {

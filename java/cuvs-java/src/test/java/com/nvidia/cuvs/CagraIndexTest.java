@@ -1,22 +1,34 @@
 package com.nvidia.cuvs;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.apache.lucene.tests.util.LuceneTestCase;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class CagraIndexTest {
-	  @Disabled
+import com.carrotsearch.randomizedtesting.RandomizedContext;
+
+public class CagraIndexTest extends LuceneTestCase {
+    Random random;
+    private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+
+	@Before
+	public void setup() {
+	    this.random = random();
+	    log.info("Test seed: " +RandomizedContext.current().getRunnerSeedAsString());
+	}
+
+    @Ignore
     @Test
     public void testInvalidDataset() {
         Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -34,7 +46,7 @@ public class CagraIndexTest {
 
         assertEquals("Dataset cannot be null or empty", exception.getMessage());
     }
-	  @Disabled
+	  @Ignore
     @Test
     public void testSerializationWithoutOutputStream() throws Throwable {
         // Use the same dataset as the working test
@@ -61,7 +73,7 @@ public class CagraIndexTest {
 
         assertEquals("Output stream cannot be null", exception.getMessage());
     }
-	  @Disabled
+	  @Ignore
     @Test
     public void testSingleElementDataset() throws Throwable {
         // Match dataset and parameters to the working test
@@ -98,9 +110,9 @@ public class CagraIndexTest {
         CagraSearchResults results = index.search(cuvsQuery);
 
         // Verify the results size matches the queries
-        assertEquals(query.length, results.getResults().size(), "Expected one result for each query");
+        assertEquals("Expected one result for each query", query.length, results.getResults().size());
     }
-	  @Disabled
+	  @Ignore
     @Test
     public void testSearchResultMapping() throws Throwable {
         // Match dataset and parameters to the working test
@@ -147,15 +159,6 @@ public class CagraIndexTest {
     
 	  @Test
 	  public void testResultsTopKWithRandomValues() throws Throwable {
-	      long seed = System.currentTimeMillis();
-	      String seedProperty = System.getProperty("test.seed");
-	      if (seedProperty != null) {
-	          seed = Long.parseLong(seedProperty);
-	      }
-	      System.out.println("Using seed: " + seed);
-
-	      Random random = new Random(seed);
-
 	      int numRows = random.nextInt(10) + 1; // 1 - 10 rows
 	      int numCols = random.nextInt(5) + 1;  // 1 - 5 columns
 	      float[][] dataset = new float[numRows][numCols];
@@ -195,11 +198,11 @@ public class CagraIndexTest {
 
 	      results.getResults().forEach(result -> {
 	          System.out.println("Result size: " + result.size());
-	          assertEquals(topK, result.size(), "TopK mismatch for query.");
+	          assertEquals("TopK mismatch for query.", topK, result.size());
 	      });
 	  }
 
-    @Disabled
+    @Ignore
     @Test
     public void testEmptyResults() throws Throwable {
         float[][] dataset = {
@@ -230,7 +233,7 @@ public class CagraIndexTest {
         // Verify no neighbors were found
         assertTrue(results.getResults().isEmpty());
     }
-    @Disabled
+    @Ignore
     @Test
     public void testSearchWithDeletedIndexFile() throws Throwable {
         // Dataset and Query
@@ -284,9 +287,9 @@ public class CagraIndexTest {
         });
 
         // Assert the exception type
-        assertTrue(exception instanceof java.io.FileNotFoundException, "Expected FileNotFoundException");
+        assertTrue("Expected FileNotFoundException", exception instanceof java.io.FileNotFoundException);
     }
-    @Disabled
+    @Ignore
     @Test
     public void testNullQueryVectors() throws Throwable {
         float[][] dataset = {
