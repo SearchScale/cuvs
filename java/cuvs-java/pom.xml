@@ -121,7 +121,7 @@
                     <archive>
                         <manifest>
                             <mainClass>
-                                com.nvidia.cuvs.ExampleApp</mainClass>
+                                com.nvidia.cuvs.examples.CagraExample</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -144,7 +144,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <mainClass>
-                                com.nvidia.cuvs.ExampleApp</mainClass>
+                                com.nvidia.cuvs.examples.CagraExample</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
