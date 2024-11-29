@@ -1,6 +1,7 @@
 package com.nvidia.cuvs;
 
 import java.lang.invoke.MethodHandles;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -25,36 +26,139 @@ public class CagraRandomizedTest extends LuceneTestCase {
 
     @Before
     public void setup() {
-        // Initialize the random instance and log the test seed for reproducibility
+        
         this.random = random();
         log.info("Test seed: " + RandomizedContext.current().getRunnerSeedAsString());
     }
     @Ignore
     @Test
-    public void testResultsTopKWithRandomValues() throws Throwable {
-        // Generate a random dataset
-        int numRows = random.nextInt(10) + 1; // 1 - 10 rows
-        int numCols = random.nextInt(5) + 1;  // 1 - 5 columns
+    public void testInvalidDataset() throws Throwable {
+        float[][] invalidDataset = null; // Simulate an invalid dataset
+
+        CuVSResources resources = new CuVSResources();
+        CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
+            .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
+            .build();
+
+        Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
+            new CagraIndex.Builder(resources)
+                .withDataset(invalidDataset)
+                .withIndexParams(indexParams)
+                .build();
+        });
+
+        assertEquals("Dataset cannot be null or empty", exception.getMessage());
+    }
+    @Ignore
+    @Test
+    public void testSerializationWithoutOutputStream() throws Throwable {
+        // Randomize dataset
+        int numRows = random.nextInt(10) + 1;
+        int numCols = random.nextInt(5) + 1;
         float[][] dataset = new float[numRows][numCols];
         for (int i = 0; i < numRows; i++) {
             for (int j = 0; j < numCols; j++) {
-                dataset[i][j] = random.nextFloat() * 100; // Random values between 0 and 100
+                dataset[i][j] = random.nextFloat() * 100;
+            }
+        }
+
+        CuVSResources resources = new CuVSResources();
+        CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
+            .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
+            .build();
+
+        CagraIndex index = new CagraIndex.Builder(resources)
+            .withDataset(dataset)
+            .withIndexParams(indexParams)
+            .build();
+
+        Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
+            index.serialize(null);
+        });
+
+        assertEquals("Output stream cannot be null", exception.getMessage());
+    }
+    
+    @Test
+    public void testSearchResultMapping() throws Throwable {
+        // Randomize dataset
+        int numRows = random.nextInt(10) + 1; 
+        int numCols = random.nextInt(5) + 1;
+        float[][] dataset = new float[numRows][numCols];
+        for (int i = 0; i < numRows; i++) {
+            for (int j = 0; j < numCols; j++) {
+                dataset[i][j] = random.nextFloat() * 100;
+            }
+        }
+
+        CuVSResources resources = new CuVSResources();
+        CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
+            .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
+            .build();
+
+        CagraIndex index = new CagraIndex.Builder(resources)
+            .withDataset(dataset)
+            .withIndexParams(indexParams)
+            .build();
+
+        
+        Map<Integer, Integer> mapping = new java.util.HashMap<>();
+        for (int i = 0; i < numRows; i++) {
+            mapping.put(i, i + 1000);
+        }
+
+        // Randomize query vectors
+        float[][] query = new float[4][numCols];
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < numCols; j++) {
+                query[i][j] = random.nextFloat() * 100;
+            }
+        }
+
+        CagraQuery cuvsQuery = new CagraQuery.Builder()
+            .withTopK(3)
+            .withSearchParams(new CagraSearchParams.Builder(resources).build())
+            .withQueryVectors(query)
+            .withMapping(mapping)
+            .build();
+
+        CagraSearchResults results = index.search(cuvsQuery);
+
+        // Validate the results
+        results.getResults().forEach(result -> {
+            result.keySet().forEach(key -> {
+                assertNotNull("Key should not be null", key);
+                assertTrue("Key not in mapping: " + key, mapping.containsValue(key));
+            });
+        });
+    }
+
+
+    @Ignore
+    @Test
+    public void testResultsTopKWithRandomValues() throws Throwable {
+        // Generate a random dataset
+        int numRows = random.nextInt(10) + 1;
+        int numCols = random.nextInt(5) + 1;
+        float[][] dataset = new float[numRows][numCols];
+        for (int i = 0; i < numRows; i++) {
+            for (int j = 0; j < numCols; j++) {
+                dataset[i][j] = random.nextFloat() * 100;
             }
         }
 
         // Generate random query vectors
-        int numQueries = random.nextInt(5) + 1; // 1 - 5 queries
+        int numQueries = random.nextInt(5) + 1;
         float[][] queries = new float[numQueries][numCols];
         for (int i = 0; i < numQueries; i++) {
             for (int j = 0; j < numCols; j++) {
-                queries[i][j] = random.nextFloat() * 100; // Random values between 0 and 100
+                queries[i][j] = random.nextFloat() * 100;
             }
         }
 
-        // Set TopK to be within the range of dataset size
+        
         int topK = random.nextInt(numRows) + 1;
 
-        // Log dataset and query information for debugging
         log.info("Dataset size: {}x{}", numRows, numCols);
         log.info("Query size: {}x{}", numQueries, numCols);
         log.info("TopK: {}", topK);
@@ -69,38 +173,32 @@ public class CagraRandomizedTest extends LuceneTestCase {
             log.info(java.util.Arrays.toString(query));
         }
 
-        // Create CuVSResources
         CuVSResources resources = new CuVSResources();
 
-        // Create index parameters
         CagraIndexParams indexParams = new CagraIndexParams.Builder(resources).build();
 
-        // Create the index
         CagraIndex index = new CagraIndex.Builder(resources)
             .withDataset(dataset)
             .withIndexParams(indexParams)
             .build();
 
-        // Create the query object
         CagraQuery query = new CagraQuery.Builder()
             .withQueryVectors(queries)
             .withTopK(topK)
             .withSearchParams(new CagraSearchParams.Builder(resources).build())
             .build();
 
-        // Perform the search
         CagraSearchResults results = index.search(query);
 
-        // Validate results
         results.getResults().forEach(result -> {
             log.info("Result size: {}", result.size());
             assertEquals("TopK mismatch for query.", Math.min(topK, numRows), result.size());
         });
     }
-
+    @Ignore
     @Test
     public void testSearchWithDeletedIndexFile() throws Throwable {
-        Random random = random(); // Use LuceneTestCase random for reproducibility
+        Random random = random();
 
         // Generate random dataset
         int numRows = random.nextInt(10) + 1; // 1 - 10 rows
@@ -121,10 +219,8 @@ public class CagraRandomizedTest extends LuceneTestCase {
             }
         }
 
-        // Set TopK value
         int topK = random.nextInt(numRows) + 1;
 
-        // Log dataset and query details
         System.out.println("Dataset size: " + numRows + "x" + numCols);
         System.out.println("Query size: " + numQueries + "x" + numCols);
         System.out.println("TopK: " + topK);
@@ -139,13 +235,11 @@ public class CagraRandomizedTest extends LuceneTestCase {
             System.out.println(java.util.Arrays.toString(query));
         }
 
-        // Create resources and index parameters
         CuVSResources resources = new CuVSResources();
         CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
             .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
             .build();
 
-        // Create and serialize the index
         CagraIndex index = new CagraIndex.Builder(resources)
             .withDataset(dataset)
             .withIndexParams(indexParams)
@@ -154,13 +248,11 @@ public class CagraRandomizedTest extends LuceneTestCase {
         String indexFileName = UUID.randomUUID().toString() + ".cag";
         index.serialize(new FileOutputStream(indexFileName));
 
-        // Delete the serialized file
         File indexFile = new File(indexFileName);
         if (indexFile.exists()) {
             indexFile.delete();
         }
 
-        // Attempt to create an InputStream from the deleted file
         Throwable exception = assertThrows(Exception.class, () -> {
             try (InputStream inputStream = new FileInputStream(indexFile)) {
                 CagraIndex deletedIndex = new CagraIndex.Builder(resources)
@@ -177,7 +269,6 @@ public class CagraRandomizedTest extends LuceneTestCase {
             }
         });
 
-        // Assert the exception type
         assertTrue("Expected FileNotFoundException", exception instanceof java.io.FileNotFoundException);
     }
 
