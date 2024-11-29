@@ -141,6 +141,9 @@ public class CagraIndex {
    * @return an instance of {@link CagraSearchResults} containing the results
    */
   public CagraSearchResults search(CagraQuery query) throws Throwable {
+    if (query.getQueryVectors() == null) {
+      throw new IllegalArgumentException("Query vectors cannot be null");
+  }
     long numQueries = query.getQueryVectors().length;
     long numBlocks = query.getTopK() * numQueries;
     int vectorDimension = numQueries > 0 ? query.getQueryVectors()[0].length : 0;
