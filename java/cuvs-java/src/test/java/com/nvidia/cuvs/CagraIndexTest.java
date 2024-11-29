@@ -35,7 +35,7 @@ public class CagraIndexTest extends LuceneTestCase {
             // Use consistent dataset parameters as the working test
             float[][] invalidDataset = null; // Simulate an invalid dataset
             CuVSResources resources = new CuVSResources();
-            CagraIndexParams indexParams = new CagraIndexParams.Builder()
+            CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
                 .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
                 .build();
             new CagraIndex.Builder(resources)
@@ -58,7 +58,7 @@ public class CagraIndexTest extends LuceneTestCase {
         };
 
         CuVSResources resources = new CuVSResources();
-        CagraIndexParams indexParams = new CagraIndexParams.Builder()
+        CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
             .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
             .build();
 
@@ -85,7 +85,7 @@ public class CagraIndexTest extends LuceneTestCase {
         };
 
         CuVSResources resources = new CuVSResources();
-        CagraIndexParams indexParams = new CagraIndexParams.Builder()
+        CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
             .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
             .build();
 
@@ -103,7 +103,7 @@ public class CagraIndexTest extends LuceneTestCase {
 
         CagraQuery cuvsQuery = new CagraQuery.Builder()
             .withTopK(3)
-            .withSearchParams(new CagraSearchParams.Builder().build())
+            .withSearchParams(new CagraSearchParams.Builder(resources).build())
             .withQueryVectors(query)
             .build();
 
@@ -124,7 +124,7 @@ public class CagraIndexTest extends LuceneTestCase {
         };
 
         CuVSResources resources = new CuVSResources();
-        CagraIndexParams indexParams = new CagraIndexParams.Builder()
+        CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
             .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
             .build();
 
@@ -144,7 +144,7 @@ public class CagraIndexTest extends LuceneTestCase {
 
         CagraQuery cuvsQuery = new CagraQuery.Builder()
             .withTopK(3)
-            .withSearchParams(new CagraSearchParams.Builder().build())
+            .withSearchParams(new CagraSearchParams.Builder(resources).build())
             .withQueryVectors(query)
             .withMapping(mapping)
             .build();
@@ -182,7 +182,7 @@ public class CagraIndexTest extends LuceneTestCase {
 	      System.out.println("TopK: " + topK);
 
 	      CuVSResources resources = new CuVSResources();
-	      CagraIndexParams indexParams = new CagraIndexParams.Builder().build();
+	      CagraIndexParams indexParams = new CagraIndexParams.Builder(resources).build();
 	      CagraIndex index = new CagraIndex.Builder(resources)
 	          .withDataset(dataset)
 	          .withIndexParams(indexParams)
@@ -191,7 +191,7 @@ public class CagraIndexTest extends LuceneTestCase {
 	      CagraQuery query = new CagraQuery.Builder()
 	          .withQueryVectors(queries)
 	          .withTopK(topK)
-	          .withSearchParams(new CagraSearchParams.Builder().build())
+	          .withSearchParams(new CagraSearchParams.Builder(resources).build())
 	          .build();
 
 	      CagraSearchResults results = index.search(query);
@@ -215,7 +215,7 @@ public class CagraIndexTest extends LuceneTestCase {
         };
 
         CuVSResources resources = new CuVSResources();
-        CagraIndexParams indexParams = new CagraIndexParams.Builder().build();
+        CagraIndexParams indexParams = new CagraIndexParams.Builder(resources).build();
         CagraIndex index = new CagraIndex.Builder(resources)
             .withDataset(dataset)
             .withIndexParams(indexParams)
@@ -224,7 +224,7 @@ public class CagraIndexTest extends LuceneTestCase {
         CagraQuery query = new CagraQuery.Builder()
             .withQueryVectors(queries)
             .withTopK(2)
-            .withSearchParams(new CagraSearchParams.Builder().build())
+            .withSearchParams(new CagraSearchParams.Builder(resources).build())
             .build();
 
         CagraSearchResults results = index.search(query);
@@ -250,7 +250,7 @@ public class CagraIndexTest extends LuceneTestCase {
         };
 
         CuVSResources resources = new CuVSResources();
-        CagraIndexParams indexParams = new CagraIndexParams.Builder()
+        CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
             .withCagraGraphBuildAlgo(CagraIndexParams.CagraGraphBuildAlgo.NN_DESCENT)
             .build();
 
@@ -278,7 +278,7 @@ public class CagraIndexTest extends LuceneTestCase {
 
                 CagraQuery query = new CagraQuery.Builder()
                     .withTopK(3)
-                    .withSearchParams(new CagraSearchParams.Builder().build())
+                    .withSearchParams(new CagraSearchParams.Builder(resources).build())
                     .withQueryVectors(queries)
                     .build();
 
@@ -298,7 +298,7 @@ public class CagraIndexTest extends LuceneTestCase {
         };
 
         CuVSResources resources = new CuVSResources();
-        CagraIndexParams indexParams = new CagraIndexParams.Builder().build();
+        CagraIndexParams indexParams = new CagraIndexParams.Builder(resources).build();
         CagraIndex index = new CagraIndex.Builder(resources)
             .withDataset(dataset)
             .withIndexParams(indexParams)
@@ -307,7 +307,7 @@ public class CagraIndexTest extends LuceneTestCase {
         CagraQuery invalidQuery = new CagraQuery.Builder()
             .withQueryVectors(null)
             .withTopK(3)
-            .withSearchParams(new CagraSearchParams.Builder().build())
+            .withSearchParams(new CagraSearchParams.Builder(resources).build())
             .build();
 
         Throwable exception = assertThrows(IllegalArgumentException.class, () -> {
