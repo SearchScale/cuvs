@@ -20,16 +20,41 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 
 import org.apache.commons.io.IOUtils;
 
+import com.nvidia.cuvs.CuVSResources;
+
 public class Util {
+
+  /**
+   * Returns the number of GPUs connected to the system using CuVSResources.
+   *
+   * @param resources The CuVSResources object managing native resources.
+   * @return Number of GPUs connected, or -1 if an error occurred.
+   */
+  public static int getNumberOfGPUs(CuVSResources resources) {
+    try {
+      MethodHandle getNumberOfGPUsHandle = resources.linker.downcallHandle(
+          resources.libcuvsNativeLibrary.find("get_number_of_gpus")
+              .orElseThrow(() -> new IllegalStateException("get_number_of_gpus not found in library")),
+          FunctionDescriptor.of(ValueLayout.JAVA_INT));
+
+      return (int) getNumberOfGPUsHandle.invokeExact();
+    } catch (Throwable e) {
+      System.err.println("Failed to invoke get_number_of_gpus: " + e.getMessage());
+      return -1; // Return -1 to indicate an error
+    }
+  }
+
   /**
    * A utility method for getting an instance of {@link MemorySegment} for a
    * {@link String}.
