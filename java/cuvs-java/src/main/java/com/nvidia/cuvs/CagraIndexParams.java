@@ -75,12 +75,12 @@ public class CagraIndexParams {
   }
 
   private MemorySegment initMemorySegment() {
-    MemorySegment memorySegment = CuVSCagraIndexParams.allocate(resources.arena);
-    CuVSCagraIndexParams.intermediate_graph_degree(memorySegment, intermediateGraphDegree);
-    CuVSCagraIndexParams.graph_degree(memorySegment, graphDegree);
-    CuVSCagraIndexParams.build_algo(memorySegment, cuvsCagraGraphBuildAlgo.value);
-    CuVSCagraIndexParams.nn_descent_niter(memorySegment, nnDescentNiter);
-    return memorySegment;
+    MemorySegment indexParamsMemorySegment = CuVSCagraIndexParams.allocate(resources.arena);
+    CuVSCagraIndexParams.intermediate_graph_degree(indexParamsMemorySegment, intermediateGraphDegree);
+    CuVSCagraIndexParams.graph_degree(indexParamsMemorySegment, graphDegree);
+    CuVSCagraIndexParams.build_algo(indexParamsMemorySegment, cuvsCagraGraphBuildAlgo.value);
+    CuVSCagraIndexParams.nn_descent_niter(indexParamsMemorySegment, nnDescentNiter);
+    return indexParamsMemorySegment;
   }
 
   /**

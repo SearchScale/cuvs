@@ -21,10 +21,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-cuvsResources_t create_resource(int *returnValue) {
+cuvsResources_t create_resources(int *returnValue) {
   cuvsResources_t cuvsResources;
   *returnValue = cuvsResourcesCreate(&cuvsResources);
   return cuvsResources;
+}
+
+void destroy_resources(cuvsResources_t cuvsResources, int *returnValue) {
+  *returnValue = cuvsResourcesDestroy(cuvsResources);
 }
 
 DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code) {
@@ -43,7 +47,7 @@ DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code)
 }
 
 cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, cuvsResources_t cuvsResources, int *returnValue,
-    cuvsCagraIndexParams_t index_params) {
+    cuvsCagraIndexParams_t index_params, cuvsCagraCompressionParams_t compression_params) {
 
   int64_t dataset_shape[2] = {rows, dimensions};
   DLManagedTensor dataset_tensor = prepare_tensor(dataset, dataset_shape, kDLFloat);
@@ -51,8 +55,17 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
   cuvsCagraIndex_t index;
   cuvsCagraIndexCreate(&index);
 
+  index_params->compression = NULL; //todo: update this.
+
   *returnValue = cuvsCagraBuild(cuvsResources, index_params, &dataset_tensor, index);
+  cuvsCagraIndexParamsDestroy(index_params);
+  cuvsCagraCompressionParamsDestroy(index_params->compression);
+
   return index;
+}
+
+void destroy_cagra_index(cuvsCagraIndex_t index, int *returnValue) {
+  *returnValue = cuvsCagraIndexDestroy(index);
 }
 
 void serialize_cagra_index(cuvsResources_t cuvsResources, cuvsCagraIndex_t index, int *returnValue, char* filename) {
@@ -90,4 +103,10 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
 
   cudaMemcpy(neighbors_h, neighbors, sizeof(uint32_t) * n_queries * topk, cudaMemcpyDefault);
   cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
+
+  cuvsRMMFree(cuvsResources, distances, sizeof(float) * n_queries * topk);
+  cuvsRMMFree(cuvsResources, neighbors, sizeof(uint32_t) * n_queries * topk);
+  cuvsRMMFree(cuvsResources, queries_d, sizeof(float) * n_queries * dimensions);
+
+  cuvsCagraSearchParamsDestroy(search_params);
 }
