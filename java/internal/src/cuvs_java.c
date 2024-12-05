@@ -91,3 +91,16 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
   cudaMemcpy(neighbors_h, neighbors, sizeof(uint32_t) * n_queries * topk, cudaMemcpyDefault);
   cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
 }
+
+int get_number_of_gpus() {
+    int deviceCount = 0;
+    cudaError_t err = cudaGetDeviceCount(&deviceCount);
+
+    if (err != cudaSuccess) {
+        return -1; 
+    }   
+    else if(deviceCount == 0){ 
+        return 0;
+    }   
+    return deviceCount;
+}
