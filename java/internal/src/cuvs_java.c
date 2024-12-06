@@ -20,6 +20,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <omp.h>
 
 cuvsResources_t create_resources(int *returnValue) {
   cuvsResources_t cuvsResources;
