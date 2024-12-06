@@ -165,7 +165,7 @@ public class CagraCompressionParams {
     private int pqBits = 8;
     private int pqDim = 0;
     private int vqNCenters = 0;
-    private int kmeansNIters = 0;
+    private int kmeansNIters = 25;
     private double vqKmeansTrainsetFraction = 0;
     private double pqKmeansTrainsetFraction = 0;
 

@@ -25,7 +25,6 @@ import java.io.OutputStream;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
-import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.SequenceLayout;
 import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
@@ -97,7 +96,7 @@ public class CagraIndex {
         resources.getLibcuvsNativeLibrary().find("build_cagra_index").get(),
         FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, resources.linker.canonicalLayouts().get("long"),
             resources.linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-            ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+            ValueLayout.ADDRESS, ValueLayout.ADDRESS, resources.linker.canonicalLayouts().get("int")));
 
     searchMethodHandle = resources.linker.downcallHandle(
         resources.getLibcuvsNativeLibrary().find("search_cagra_index").get(),
@@ -138,13 +137,19 @@ public class CagraIndex {
 
     MemoryLayout layout = resources.linker.canonicalLayouts().get("int");
     MemorySegment segment = resources.arena.allocate(layout);
+
+    MemorySegment indexParamsMemorySegment = cagraIndexParameters != null ? cagraIndexParameters.getMemorySegment()
+        : MemorySegment.NULL;
+
+    int numWriterThreads = cagraIndexParameters != null ? cagraIndexParameters.getNumWriterThreads() : 1;
+
     MemorySegment compressionParamsMemorySegment = cagraCompressionParams != null
         ? cagraCompressionParams.getMemorySegment()
         : MemorySegment.NULL;
 
     IndexReference indexReference = new IndexReference((MemorySegment) indexMethodHandle.invokeExact(
         Util.buildMemorySegment(resources.linker, resources.arena, dataset), rows, cols, resources.getMemorySegment(),
-        segment, cagraIndexParameters.getMemorySegment(), compressionParamsMemorySegment));
+        segment, indexParamsMemorySegment, compressionParamsMemorySegment, numWriterThreads));
 
     return indexReference;
   }

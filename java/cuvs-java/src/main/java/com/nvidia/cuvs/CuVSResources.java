@@ -33,7 +33,7 @@ import com.nvidia.cuvs.common.Util;
  * 
  * @since 24.12
  */
-public class CuVSResources {
+public class CuVSResources implements AutoCloseable {
 
   public final Arena arena;
   public final Linker linker;
@@ -51,7 +51,7 @@ public class CuVSResources {
    */
   public CuVSResources() throws Throwable {
     linker = Linker.nativeLinker();
-    arena = Arena.ofConfined();
+    arena = Arena.ofShared();
 
     nativeLibrary = Util.loadLibraryFromJar("/libcuvs_java.so");
     libcuvsNativeLibrary = SymbolLookup.libraryLookup(nativeLibrary.getAbsolutePath(), arena);
@@ -61,6 +61,7 @@ public class CuVSResources {
     
     destroyResourcesMethodHandle = linker.downcallHandle(libcuvsNativeLibrary.find("destroy_resources").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    createResources();
   }
   
   public void createResources() throws Throwable {
@@ -69,10 +70,15 @@ public class CuVSResources {
     resourcesMemorySegment = (MemorySegment) createResourcesMethodHandle.invokeExact(returnValueMemorySegment);
   }
   
-  public void destroyResources() throws Throwable {
+  @Override
+  public void close() {
     MemoryLayout returnValueMemoryLayout = linker.canonicalLayouts().get("int");
     MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
-    destroyResourcesMethodHandle.invokeExact(resourcesMemorySegment, returnValueMemorySegment);
+    try {
+      destroyResourcesMethodHandle.invokeExact(resourcesMemorySegment, returnValueMemorySegment);
+    } catch (Throwable e) {
+      e.printStackTrace();
+    }
   }
 
   /**

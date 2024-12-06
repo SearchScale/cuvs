@@ -47,7 +47,9 @@ DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code)
 }
 
 cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, cuvsResources_t cuvsResources, int *returnValue,
-    cuvsCagraIndexParams_t index_params, cuvsCagraCompressionParams_t compression_params) {
+    cuvsCagraIndexParams_t index_params, cuvsCagraCompressionParams_t compression_params, int numWriterThreads) {
+
+  omp_set_num_threads(numWriterThreads);
 
   int64_t dataset_shape[2] = {rows, dimensions};
   DLManagedTensor dataset_tensor = prepare_tensor(dataset, dataset_shape, kDLFloat);
@@ -55,11 +57,12 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
   cuvsCagraIndex_t index;
   cuvsCagraIndexCreate(&index);
 
-  index_params->compression = NULL; //todo: update this.
-
+  index_params->compression = compression_params;
   *returnValue = cuvsCagraBuild(cuvsResources, index_params, &dataset_tensor, index);
+
   cuvsCagraIndexParamsDestroy(index_params);
-  cuvsCagraCompressionParamsDestroy(index_params->compression);
+
+  omp_set_num_threads(1);
 
   return index;
 }
