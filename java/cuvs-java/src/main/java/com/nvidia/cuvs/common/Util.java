@@ -35,23 +35,25 @@ import com.nvidia.cuvs.CuVSResources;
 
 public class Util {
 
-  /**
-   * Returns the number of GPUs connected to the system using CuVSResources.
-   *
-   * @param resources The CuVSResources object managing native resources.
-   * @return Number of GPUs connected, or -1 if an error occurred.
-   */
-  public static int getNumberOfGPUs(CuVSResources resources) {
-    try {
-      MethodHandle getNumberOfGPUsHandle = resources.linker.downcallHandle(
-          resources.libcuvsNativeLibrary.find("get_number_of_gpus")
-              .orElseThrow(() -> new IllegalStateException("get_number_of_gpus not found in library")),
-          FunctionDescriptor.of(ValueLayout.JAVA_INT));
+  public static String getGpuDetails(CuVSResources resources, int maxGpus, int maxDetailLength) {
+    try (Arena arena = Arena.ofConfined()) {
+      MemorySegment detailSegment = arena.allocate(maxGpus * maxDetailLength);
+      MethodHandle getGpuDetailsHandle = resources.linker.downcallHandle(
+          resources.libcuvsNativeLibrary.find("get_gpu_details")
+              .orElseThrow(() -> new IllegalStateException("get_gpu_details not found in library")),
+          FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
 
-      return (int) getNumberOfGPUsHandle.invokeExact();
+      int gpuCount = (int) getGpuDetailsHandle.invoke(detailSegment, maxGpus, maxDetailLength);
+      if (gpuCount < 0) {
+        throw new RuntimeException("Failed to retrieve GPU details");
+      }
+
+      // Convert MemorySegment to String
+      String details = new String(detailSegment.toArray(ValueLayout.JAVA_BYTE), 0, gpuCount * maxDetailLength);
+      return details.trim();
     } catch (Throwable e) {
-      System.err.println("Failed to invoke get_number_of_gpus: " + e.getMessage());
-      return -1; // Return -1 to indicate an error
+      System.err.println("Error invoking get_gpu_details: " + e.getMessage());
+      throw new RuntimeException("Failed to invoke get_gpu_details", e);
     }
   }
 

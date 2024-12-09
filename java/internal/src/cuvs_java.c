@@ -20,6 +20,8 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cuda_runtime.h>
+#include <string.h>
 
 cuvsResources_t create_resource(int *returnValue) {
   cuvsResources_t cuvsResources;
@@ -102,5 +104,39 @@ int get_number_of_gpus() {
     else if(deviceCount == 0){ 
         return 0;
     }   
+    return deviceCount;
+}
+
+int get_gpu_details(char *details, int max_gpus, int max_detail_length) {
+    int deviceCount = 0;
+    cudaError_t err = cudaGetDeviceCount(&deviceCount);
+
+    if (err != cudaSuccess || deviceCount == 0) {
+        fprintf(stderr, "cudaGetDeviceCount failed or no GPUs found: %s\n", cudaGetErrorString(err));
+        return -1;
+    }
+
+    for (int i = 0; i < deviceCount && i < max_gpus; i++) {
+        struct cudaDeviceProp deviceProp;
+        err = cudaGetDeviceProperties(&deviceProp, i);
+        if (err != cudaSuccess) {
+            snprintf(&details[i * max_detail_length], max_detail_length, 
+                "Error fetching properties for device %d", i);
+            continue;
+        }
+
+        size_t freeMem = 0, totalMem = 0;
+        cudaSetDevice(i);
+        err = cudaMemGetInfo(&freeMem, &totalMem);
+        if (err != cudaSuccess) {
+            snprintf(&details[i * max_detail_length], max_detail_length, 
+                "%s | Memory info unavailable", deviceProp.name);
+            continue;
+        }
+
+        snprintf(&details[i * max_detail_length], max_detail_length, 
+            "%s | Total: %zuMB | Free: %zuMB", deviceProp.name, totalMem / (1024 * 1024), freeMem / (1024 * 1024));
+    }
+
     return deviceCount;
 }

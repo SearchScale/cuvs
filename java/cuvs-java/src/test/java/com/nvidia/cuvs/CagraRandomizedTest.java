@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.randomizedtesting.RandomizedContext;
-import com.nvidia.cuvs.common.Util;
 
 public class CagraRandomizedTest extends LuceneTestCase {
   private Random random;
@@ -56,20 +55,11 @@ public class CagraRandomizedTest extends LuceneTestCase {
     }
 
     log.info("Queries:");
-    for (float[] query : queries) {
+    for (float[] query : queries) {  
       log.info(java.util.Arrays.toString(query));
     }
 
     CuVSResources resources = new CuVSResources();
-
-    int gpuCount = Util.getNumberOfGPUs(resources);
-    if (gpuCount == -1) {
-      log.info("Failed to detect GPUs.");
-    } else if (gpuCount == 0) {
-      log.info("No GPUs detected.");
-    } else {
-      log.info("Number of GPUs detected: {}", gpuCount);
-    }
 
     CagraIndexParams indexParams = new CagraIndexParams.Builder(resources).build();
 
@@ -87,4 +77,3 @@ public class CagraRandomizedTest extends LuceneTestCase {
   }
 
 }
-
