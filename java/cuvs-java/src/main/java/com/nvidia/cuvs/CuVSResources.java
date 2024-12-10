@@ -41,6 +41,7 @@ public class CuVSResources {
 
   private final MethodHandle createResourceMethodHandle;
   private final MemorySegment memorySegment;
+  private final MethodHandle getGpuDetailsHandle;
 
   /**
    * Constructor that allocates the resources needed for cuVS
@@ -61,6 +62,10 @@ public class CuVSResources {
     MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
 
     memorySegment = (MemorySegment) createResourceMethodHandle.invokeExact(returnValueMemorySegment);
+    getGpuDetailsHandle = linker.downcallHandle(
+        libcuvsNativeLibrary.find("get_gpu_details")
+            .orElseThrow(() -> new IllegalStateException("get_gpu_details not found in library")),
+        FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
   }
 
   /**
@@ -77,5 +82,14 @@ public class CuVSResources {
    */
   protected SymbolLookup getLibcuvsNativeLibrary() {
     return libcuvsNativeLibrary;
+  }
+
+  /**
+   * Gets the MethodHandle for the `get_gpu_details` function.
+   * 
+   * @return MethodHandle for `get_gpu_details`
+   */
+  public MethodHandle getGpuDetailsHandle() {
+    return getGpuDetailsHandle;
   }
 }

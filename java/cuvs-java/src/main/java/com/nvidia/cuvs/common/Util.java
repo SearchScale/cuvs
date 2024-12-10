@@ -30,33 +30,42 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.nvidia.cuvs.CuVSResources;
+import com.nvidia.cuvs.panama.GpuDetailLayout;
 
 public class Util {
+  
+  private static final Logger log = LoggerFactory.getLogger(Util.class);
 
-  public static String getGpuDetails(CuVSResources resources, int maxGpus, int maxDetailLength) {
+  public static GpuDetail[] getGpuDetails(CuVSResources resources, int maxGpus, int maxDetailLength) {
     try (Arena arena = Arena.ofConfined()) {
-      MemorySegment detailSegment = arena.allocate(maxGpus * maxDetailLength);
-      MethodHandle getGpuDetailsHandle = resources.linker.downcallHandle(
-          resources.libcuvsNativeLibrary.find("get_gpu_details")
-              .orElseThrow(() -> new IllegalStateException("get_gpu_details not found in library")),
-          FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
+        
+        MemorySegment detailsSegment = arena.allocate(maxGpus * maxDetailLength);
 
-      int gpuCount = (int) getGpuDetailsHandle.invoke(detailSegment, maxGpus, maxDetailLength);
-      if (gpuCount < 0) {
-        throw new RuntimeException("Failed to retrieve GPU details");
-      }
+        int gpuCount = (int) resources.getGpuDetailsHandle().invoke(detailsSegment, maxGpus, maxDetailLength);
 
-      // Convert MemorySegment to String
-      String details = new String(detailSegment.toArray(ValueLayout.JAVA_BYTE), 0, gpuCount * maxDetailLength);
-      return details.trim();
+        if (gpuCount < 0) {
+            throw new RuntimeException("Failed to retrieve GPU details");
+        }
+        else if (gpuCount == 0)
+        {
+          log.info("No GPU found");
+        }
+
+        GpuDetail[] gpuDetails = new GpuDetail[gpuCount];
+        for (int i = 0; i < gpuCount; i++) {
+            MemorySegment structSegment = detailsSegment.asSlice(i * GpuDetailLayout.LAYOUT.byteSize(), GpuDetailLayout.LAYOUT.byteSize());
+            gpuDetails[i] = GpuDetailLayout.fromMemorySegment(structSegment);
+        }
+
+        return gpuDetails;
     } catch (Throwable e) {
-      System.err.println("Error invoking get_gpu_details: " + e.getMessage());
-      throw new RuntimeException("Failed to invoke get_gpu_details", e);
+        throw new RuntimeException("Failed to invoke get_gpu_details", e);
     }
-  }
-
+}
   /**
    * A utility method for getting an instance of {@link MemorySegment} for a
    * {@link String}.

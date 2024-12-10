@@ -94,48 +94,31 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
   cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
 }
 
-int get_number_of_gpus() {
-    int deviceCount = 0;
-    cudaError_t err = cudaGetDeviceCount(&deviceCount);
+typedef struct {
+    char name[64];
+    size_t totalMemory;
+    size_t freeMemory;
+} GpuDetail;
 
-    if (err != cudaSuccess) {
-        return -1; 
-    }   
-    else if(deviceCount == 0){ 
-        return 0;
-    }   
-    return deviceCount;
-}
-
-int get_gpu_details(char *details, int max_gpus, int max_detail_length) {
+int get_gpu_details(GpuDetail *details, int maxGpus) {
     int deviceCount = 0;
     cudaError_t err = cudaGetDeviceCount(&deviceCount);
 
     if (err != cudaSuccess || deviceCount == 0) {
-        fprintf(stderr, "cudaGetDeviceCount failed or no GPUs found: %s\n", cudaGetErrorString(err));
         return -1;
     }
+    else if(deviceCount == 0){
+        return 0;
+    }
 
-    for (int i = 0; i < deviceCount && i < max_gpus; i++) {
+    for (int i = 0; i < deviceCount && i < maxGpus; i++) {
         struct cudaDeviceProp deviceProp;
-        err = cudaGetDeviceProperties(&deviceProp, i);
-        if (err != cudaSuccess) {
-            snprintf(&details[i * max_detail_length], max_detail_length, 
-                "Error fetching properties for device %d", i);
-            continue;
-        }
+        cudaGetDeviceProperties(&deviceProp, i);
 
-        size_t freeMem = 0, totalMem = 0;
-        cudaSetDevice(i);
-        err = cudaMemGetInfo(&freeMem, &totalMem);
-        if (err != cudaSuccess) {
-            snprintf(&details[i * max_detail_length], max_detail_length, 
-                "%s | Memory info unavailable", deviceProp.name);
-            continue;
-        }
+        strncpy(details[i].name, deviceProp.name, sizeof(details[i].name) - 1);
+        details[i].name[sizeof(details[i].name) - 1] = '\0'; // Null-terminate
 
-        snprintf(&details[i * max_detail_length], max_detail_length, 
-            "%s | Total: %zuMB | Free: %zuMB", deviceProp.name, totalMem / (1024 * 1024), freeMem / (1024 * 1024));
+        cudaMemGetInfo(&details[i].freeMemory, &details[i].totalMemory);
     }
 
     return deviceCount;
