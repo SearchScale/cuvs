@@ -41,9 +41,9 @@ public class Util {
   private static final Logger log = LoggerFactory.getLogger(Util.class);
 
   public static GpuDetail[] getGpuDetails(CuVSResources resources, int maxGpus, int maxDetailLength) {
-    try (Arena arena = Arena.ofConfined()) {
+    try{
         
-        MemorySegment detailsSegment = arena.allocate(maxGpus * maxDetailLength);
+        MemorySegment detailsSegment = resources.arena.allocate(maxGpus * maxDetailLength);
 
         int gpuCount = (int) resources.getGpuDetailsHandle().invoke(detailsSegment, maxGpus, maxDetailLength);
 
