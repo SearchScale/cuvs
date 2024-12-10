@@ -37,35 +37,35 @@ import com.nvidia.cuvs.CuVSResources;
 import com.nvidia.cuvs.panama.GpuDetailLayout;
 
 public class Util {
-  
+
   private static final Logger log = LoggerFactory.getLogger(Util.class);
 
   public static GpuDetail[] getGpuDetails(CuVSResources resources, int maxGpus, int maxDetailLength) {
-    try{
-        
-        MemorySegment detailsSegment = resources.arena.allocate(maxGpus * maxDetailLength);
+    try {
 
-        int gpuCount = (int) resources.getGpuDetailsHandle().invoke(detailsSegment, maxGpus, maxDetailLength);
+      MemorySegment detailsSegment = resources.arena.allocate(maxGpus * maxDetailLength);
 
-        if (gpuCount < 0) {
-            throw new RuntimeException("Failed to retrieve GPU details");
-        }
-        else if (gpuCount == 0)
-        {
-          log.info("No GPU found");
-        }
+      int gpuCount = (int) resources.getGpuDetailsHandle().invoke(detailsSegment, maxGpus, maxDetailLength);
 
-        GpuDetail[] gpuDetails = new GpuDetail[gpuCount];
-        for (int i = 0; i < gpuCount; i++) {
-            MemorySegment structSegment = detailsSegment.asSlice(i * GpuDetailLayout.LAYOUT.byteSize(), GpuDetailLayout.LAYOUT.byteSize());
-            gpuDetails[i] = GpuDetailLayout.fromMemorySegment(structSegment);
-        }
+      if (gpuCount < 0) {
+        throw new RuntimeException("Failed to retrieve GPU details");
+      } else if (gpuCount == 0) {
+        log.info("No GPU found");
+      }
 
-        return gpuDetails;
+      GpuDetail[] gpuDetails = new GpuDetail[gpuCount];
+      for (int i = 0; i < gpuCount; i++) {
+        MemorySegment structSegment = detailsSegment.asSlice(i * GpuDetailLayout.LAYOUT.byteSize(),
+            GpuDetailLayout.LAYOUT.byteSize());
+        gpuDetails[i] = GpuDetailLayout.fromMemorySegment(structSegment);
+      }
+
+      return gpuDetails;
     } catch (Throwable e) {
-        throw new RuntimeException("Failed to invoke get_gpu_details", e);
+      throw new RuntimeException("Failed to invoke get_gpu_details", e);
     }
-}
+  }
+
   /**
    * A utility method for getting an instance of {@link MemorySegment} for a
    * {@link String}.
