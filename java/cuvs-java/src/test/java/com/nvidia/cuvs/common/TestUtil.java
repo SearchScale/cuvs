@@ -28,8 +28,8 @@ public class TestUtil {
       log.info("Number of GPUs: {}", gpuDetails.length);
       for (GpuDetail detail : gpuDetails) {
         log.info("GPU Name: {}", detail.getName());
-        log.info("Total Memory (MB): {}", detail.getTotalMemory());
-        log.info("Free Memory (MB): {}", detail.getFreeMemory());
+        log.info("Total Memory (MB): {}", detail.getTotalMemory()/(1024*1024));
+        log.info("Free Memory (MB): {}", detail.getFreeMemory()/(1024*1024));
       }
 
     } catch (Throwable e) {
