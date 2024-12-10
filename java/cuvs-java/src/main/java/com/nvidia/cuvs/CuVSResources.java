@@ -52,24 +52,28 @@ public class CuVSResources implements AutoCloseable {
   public CuVSResources() throws Throwable {
     linker = Linker.nativeLinker();
     arena = Arena.ofShared();
-
     nativeLibrary = Util.loadLibraryFromJar("/libcuvs_java.so");
     libcuvsNativeLibrary = SymbolLookup.libraryLookup(nativeLibrary.getAbsolutePath(), arena);
 
     createResourcesMethodHandle = linker.downcallHandle(libcuvsNativeLibrary.find("create_resources").get(),
         FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
-    
+
     destroyResourcesMethodHandle = linker.downcallHandle(libcuvsNativeLibrary.find("destroy_resources").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
     createResources();
   }
-  
+
+  /**
+   * Creates the resources used internally and returns its reference.
+   * 
+   * @throws Throwable exception thrown when native function is invoked
+   */
   public void createResources() throws Throwable {
     MemoryLayout returnValueMemoryLayout = linker.canonicalLayouts().get("int");
     MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
     resourcesMemorySegment = (MemorySegment) createResourcesMethodHandle.invokeExact(returnValueMemorySegment);
   }
-  
+
   @Override
   public void close() {
     MemoryLayout returnValueMemoryLayout = linker.canonicalLayouts().get("int");
@@ -79,6 +83,7 @@ public class CuVSResources implements AutoCloseable {
     } catch (Throwable e) {
       e.printStackTrace();
     }
+    nativeLibrary.delete();
   }
 
   /**

@@ -81,9 +81,9 @@ public class CagraCompressionParams {
   }
 
   /**
-   * Gets the
+   * Gets the memory segment instance containing the compression parameters.
    * 
-   * @return the
+   * @return the memory segment instance containing the compression parameters.
    */
   protected MemorySegment getMemorySegment() {
     return memorySegment;
