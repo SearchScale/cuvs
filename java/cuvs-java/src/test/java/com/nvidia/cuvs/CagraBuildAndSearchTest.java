@@ -48,15 +48,25 @@ public class CagraBuildAndSearchTest {
   public void testIndexingAndSearchingFlow() throws Throwable {
 
     // Sample data and query
-    float[][] dataset = { { 0.74021935f, 0.9209938f }, { 0.03902049f, 0.9689629f }, { 0.92514056f, 0.4463501f },
-        { 0.6673192f, 0.10993068f } };
+    float[][] dataset = { 
+        { 0.74021935f, 0.9209938f },
+        { 0.03902049f, 0.9689629f },
+        { 0.92514056f, 0.4463501f },
+        { 0.6673192f, 0.10993068f } 
+      };
     Map<Integer, Integer> map = Map.of(0, 0, 1, 1, 2, 2, 3, 3);
-    float[][] queries = { { 0.48216683f, 0.0428398f }, { 0.5084142f, 0.6545497f }, { 0.51260436f, 0.2643005f },
-        { 0.05198065f, 0.5789965f } };
+    float[][] queries = { 
+        { 0.48216683f, 0.0428398f },
+        { 0.5084142f, 0.6545497f },
+        { 0.51260436f, 0.2643005f },
+        { 0.05198065f, 0.5789965f }
+      };
 
     // Expected search results
-    List<Map<Integer, Float>> expectedResults = Arrays.asList(Map.of(3, 0.038782578f, 2, 0.3590463f, 0, 0.83774555f),
-        Map.of(0, 0.12472608f, 2, 0.21700792f, 1, 0.31918612f), Map.of(3, 0.047766715f, 2, 0.20332818f, 0, 0.48305473f),
+    List<Map<Integer, Float>> expectedResults = Arrays.asList(
+        Map.of(3, 0.038782578f, 2, 0.3590463f, 0, 0.83774555f),
+        Map.of(0, 0.12472608f, 2, 0.21700792f, 1, 0.31918612f),
+        Map.of(3, 0.047766715f, 2, 0.20332818f, 0, 0.48305473f),
         Map.of(1, 0.15224178f, 0, 0.59063464f, 3, 0.5986642f));
 
     for (int j = 0; j < 10; j++) {
