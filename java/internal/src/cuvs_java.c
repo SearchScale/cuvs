@@ -104,11 +104,8 @@ int get_gpu_details(GpuDetail *details, int maxGpus) {
     int deviceCount = 0;
     cudaError_t err = cudaGetDeviceCount(&deviceCount);
 
-    if (err != cudaSuccess || deviceCount == 0) {
+    if (err != cudaSuccess) {
         return -1;
-    }
-    else if(deviceCount == 0){
-        return 0;
     }
 
     for (int i = 0; i < deviceCount && i < maxGpus; i++) {

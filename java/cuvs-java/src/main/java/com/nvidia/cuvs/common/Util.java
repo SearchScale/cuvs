@@ -49,8 +49,6 @@ public class Util {
 
       if (gpuCount < 0) {
         throw new RuntimeException("Failed to retrieve GPU details");
-      } else if (gpuCount == 0) {
-        log.info("No GPU found");
       }
 
       GpuDetail[] gpuDetails = new GpuDetail[gpuCount];
