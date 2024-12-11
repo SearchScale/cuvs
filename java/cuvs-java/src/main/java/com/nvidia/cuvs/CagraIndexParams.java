@@ -23,7 +23,7 @@ import com.nvidia.cuvs.panama.CuVSCagraIndexParams;
 /**
  * Supplemental parameters to build CAGRA Index.
  * 
- * @since 24.12
+ * @since 25.02
  */
 public class CagraIndexParams {
 

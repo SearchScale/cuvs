@@ -44,7 +44,7 @@ import com.nvidia.cuvs.panama.cuvsCagraIndex;
  * more about this algorithm
  * <a href="https://arxiv.org/abs/2308.15136" target="_blank">here</a>
  * 
- * @since 24.12
+ * @since 25.02
  */
 public class CagraIndex {
 
@@ -328,7 +328,7 @@ public class CagraIndex {
      * Registers an instance of configured {@link CagraCompressionParams} with this
      * Builder.
      * 
-     * @param cagraIndexParameters An instance of CagraCompressionParams.
+     * @param cagraCompressionParams An instance of CagraCompressionParams.
      * @return An instance of this Builder.
      */
     public Builder withCompressionParams(CagraCompressionParams cagraCompressionParams) {

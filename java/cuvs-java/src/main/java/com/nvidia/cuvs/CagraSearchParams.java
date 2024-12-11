@@ -24,7 +24,7 @@ import com.nvidia.cuvs.panama.CuvsCagraSearchParams;
  * CagraSearchParams encapsulates the logic for configuring and holding search
  * parameters.
  * 
- * @since 24.12
+ * @since 25.02
  */
 public class CagraSearchParams {
 

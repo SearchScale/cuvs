@@ -31,7 +31,7 @@ import com.nvidia.cuvs.common.Util;
 /**
  * Used for allocating resources for cuVS
  * 
- * @since 24.12
+ * @since 25.02
  */
 public class CuVSResources implements AutoCloseable {
 
