@@ -66,8 +66,6 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
   index_params->compression = compression_params;
   *returnValue = cuvsCagraBuild(cuvsResources, index_params, &dataset_tensor, index);
 
-  //cuvsCagraIndexParamsDestroy(index_params);
-
   omp_set_num_threads(1);
 
   return index;
@@ -105,8 +103,6 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
   int64_t distances_shape[2] = {n_queries, topk};
   DLManagedTensor distances_tensor = prepare_tensor(distances, distances_shape, kDLFloat);
 
-  cuvsCagraSearchParamsCreate(&search_params);
-
   *returnValue = cuvsCagraSearch(cuvsResources, search_params, index, &queries_tensor, &neighbors_tensor,
                   &distances_tensor);
 
@@ -116,6 +112,4 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
   cuvsRMMFree(cuvsResources, distances, sizeof(float) * n_queries * topk);
   cuvsRMMFree(cuvsResources, neighbors, sizeof(uint32_t) * n_queries * topk);
   cuvsRMMFree(cuvsResources, queries_d, sizeof(float) * n_queries * dimensions);
-
-  cuvsCagraSearchParamsDestroy(search_params);
 }

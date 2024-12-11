@@ -156,12 +156,16 @@ public class CagraSearchParams {
     CuvsCagraSearchParams.max_queries(memorySegment, maxQueries);
     CuvsCagraSearchParams.itopk_size(memorySegment, iTopKSize);
     CuvsCagraSearchParams.max_iterations(memorySegment, maxIterations);
-    CuvsCagraSearchParams.algo(memorySegment, searchAlgo.value);
+    if (searchAlgo != null) {
+      CuvsCagraSearchParams.algo(memorySegment, searchAlgo.value);
+    }
     CuvsCagraSearchParams.team_size(memorySegment, teamSize);
     CuvsCagraSearchParams.search_width(memorySegment, searchWidth);
     CuvsCagraSearchParams.min_iterations(memorySegment, minIterations);
     CuvsCagraSearchParams.thread_block_size(memorySegment, threadBlockSize);
-    CuvsCagraSearchParams.hashmap_mode(memorySegment, hashMapMode.value);
+    if (hashMapMode != null) {
+      CuvsCagraSearchParams.hashmap_mode(memorySegment, hashMapMode.value);
+    }
     CuvsCagraSearchParams.hashmap_min_bitlen(memorySegment, hashmapMinBitlen);
     CuvsCagraSearchParams.hashmap_max_fill_rate(memorySegment, hashMapMaxFillRate);
     CuvsCagraSearchParams.num_random_samplings(memorySegment, numRandomSamplings);
@@ -312,19 +316,19 @@ public class CagraSearchParams {
   public static class Builder {
 
     private CuVSResources resources;
-    private int maxQueries = 1;
-    private int iTopKSize = 2;
-    private int maxIterations = 3;
-    private int teamSize = 4;
-    private int searchWidth = 5;
-    private int minIterations = 6;
-    private int threadBlockSize = 7;
-    private int hashMapMinBitlen = 8;
-    private int numRandomSamplings = 10;
-    private float hashMapMaxFillRate = 9.0f;
-    private long randXORMask = 11L;
-    private SearchAlgo searchAlgo = SearchAlgo.MULTI_KERNEL;
-    private HashMapMode hashMapMode = HashMapMode.AUTO_HASH;
+    private int maxQueries;
+    private int iTopKSize = 64;
+    private int maxIterations;
+    private int teamSize;
+    private int searchWidth = 1;
+    private int minIterations;
+    private int threadBlockSize;
+    private int hashMapMinBitlen;
+    private int numRandomSamplings = 1;
+    private float hashMapMaxFillRate = 0.5f;
+    private long randXORMask = 0x128394;
+    private SearchAlgo searchAlgo;
+    private HashMapMode hashMapMode;
 
     /**
      * Constructs this Builder with an instance of Arena.

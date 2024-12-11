@@ -31,16 +31,16 @@ import java.util.function.Consumer;
 /**
  * {@snippet lang = c :
  * struct cuvsCagraSearchParams {
- *     unsigned int max_queries;
- *     unsigned int itopk_size;
- *     unsigned int max_iterations;
+ *     long max_queries;
+ *     long itopk_size;
+ *     long max_iterations;
  *     enum cuvsCagraSearchAlgo algo;
- *     unsigned int team_size;
- *     unsigned int search_width;
- *     unsigned int min_iterations;
- *     unsigned int thread_block_size;
+ *     long team_size;
+ *     long search_width;
+ *     long min_iterations;
+ *     long thread_block_size;
  *     enum cuvsCagraHashMode hashmap_mode;
- *     unsigned int hashmap_min_bitlen;
+ *     long hashmap_min_bitlen;
  *     float hashmap_max_fill_rate;
  *     uint32_t num_random_samplings;
  *     uint64_t rand_xor_mask;
@@ -54,11 +54,12 @@ public class CuvsCagraSearchParams {
   }
 
   private static final GroupLayout $LAYOUT = MemoryLayout
-      .structLayout(cagra_h.C_INT.withName("max_queries"), cagra_h.C_INT.withName("itopk_size"),
-          cagra_h.C_INT.withName("max_iterations"), cagra_h.C_INT.withName("algo"), cagra_h.C_INT.withName("team_size"),
-          cagra_h.C_INT.withName("search_width"), cagra_h.C_INT.withName("min_iterations"),
-          cagra_h.C_INT.withName("thread_block_size"), cagra_h.C_INT.withName("hashmap_mode"),
-          cagra_h.C_INT.withName("hashmap_min_bitlen"), cagra_h.C_FLOAT.withName("hashmap_max_fill_rate"),
+      .structLayout(cagra_h.C_LONG.withName("max_queries"), cagra_h.C_LONG.withName("itopk_size"),
+          cagra_h.C_LONG.withName("max_iterations"), cagra_h.C_INT.withName("algo"), MemoryLayout.paddingLayout(4),
+          cagra_h.C_LONG.withName("team_size"), cagra_h.C_LONG.withName("search_width"),
+          cagra_h.C_LONG.withName("min_iterations"), cagra_h.C_LONG.withName("thread_block_size"),
+          cagra_h.C_INT.withName("hashmap_mode"), MemoryLayout.paddingLayout(4),
+          cagra_h.C_LONG.withName("hashmap_min_bitlen"), cagra_h.C_FLOAT.withName("hashmap_max_fill_rate"),
           cagra_h.C_INT.withName("num_random_samplings"), cagra_h.C_LONG.withName("rand_xor_mask"))
       .withName("cuvsCagraSearchParams");
 
@@ -69,14 +70,14 @@ public class CuvsCagraSearchParams {
     return $LAYOUT;
   }
 
-  private static final OfInt max_queries$LAYOUT = (OfInt) $LAYOUT.select(groupElement("max_queries"));
+  private static final OfLong max_queries$LAYOUT = (OfLong) $LAYOUT.select(groupElement("max_queries"));
 
   /**
    * Layout for field:
-   * {@snippet lang = c : * unsigned int max_queries
+   * {@snippet lang = c : * long max_queries
    * }
    */
-  public static final OfInt max_queries$layout() {
+  public static final OfLong max_queries$layout() {
     return max_queries$LAYOUT;
   }
 
@@ -84,7 +85,7 @@ public class CuvsCagraSearchParams {
 
   /**
    * Offset for field:
-   * {@snippet lang = c : * unsigned int max_queries
+   * {@snippet lang = c : * long max_queries
    * }
    */
   public static final long max_queries$offset() {
@@ -93,38 +94,38 @@ public class CuvsCagraSearchParams {
 
   /**
    * Getter for field:
-   * {@snippet lang = c : * unsigned int max_queries
+   * {@snippet lang = c : * long max_queries
    * }
    */
-  public static int max_queries(MemorySegment struct) {
+  public static long max_queries(MemorySegment struct) {
     return struct.get(max_queries$LAYOUT, max_queries$OFFSET);
   }
 
   /**
    * Setter for field:
-   * {@snippet lang = c : * unsigned int max_queries
+   * {@snippet lang = c : * long max_queries
    * }
    */
-  public static void max_queries(MemorySegment struct, int fieldValue) {
+  public static void max_queries(MemorySegment struct, long fieldValue) {
     struct.set(max_queries$LAYOUT, max_queries$OFFSET, fieldValue);
   }
 
-  private static final OfInt itopk_size$LAYOUT = (OfInt) $LAYOUT.select(groupElement("itopk_size"));
+  private static final OfLong itopk_size$LAYOUT = (OfLong) $LAYOUT.select(groupElement("itopk_size"));
 
   /**
    * Layout for field:
-   * {@snippet lang = c : * unsigned int itopk_size
+   * {@snippet lang = c : * long itopk_size
    * }
    */
-  public static final OfInt itopk_size$layout() {
+  public static final OfLong itopk_size$layout() {
     return itopk_size$LAYOUT;
   }
 
-  private static final long itopk_size$OFFSET = 4;
+  private static final long itopk_size$OFFSET = 8;
 
   /**
    * Offset for field:
-   * {@snippet lang = c : * unsigned int itopk_size
+   * {@snippet lang = c : * long itopk_size
    * }
    */
   public static final long itopk_size$offset() {
@@ -133,38 +134,38 @@ public class CuvsCagraSearchParams {
 
   /**
    * Getter for field:
-   * {@snippet lang = c : * unsigned int itopk_size
+   * {@snippet lang = c : * long itopk_size
    * }
    */
-  public static int itopk_size(MemorySegment struct) {
+  public static long itopk_size(MemorySegment struct) {
     return struct.get(itopk_size$LAYOUT, itopk_size$OFFSET);
   }
 
   /**
    * Setter for field:
-   * {@snippet lang = c : * unsigned int itopk_size
+   * {@snippet lang = c : * long itopk_size
    * }
    */
-  public static void itopk_size(MemorySegment struct, int fieldValue) {
+  public static void itopk_size(MemorySegment struct, long fieldValue) {
     struct.set(itopk_size$LAYOUT, itopk_size$OFFSET, fieldValue);
   }
 
-  private static final OfInt max_iterations$LAYOUT = (OfInt) $LAYOUT.select(groupElement("max_iterations"));
+  private static final OfLong max_iterations$LAYOUT = (OfLong) $LAYOUT.select(groupElement("max_iterations"));
 
   /**
    * Layout for field:
-   * {@snippet lang = c : * unsigned int max_iterations
+   * {@snippet lang = c : * long max_iterations
    * }
    */
-  public static final OfInt max_iterations$layout() {
+  public static final OfLong max_iterations$layout() {
     return max_iterations$LAYOUT;
   }
 
-  private static final long max_iterations$OFFSET = 8;
+  private static final long max_iterations$OFFSET = 16;
 
   /**
    * Offset for field:
-   * {@snippet lang = c : * unsigned int max_iterations
+   * {@snippet lang = c : * long max_iterations
    * }
    */
   public static final long max_iterations$offset() {
@@ -173,19 +174,19 @@ public class CuvsCagraSearchParams {
 
   /**
    * Getter for field:
-   * {@snippet lang = c : * unsigned int max_iterations
+   * {@snippet lang = c : * long max_iterations
    * }
    */
-  public static int max_iterations(MemorySegment struct) {
+  public static long max_iterations(MemorySegment struct) {
     return struct.get(max_iterations$LAYOUT, max_iterations$OFFSET);
   }
 
   /**
    * Setter for field:
-   * {@snippet lang = c : * unsigned int max_iterations
+   * {@snippet lang = c : * long max_iterations
    * }
    */
-  public static void max_iterations(MemorySegment struct, int fieldValue) {
+  public static void max_iterations(MemorySegment struct, long fieldValue) {
     struct.set(max_iterations$LAYOUT, max_iterations$OFFSET, fieldValue);
   }
 
@@ -200,7 +201,7 @@ public class CuvsCagraSearchParams {
     return algo$LAYOUT;
   }
 
-  private static final long algo$OFFSET = 12;
+  private static final long algo$OFFSET = 24;
 
   /**
    * Offset for field:
@@ -229,22 +230,22 @@ public class CuvsCagraSearchParams {
     struct.set(algo$LAYOUT, algo$OFFSET, fieldValue);
   }
 
-  private static final OfInt team_size$LAYOUT = (OfInt) $LAYOUT.select(groupElement("team_size"));
+  private static final OfLong team_size$LAYOUT = (OfLong) $LAYOUT.select(groupElement("team_size"));
 
   /**
    * Layout for field:
-   * {@snippet lang = c : * unsigned int team_size
+   * {@snippet lang = c : * long team_size
    * }
    */
-  public static final OfInt team_size$layout() {
+  public static final OfLong team_size$layout() {
     return team_size$LAYOUT;
   }
 
-  private static final long team_size$OFFSET = 16;
+  private static final long team_size$OFFSET = 32;
 
   /**
    * Offset for field:
-   * {@snippet lang = c : * unsigned int team_size
+   * {@snippet lang = c : * long team_size
    * }
    */
   public static final long team_size$offset() {
@@ -253,38 +254,38 @@ public class CuvsCagraSearchParams {
 
   /**
    * Getter for field:
-   * {@snippet lang = c : * unsigned int team_size
+   * {@snippet lang = c : * long team_size
    * }
    */
-  public static int team_size(MemorySegment struct) {
+  public static long team_size(MemorySegment struct) {
     return struct.get(team_size$LAYOUT, team_size$OFFSET);
   }
 
   /**
    * Setter for field:
-   * {@snippet lang = c : * unsigned int team_size
+   * {@snippet lang = c : * long team_size
    * }
    */
-  public static void team_size(MemorySegment struct, int fieldValue) {
+  public static void team_size(MemorySegment struct, long fieldValue) {
     struct.set(team_size$LAYOUT, team_size$OFFSET, fieldValue);
   }
 
-  private static final OfInt search_width$LAYOUT = (OfInt) $LAYOUT.select(groupElement("search_width"));
+  private static final OfLong search_width$LAYOUT = (OfLong) $LAYOUT.select(groupElement("search_width"));
 
   /**
    * Layout for field:
-   * {@snippet lang = c : * unsigned int search_width
+   * {@snippet lang = c : * long search_width
    * }
    */
-  public static final OfInt search_width$layout() {
+  public static final OfLong search_width$layout() {
     return search_width$LAYOUT;
   }
 
-  private static final long search_width$OFFSET = 20;
+  private static final long search_width$OFFSET = 40;
 
   /**
    * Offset for field:
-   * {@snippet lang = c : * unsigned int search_width
+   * {@snippet lang = c : * long search_width
    * }
    */
   public static final long search_width$offset() {
@@ -293,38 +294,38 @@ public class CuvsCagraSearchParams {
 
   /**
    * Getter for field:
-   * {@snippet lang = c : * unsigned int search_width
+   * {@snippet lang = c : * long search_width
    * }
    */
-  public static int search_width(MemorySegment struct) {
+  public static long search_width(MemorySegment struct) {
     return struct.get(search_width$LAYOUT, search_width$OFFSET);
   }
 
   /**
    * Setter for field:
-   * {@snippet lang = c : * unsigned int search_width
+   * {@snippet lang = c : * long search_width
    * }
    */
-  public static void search_width(MemorySegment struct, int fieldValue) {
+  public static void search_width(MemorySegment struct, long fieldValue) {
     struct.set(search_width$LAYOUT, search_width$OFFSET, fieldValue);
   }
 
-  private static final OfInt min_iterations$LAYOUT = (OfInt) $LAYOUT.select(groupElement("min_iterations"));
+  private static final OfLong min_iterations$LAYOUT = (OfLong) $LAYOUT.select(groupElement("min_iterations"));
 
   /**
    * Layout for field:
-   * {@snippet lang = c : * unsigned int min_iterations
+   * {@snippet lang = c : * long min_iterations
    * }
    */
-  public static final OfInt min_iterations$layout() {
+  public static final OfLong min_iterations$layout() {
     return min_iterations$LAYOUT;
   }
 
-  private static final long min_iterations$OFFSET = 24;
+  private static final long min_iterations$OFFSET = 48;
 
   /**
    * Offset for field:
-   * {@snippet lang = c : * unsigned int min_iterations
+   * {@snippet lang = c : * long min_iterations
    * }
    */
   public static final long min_iterations$offset() {
@@ -333,38 +334,38 @@ public class CuvsCagraSearchParams {
 
   /**
    * Getter for field:
-   * {@snippet lang = c : * unsigned int min_iterations
+   * {@snippet lang = c : * long min_iterations
    * }
    */
-  public static int min_iterations(MemorySegment struct) {
+  public static long min_iterations(MemorySegment struct) {
     return struct.get(min_iterations$LAYOUT, min_iterations$OFFSET);
   }
 
   /**
    * Setter for field:
-   * {@snippet lang = c : * unsigned int min_iterations
+   * {@snippet lang = c : * long min_iterations
    * }
    */
-  public static void min_iterations(MemorySegment struct, int fieldValue) {
+  public static void min_iterations(MemorySegment struct, long fieldValue) {
     struct.set(min_iterations$LAYOUT, min_iterations$OFFSET, fieldValue);
   }
 
-  private static final OfInt thread_block_size$LAYOUT = (OfInt) $LAYOUT.select(groupElement("thread_block_size"));
+  private static final OfLong thread_block_size$LAYOUT = (OfLong) $LAYOUT.select(groupElement("thread_block_size"));
 
   /**
    * Layout for field:
-   * {@snippet lang = c : * unsigned int thread_block_size
+   * {@snippet lang = c : * long thread_block_size
    * }
    */
-  public static final OfInt thread_block_size$layout() {
+  public static final OfLong thread_block_size$layout() {
     return thread_block_size$LAYOUT;
   }
 
-  private static final long thread_block_size$OFFSET = 28;
+  private static final long thread_block_size$OFFSET = 56;
 
   /**
    * Offset for field:
-   * {@snippet lang = c : * unsigned int thread_block_size
+   * {@snippet lang = c : * long thread_block_size
    * }
    */
   public static final long thread_block_size$offset() {
@@ -373,19 +374,19 @@ public class CuvsCagraSearchParams {
 
   /**
    * Getter for field:
-   * {@snippet lang = c : * unsigned int thread_block_size
+   * {@snippet lang = c : * long thread_block_size
    * }
    */
-  public static int thread_block_size(MemorySegment struct) {
+  public static long thread_block_size(MemorySegment struct) {
     return struct.get(thread_block_size$LAYOUT, thread_block_size$OFFSET);
   }
 
   /**
    * Setter for field:
-   * {@snippet lang = c : * unsigned int thread_block_size
+   * {@snippet lang = c : * long thread_block_size
    * }
    */
-  public static void thread_block_size(MemorySegment struct, int fieldValue) {
+  public static void thread_block_size(MemorySegment struct, long fieldValue) {
     struct.set(thread_block_size$LAYOUT, thread_block_size$OFFSET, fieldValue);
   }
 
@@ -400,7 +401,7 @@ public class CuvsCagraSearchParams {
     return hashmap_mode$LAYOUT;
   }
 
-  private static final long hashmap_mode$OFFSET = 32;
+  private static final long hashmap_mode$OFFSET = 64;
 
   /**
    * Offset for field:
@@ -429,22 +430,22 @@ public class CuvsCagraSearchParams {
     struct.set(hashmap_mode$LAYOUT, hashmap_mode$OFFSET, fieldValue);
   }
 
-  private static final OfInt hashmap_min_bitlen$LAYOUT = (OfInt) $LAYOUT.select(groupElement("hashmap_min_bitlen"));
+  private static final OfLong hashmap_min_bitlen$LAYOUT = (OfLong) $LAYOUT.select(groupElement("hashmap_min_bitlen"));
 
   /**
    * Layout for field:
-   * {@snippet lang = c : * unsigned int hashmap_min_bitlen
+   * {@snippet lang = c : * long hashmap_min_bitlen
    * }
    */
-  public static final OfInt hashmap_min_bitlen$layout() {
+  public static final OfLong hashmap_min_bitlen$layout() {
     return hashmap_min_bitlen$LAYOUT;
   }
 
-  private static final long hashmap_min_bitlen$OFFSET = 36;
+  private static final long hashmap_min_bitlen$OFFSET = 72;
 
   /**
    * Offset for field:
-   * {@snippet lang = c : * unsigned int hashmap_min_bitlen
+   * {@snippet lang = c : * long hashmap_min_bitlen
    * }
    */
   public static final long hashmap_min_bitlen$offset() {
@@ -453,19 +454,19 @@ public class CuvsCagraSearchParams {
 
   /**
    * Getter for field:
-   * {@snippet lang = c : * unsigned int hashmap_min_bitlen
+   * {@snippet lang = c : * long hashmap_min_bitlen
    * }
    */
-  public static int hashmap_min_bitlen(MemorySegment struct) {
+  public static long hashmap_min_bitlen(MemorySegment struct) {
     return struct.get(hashmap_min_bitlen$LAYOUT, hashmap_min_bitlen$OFFSET);
   }
 
   /**
    * Setter for field:
-   * {@snippet lang = c : * unsigned int hashmap_min_bitlen
+   * {@snippet lang = c : * long hashmap_min_bitlen
    * }
    */
-  public static void hashmap_min_bitlen(MemorySegment struct, int fieldValue) {
+  public static void hashmap_min_bitlen(MemorySegment struct, long fieldValue) {
     struct.set(hashmap_min_bitlen$LAYOUT, hashmap_min_bitlen$OFFSET, fieldValue);
   }
 
@@ -481,7 +482,7 @@ public class CuvsCagraSearchParams {
     return hashmap_max_fill_rate$LAYOUT;
   }
 
-  private static final long hashmap_max_fill_rate$OFFSET = 40;
+  private static final long hashmap_max_fill_rate$OFFSET = 80;
 
   /**
    * Offset for field:
@@ -521,7 +522,7 @@ public class CuvsCagraSearchParams {
     return num_random_samplings$LAYOUT;
   }
 
-  private static final long num_random_samplings$OFFSET = 44;
+  private static final long num_random_samplings$OFFSET = 84;
 
   /**
    * Offset for field:
@@ -561,7 +562,7 @@ public class CuvsCagraSearchParams {
     return rand_xor_mask$LAYOUT;
   }
 
-  private static final long rand_xor_mask$OFFSET = 48;
+  private static final long rand_xor_mask$OFFSET = 88;
 
   /**
    * Offset for field:
