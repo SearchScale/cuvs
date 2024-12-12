@@ -54,3 +54,7 @@ include(get_dlpack.cmake)
 ADD_LIBRARY(cuvs_java SHARED src/cuvs_java.c)
 target_include_directories(cuvs_java PUBLIC "$<BUILD_INTERFACE:${DLPACK_INCLUDE_DIR}>")
 target_link_libraries(cuvs_java PRIVATE cuvs::c_api $<TARGET_NAME_IF_EXISTS:conda_env>)
+
+ADD_LIBRARY(cuvs_java_brute_force SHARED src/cuvs_java_brute_force.c)
+target_include_directories(cuvs_java_brute_force PUBLIC "$<BUILD_INTERFACE:${DLPACK_INCLUDE_DIR}>")
+target_link_libraries(cuvs_java_brute_force PRIVATE cuvs::c_api $<TARGET_NAME_IF_EXISTS:conda_env>)
