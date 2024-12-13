@@ -55,7 +55,7 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
     cuvsCagraIndexParams_t index_params, cuvsCagraCompressionParams_t compression_params, int numWriterThreads) {
 
   omp_set_num_threads(numWriterThreads);
-  cuvsRMMPoolMemoryResourceEnable(95, 95, true);
+  cuvsRMMPoolMemoryResourceEnable(95, 95, false);
 
   int64_t dataset_shape[2] = {rows, dimensions};
   DLManagedTensor dataset_tensor = prepare_tensor(dataset, dataset_shape, kDLFloat);
