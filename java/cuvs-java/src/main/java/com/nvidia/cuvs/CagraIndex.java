@@ -380,7 +380,7 @@ public class CagraIndex {
      * 
      * @return index MemorySegment
      */
-    protected MemorySegment getMemorySegment() {
+    public MemorySegment getMemorySegment() {
       return memorySegment;
     }
   }

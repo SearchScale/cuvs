@@ -20,14 +20,21 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.Linker;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemoryLayout.PathElement;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.IOUtils;
+
+import com.nvidia.cuvs.CagraIndex;
+import java.nio.charset.StandardCharsets;
+import com.nvidia.cuvs.CuVSResources;
 
 public class Util {
   /**
@@ -97,4 +104,32 @@ public class Util {
 
     return temp;
   }
+
+  public static void convertCagraToHnsw(CuVSResources resources, String cagraFilePath, String hnswFilePath) {
+    try {
+      MethodHandle convertCagraToHnswHandle = resources.cagraToHnswHandle;
+
+      byte[] cagraBytes = cagraFilePath.getBytes(StandardCharsets.UTF_8);
+      byte[] hnswBytes = hnswFilePath.getBytes(StandardCharsets.UTF_8);
+
+      MemorySegment cagraFileSegment = resources.arena.allocate(cagraBytes.length + 1);
+      MemorySegment hnswFileSegment = resources.arena.allocate(hnswBytes.length + 1);
+
+      cagraFileSegment.asSlice(0, cagraBytes.length).copyFrom(MemorySegment.ofArray(cagraBytes));
+      cagraFileSegment.set(ValueLayout.JAVA_BYTE, cagraBytes.length, (byte) 0);
+
+      hnswFileSegment.asSlice(0, hnswBytes.length).copyFrom(MemorySegment.ofArray(hnswBytes));
+      hnswFileSegment.set(ValueLayout.JAVA_BYTE, hnswBytes.length, (byte) 0);
+
+      int returnValue = (int) convertCagraToHnswHandle.invoke(resources.getMemorySegment(), cagraFileSegment,
+          hnswFileSegment);
+
+      if (returnValue != 0) {
+        throw new RuntimeException("Failed to convert CAGRA to HNSW, error code: " + returnValue);
+      }
+    } catch (Throwable e) {
+      throw new RuntimeException("Error during CAGRA to HNSW conversion", e);
+    }
+  }
+
 }

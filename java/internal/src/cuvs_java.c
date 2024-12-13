@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
+#include <cuvs/neighbors/hnsw.h>
 
 #define try bool __HadError=false;
 #define catch(x) ExitJmp:if(__HadError)
@@ -112,4 +113,34 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
   cuvsRMMFree(cuvsResources, distances, sizeof(float) * n_queries * topk);
   cuvsRMMFree(cuvsResources, neighbors, sizeof(uint32_t) * n_queries * topk);
   cuvsRMMFree(cuvsResources, queries_d, sizeof(float) * n_queries * dimensions);
+}
+
+void convert_cagra_to_hnsw(cuvsResources_t resources,
+                           const char* cagra_filename,
+                           const char* hnsw_filename,
+                           int* return_value) {
+    if (!resources || !cagra_filename || !hnsw_filename) {
+        *return_value = -1; // Invalid parameters
+        return;
+    }
+
+    // Step 1: Create and deserialize the CAGRA index
+    cuvsCagraIndex_t cagra_index;
+    cuvsCagraIndexCreate(&cagra_index);
+
+    *return_value = cuvsCagraDeserialize(resources, cagra_filename, cagra_index);
+    if (*return_value != 0) {
+        *return_value = -2; // CAGRA deserialization failed
+        cuvsCagraIndexDestroy(cagra_index);
+        return;
+    }
+
+    // Step 2: Serialize the CAGRA index to an HNSW-compatible file
+    *return_value = cuvsCagraSerializeToHnswlib(resources, hnsw_filename, cagra_index);
+    if (*return_value != 0) {
+        *return_value = -3; // Serialization to HNSW failed
+    }
+
+    // Cleanup
+    cuvsCagraIndexDestroy(cagra_index);
 }
