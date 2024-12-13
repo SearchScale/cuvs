@@ -56,7 +56,7 @@ public class CuVSResources implements AutoCloseable {
     linker = Linker.nativeLinker();
     arena = Arena.ofShared();
     
-    nativeCAGRALibrary = Util.loadLibraryFromJar("/libcuvs_java.so");
+    nativeCAGRALibrary = Util.loadLibraryFromJar("/libcuvs_java_cagra.so");
     cagraSymbolLookup = SymbolLookup.libraryLookup(nativeCAGRALibrary.getAbsolutePath(), arena);
 
     nativeBruteForceLibrary = Util.loadLibraryFromJar("/libcuvs_java_brute_force.so");
