@@ -93,28 +93,28 @@ public class CagraIndex {
    */
   private void initializeMethodHandles() throws IOException {
     indexMethodHandle = resources.linker.downcallHandle(
-        resources.getLibcuvsNativeLibrary().find("build_cagra_index").get(),
+        resources.getSymbolLookup().find("build_cagra_index").get(),
         FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, resources.linker.canonicalLayouts().get("long"),
             resources.linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS,
             ValueLayout.ADDRESS, ValueLayout.ADDRESS, resources.linker.canonicalLayouts().get("int")));
 
     searchMethodHandle = resources.linker.downcallHandle(
-        resources.getLibcuvsNativeLibrary().find("search_cagra_index").get(),
+        resources.getSymbolLookup().find("search_cagra_index").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS,
             resources.linker.canonicalLayouts().get("int"), resources.linker.canonicalLayouts().get("long"),
             resources.linker.canonicalLayouts().get("int"), ValueLayout.ADDRESS, ValueLayout.ADDRESS,
             ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
     serializeMethodHandle = resources.linker.downcallHandle(
-        resources.getLibcuvsNativeLibrary().find("serialize_cagra_index").get(),
+        resources.getSymbolLookup().find("serialize_cagra_index").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
     deserializeMethodHandle = resources.linker.downcallHandle(
-        resources.getLibcuvsNativeLibrary().find("deserialize_cagra_index").get(),
+        resources.getSymbolLookup().find("deserialize_cagra_index").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
     destroyIndexMethodHandle = resources.linker.downcallHandle(
-        resources.getLibcuvsNativeLibrary().find("destroy_cagra_index").get(),
+        resources.getSymbolLookup().find("destroy_cagra_index").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
   }
 

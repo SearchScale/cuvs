@@ -107,17 +107,7 @@
                                     <overWrite>false</overWrite>
                                     <outputDirectory>
                                         ${project.build.directory}/classes</outputDirectory>
-                                    <destFileName>libcuvs_java_cagra.so</destFileName>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>com.nvidia.cuvs</groupId>
-                                    <artifactId>cuvs-java-internal</artifactId>
-                                    <version>25.02</version>
-                                    <type>so</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>
-                                        ${project.build.directory}/classes</outputDirectory>
-                                    <destFileName>libcuvs_java_brute_force.so</destFileName>
+                                    <destFileName>libcuvs_java.so</destFileName>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

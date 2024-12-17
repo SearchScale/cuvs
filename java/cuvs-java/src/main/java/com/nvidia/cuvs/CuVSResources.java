@@ -37,14 +37,13 @@ public class CuVSResources implements AutoCloseable {
 
   public final Arena arena;
   public final Linker linker;
-  public final SymbolLookup cagraSymbolLookup;
-  public final SymbolLookup bruteforceSymbolLookup;
+  public final SymbolLookup symbolLookup;
 
-  protected File nativeCAGRALibrary;
-  protected File nativeBruteForceLibrary;
+  protected File nativeLibrary;
 
   private final MethodHandle createResourcesMethodHandle;
   private final MethodHandle destroyResourcesMethodHandle;
+
   private MemorySegment resourcesMemorySegment;
 
   /**
@@ -55,18 +54,16 @@ public class CuVSResources implements AutoCloseable {
   public CuVSResources() throws Throwable {
     linker = Linker.nativeLinker();
     arena = Arena.ofShared();
-    
-    nativeCAGRALibrary = Util.loadLibraryFromJar("/libcuvs_java_cagra.so");
-    cagraSymbolLookup = SymbolLookup.libraryLookup(nativeCAGRALibrary.getAbsolutePath(), arena);
 
-    nativeBruteForceLibrary = Util.loadLibraryFromJar("/libcuvs_java_brute_force.so");
-    bruteforceSymbolLookup = SymbolLookup.libraryLookup(nativeBruteForceLibrary.getAbsolutePath(), arena);
+    nativeLibrary = Util.loadLibraryFromJar("/libcuvs_java.so");
+    symbolLookup = SymbolLookup.libraryLookup(nativeLibrary.getAbsolutePath(), arena);
     
-    createResourcesMethodHandle = linker.downcallHandle(cagraSymbolLookup.find("create_resources").get(),
+    createResourcesMethodHandle = linker.downcallHandle(symbolLookup.find("create_resources").get(),
         FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-    destroyResourcesMethodHandle = linker.downcallHandle(cagraSymbolLookup.find("destroy_resources").get(),
+    destroyResourcesMethodHandle = linker.downcallHandle(symbolLookup.find("destroy_resources").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    
     createResources();
   }
 
@@ -90,7 +87,8 @@ public class CuVSResources implements AutoCloseable {
     } catch (Throwable e) {
       e.printStackTrace();
     }
-    nativeCAGRALibrary.delete();
+    //nativeCAGRALibrary.delete();
+    //nativeBruteForceLibrary.delete();
   }
 
   /**
@@ -103,9 +101,10 @@ public class CuVSResources implements AutoCloseable {
   }
 
   /**
-   * Returns the loaded libcuvs_java.so as a {@link SymbolLookup}
+   * Returns the loaded libcuvs_java_cagra.so as a {@link SymbolLookup}
    */
-  protected SymbolLookup getLibcuvsNativeLibrary() {
-    return cagraSymbolLookup;
+  protected SymbolLookup getSymbolLookup() {
+    return symbolLookup;
   }
+  
 }
