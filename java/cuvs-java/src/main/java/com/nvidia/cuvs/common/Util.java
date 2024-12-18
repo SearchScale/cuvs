@@ -41,8 +41,8 @@ public class Util {
       MemorySegment hnswPathSegment = toCString(arena, hnswFilePath);
 
       int result = (int) resources.cagraToHnswHandle.invokeExact(resources.getMemorySegment(), // resources
-          cagraPathSegment, // CAGRA index file path
-          hnswPathSegment // HNSW index file path
+          cagraPathSegment,
+          hnswPathSegment
       );
 
       if (result != 0) {

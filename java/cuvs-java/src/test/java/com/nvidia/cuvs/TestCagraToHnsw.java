@@ -4,6 +4,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -21,33 +23,43 @@ public class TestCagraToHnsw {
         String hnswFilePath = "hnsw_index.bin";
 
         try (CuVSResources resources = new CuVSResources()) {
-            // Build and serialize a CAGRA index
+            log.info("Starting CAGRA to HNSW test.");
+
+            // Step 1: Build a sample dataset
             float[][] dataset = {
                 {1.0f, 2.0f, 3.0f},
                 {4.0f, 5.0f, 6.0f},
                 {7.0f, 8.0f, 9.0f}
             };
 
+            log.info("Building CAGRA index...");
             CagraIndex cagraIndex = new CagraIndex.Builder(resources)
                 .withDataset(dataset)
                 .withIndexParams(new CagraIndexParams.Builder(resources).build())
                 .build();
+            log.info("CAGRA index built successfully.");
 
-            // Create a temporary file for intermediate serialization
+            log.info("Serializing CAGRA index to file: {}", cagraFilePath);
             File tempFile = File.createTempFile("cagra_temp_", ".tmp");
-
-            // Serialize CAGRA index to a file
             try (FileOutputStream outputStream = new FileOutputStream(cagraFilePath)) {
                 cagraIndex.serialize(outputStream, tempFile);
             }
+            assertTrue("CAGRA index file should exist", new File(cagraFilePath).exists());
+            log.info("CAGRA index serialized to: {}", cagraFilePath);
 
-            // Convert the CAGRA index to HNSW format
+            log.info("Converting CAGRA index to HNSW format...");
             Util.serializeCagraToHnsw(resources, cagraFilePath, hnswFilePath);
 
-            // Verify the HNSW index file
             File hnswFile = new File(hnswFilePath);
             assertTrue("HNSW index file should exist", hnswFile.exists());
             log.info("HNSW index file successfully created at: {}", hnswFilePath);
+
+            Files.deleteIfExists(Path.of(cagraFilePath));
+            Files.deleteIfExists(Path.of(hnswFilePath));
+            log.info("Test completed successfully. Temporary files cleaned up.");
+        } catch (Exception e) {
+            log.error("Test failed: ", e);
+            throw e; // Re-throw exception to mark test as failed
         }
     }
 }

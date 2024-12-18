@@ -120,15 +120,35 @@ void convert_cagra_to_hnsw(cuvsResources_t resources,
                            int* return_value) {
     if (!resources || !cagra_filename || !hnsw_filename) {
         *return_value = -1; // Invalid parameters
+        printf("Error: Invalid parameters provided\n");
         return;
     }
 
-    // direct conversion from CAGRA to HNSW
-    *return_value = cuvsCagraSerializeToHnswlib(resources, hnsw_filename, cagra_filename);
-    if (*return_value != 0) {
-        printf("Error: Failed to serialize directly to HNSW format\n");
+    printf("Initializing conversion: CAGRA -> HNSW\n");
+    printf("CAGRA file: %s\n", cagra_filename);
+    printf("HNSW file: %s\n", hnsw_filename);
+
+    cuvsCagraIndex_t cagra_index;
+    cuvsCagraIndexCreate(&cagra_index);
+
+    // Step 1: Deserialize the CAGRA index
+    *return_value = cuvsCagraDeserialize(resources, cagra_filename, cagra_index);
+    if (*return_value != CUVS_SUCCESS) {
+        printf("Error: Failed to deserialize CAGRA index. Error code: %d\n", *return_value);
+        cuvsCagraIndexDestroy(cagra_index);
+        return;
+    }
+    printf("Successfully deserialized CAGRA index\n");
+
+    // Step 2: Serialize to HNSW format
+    *return_value = cuvsCagraSerializeToHnswlib(resources, hnsw_filename, cagra_index);
+    if (*return_value != CUVS_SUCCESS) {
+        printf("Error: Failed to serialize to HNSW format. Error code: %d\n", *return_value);
+        cuvsCagraIndexDestroy(cagra_index);
         return;
     }
 
     printf("Successfully serialized CAGRA index to HNSW format: %s\n", hnsw_filename);
+    cuvsCagraIndexDestroy(cagra_index);
 }
+
