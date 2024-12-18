@@ -46,6 +46,8 @@ public class CuVSResources implements AutoCloseable {
 
   private MemorySegment resourcesMemorySegment;
 
+  private MemoryLayout intMemoryLayout;
+
   /**
    * Constructor that allocates the resources needed for cuVS
    * 
@@ -57,13 +59,14 @@ public class CuVSResources implements AutoCloseable {
 
     nativeLibrary = Util.loadLibraryFromJar("/libcuvs_java.so");
     symbolLookup = SymbolLookup.libraryLookup(nativeLibrary.getAbsolutePath(), arena);
-    
+    intMemoryLayout = linker.canonicalLayouts().get("int");
+
     createResourcesMethodHandle = linker.downcallHandle(symbolLookup.find("create_resources").get(),
         FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
     destroyResourcesMethodHandle = linker.downcallHandle(symbolLookup.find("destroy_resources").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
-    
+
     createResources();
   }
 
@@ -73,22 +76,21 @@ public class CuVSResources implements AutoCloseable {
    * @throws Throwable exception thrown when native function is invoked
    */
   public void createResources() throws Throwable {
-    MemoryLayout returnValueMemoryLayout = linker.canonicalLayouts().get("int");
+    MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
     resourcesMemorySegment = (MemorySegment) createResourcesMethodHandle.invokeExact(returnValueMemorySegment);
   }
 
   @Override
   public void close() {
-    MemoryLayout returnValueMemoryLayout = linker.canonicalLayouts().get("int");
+    MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
     try {
       destroyResourcesMethodHandle.invokeExact(resourcesMemorySegment, returnValueMemorySegment);
     } catch (Throwable e) {
       e.printStackTrace();
     }
-    //nativeCAGRALibrary.delete();
-    //nativeBruteForceLibrary.delete();
+     nativeLibrary.delete();
   }
 
   /**
@@ -106,5 +108,5 @@ public class CuVSResources implements AutoCloseable {
   protected SymbolLookup getSymbolLookup() {
     return symbolLookup;
   }
-  
+
 }

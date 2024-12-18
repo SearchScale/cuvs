@@ -43,6 +43,9 @@ public class BruteForceIndex {
   private MethodHandle destroyIndexMethodHandle;
   private IndexReference bruteForceIndexReference;
   private BruteForceIndexParams bruteForceIndexParams;
+  private MemoryLayout longMemoryLayout;
+  private MemoryLayout intMemoryLayout;
+  private MemoryLayout floatMemoryLayout;
 
   /*
    * Constructor for building the index using specified dataset
@@ -52,6 +55,10 @@ public class BruteForceIndex {
     this.dataset = dataset;
     this.resources = resources;
     this.bruteForceIndexParams = bruteForceIndexParams;
+
+    longMemoryLayout = resources.linker.canonicalLayouts().get("long");
+    intMemoryLayout = resources.linker.canonicalLayouts().get("int");
+    floatMemoryLayout = resources.linker.canonicalLayouts().get("float");
 
     initializeMethodHandles();
     this.bruteForceIndexReference = build();
@@ -74,16 +81,13 @@ public class BruteForceIndex {
   private void initializeMethodHandles() throws IOException {
     indexMethodHandle = resources.linker.downcallHandle(
         resources.getSymbolLookup().find("build_brute_force_index").get(),
-        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, resources.linker.canonicalLayouts().get("long"),
-            resources.linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-            resources.linker.canonicalLayouts().get("int")));
+        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, longMemoryLayout, longMemoryLayout,
+            ValueLayout.ADDRESS, ValueLayout.ADDRESS, intMemoryLayout));
 
     searchMethodHandle = resources.linker.downcallHandle(
         resources.getSymbolLookup().find("search_brute_force_index").get(),
-        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-            resources.linker.canonicalLayouts().get("int"), resources.linker.canonicalLayouts().get("long"),
-            resources.linker.canonicalLayouts().get("int"), ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-            ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, intMemoryLayout, longMemoryLayout,
+            intMemoryLayout, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
     destroyIndexMethodHandle = resources.linker.downcallHandle(
         resources.getSymbolLookup().find("destroy_brute_force_index").get(),
@@ -91,7 +95,7 @@ public class BruteForceIndex {
   }
 
   public void destroyIndex() throws Throwable {
-    MemoryLayout returnValueMemoryLayout = resources.linker.canonicalLayouts().get("int");
+    MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
     destroyIndexMethodHandle.invokeExact(bruteForceIndexReference.getMemorySegment(), returnValueMemorySegment);
   }
@@ -107,7 +111,7 @@ public class BruteForceIndex {
     long rows = dataset.length;
     long cols = rows > 0 ? dataset[0].length : 0;
 
-    MemoryLayout returnValueMemoryLayout = resources.linker.canonicalLayouts().get("int");
+    MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
 
     IndexReference indexReference = new IndexReference((MemorySegment) indexMethodHandle.invokeExact(
@@ -130,13 +134,11 @@ public class BruteForceIndex {
     long numBlocks = cuvsQuery.getTopK() * numQueries;
     int vectorDimension = numQueries > 0 ? cuvsQuery.getQueryVectors()[0].length : 0;
 
-    SequenceLayout neighborsSequenceLayout = MemoryLayout.sequenceLayout(numBlocks,
-        resources.linker.canonicalLayouts().get("int"));
-    SequenceLayout distancesSequenceLayout = MemoryLayout.sequenceLayout(numBlocks,
-        resources.linker.canonicalLayouts().get("float"));
+    SequenceLayout neighborsSequenceLayout = MemoryLayout.sequenceLayout(numBlocks, intMemoryLayout);
+    SequenceLayout distancesSequenceLayout = MemoryLayout.sequenceLayout(numBlocks, floatMemoryLayout);
     MemorySegment neighborsMemorySegment = resources.arena.allocate(neighborsSequenceLayout);
     MemorySegment distancesMemorySegment = resources.arena.allocate(distancesSequenceLayout);
-    MemoryLayout returnValueMemoryLayout = resources.linker.canonicalLayouts().get("int");
+    MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
 
     searchMethodHandle.invokeExact(bruteForceIndexReference.getMemorySegment(),
