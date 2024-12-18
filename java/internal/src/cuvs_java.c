@@ -66,8 +66,7 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
 
   index_params->compression = compression_params;
   *returnValue = cuvsCagraBuild(cuvsResources, index_params, &dataset_tensor, index);
-
-  omp_set_num_threads(1);
+    omp_set_num_threads(1);
 
   return index;
 }
@@ -124,23 +123,12 @@ void convert_cagra_to_hnsw(cuvsResources_t resources,
         return;
     }
 
-    // Step 1: Create and deserialize the CAGRA index
-    cuvsCagraIndex_t cagra_index;
-    cuvsCagraIndexCreate(&cagra_index);
-
-    *return_value = cuvsCagraDeserialize(resources, cagra_filename, cagra_index);
+    // direct conversion from CAGRA to HNSW
+    *return_value = cuvsCagraSerializeToHnswlib(resources, hnsw_filename, cagra_filename);
     if (*return_value != 0) {
-        *return_value = -2; // CAGRA deserialization failed
-        cuvsCagraIndexDestroy(cagra_index);
+        printf("Error: Failed to serialize directly to HNSW format\n");
         return;
     }
 
-    // Step 2: Serialize the CAGRA index to an HNSW-compatible file
-    *return_value = cuvsCagraSerializeToHnswlib(resources, hnsw_filename, cagra_index);
-    if (*return_value != 0) {
-        *return_value = -3; // Serialization to HNSW failed
-    }
-
-    // Cleanup
-    cuvsCagraIndexDestroy(cagra_index);
+    printf("Successfully serialized CAGRA index to HNSW format: %s\n", hnsw_filename);
 }
