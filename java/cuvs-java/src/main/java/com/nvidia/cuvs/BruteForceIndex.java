@@ -41,7 +41,7 @@ public class BruteForceIndex {
   private MethodHandle indexMethodHandle;
   private MethodHandle searchMethodHandle;
   private MethodHandle destroyIndexMethodHandle;
-  private IndexReference cagraIndexReference;
+  private IndexReference bruteForceIndexReference;
 
   /*
    * Constructor for building the index using specified dataset
@@ -51,7 +51,7 @@ public class BruteForceIndex {
     this.resources = resources;
 
     initializeMethodHandles();
-    this.cagraIndexReference = build();
+    this.bruteForceIndexReference = build();
   }
 
   /**
@@ -91,7 +91,7 @@ public class BruteForceIndex {
   public void destroyIndex() throws Throwable {
     MemoryLayout returnValueMemoryLayout = resources.linker.canonicalLayouts().get("int");
     MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
-    destroyIndexMethodHandle.invokeExact(cagraIndexReference.getMemorySegment(), returnValueMemorySegment);
+    destroyIndexMethodHandle.invokeExact(bruteForceIndexReference.getMemorySegment(), returnValueMemorySegment);
   }
 
   /**
@@ -137,7 +137,7 @@ public class BruteForceIndex {
     MemoryLayout returnValueMemoryLayout = resources.linker.canonicalLayouts().get("int");
     MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
 
-    searchMethodHandle.invokeExact(cagraIndexReference.getMemorySegment(),
+    searchMethodHandle.invokeExact(bruteForceIndexReference.getMemorySegment(),
         Util.buildMemorySegment(resources.linker, resources.arena, cuvsQuery.getQueryVectors()), cuvsQuery.getTopK(),
         numQueries, vectorDimension, resources.getMemorySegment(), neighborsMemorySegment, distancesMemorySegment,
         returnValueMemorySegment);

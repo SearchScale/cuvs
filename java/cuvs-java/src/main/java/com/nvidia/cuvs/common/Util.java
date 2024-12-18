@@ -82,9 +82,7 @@ public class Util {
     }
     // Obtain filename from path
     String[] parts = path.split("/");
-    System.out.println(Arrays.toString(parts));
     String filename = (parts.length > 1) ? parts[parts.length - 1] : null;
-    System.out.println(filename);
 
     // Split filename to prefix and suffix (extension)
     String prefix = "";
@@ -94,7 +92,6 @@ public class Util {
       prefix = parts[0];
       suffix = (parts.length > 1) ? "." + parts[parts.length - 1] : null;
     }
-    System.out.println(prefix + " : " + suffix);
     // Prepare temporary file
     File temp = File.createTempFile(prefix, suffix);
     IOUtils.copy(Util.class.getResourceAsStream(path), new FileOutputStream(temp));

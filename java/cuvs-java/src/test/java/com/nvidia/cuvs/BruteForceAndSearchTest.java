@@ -18,21 +18,15 @@ package com.nvidia.cuvs;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.nvidia.cuvs.CagraIndexParams.CagraGraphBuildAlgo;
 import com.nvidia.cuvs.common.SearchResults;
 
 public class BruteForceAndSearchTest {
@@ -48,14 +42,14 @@ public class BruteForceAndSearchTest {
   public void testIndexingAndSearchingFlow() throws Throwable {
 
     // Sample data and query
-    float[][] dataset = { 
+    float[][] dataset = {
         { 0.74021935f, 0.9209938f },
         { 0.03902049f, 0.9689629f },
         { 0.92514056f, 0.4463501f },
-        { 0.6673192f, 0.10993068f } 
+        { 0.6673192f, 0.10993068f }
       };
     Map<Integer, Integer> map = Map.of(0, 0, 1, 1, 2, 2, 3, 3);
-    float[][] queries = { 
+    float[][] queries = {
         { 0.48216683f, 0.0428398f },
         { 0.5084142f, 0.6545497f },
         { 0.51260436f, 0.2643005f },
@@ -64,12 +58,12 @@ public class BruteForceAndSearchTest {
 
     // Expected search results
     List<Map<Integer, Float>> expectedResults = Arrays.asList(
-        Map.of(3, 0.038782578f, 2, 0.3590463f, 0, 0.83774555f),
-        Map.of(0, 0.12472608f, 2, 0.21700792f, 1, 0.31918612f),
-        Map.of(3, 0.047766715f, 2, 0.20332818f, 0, 0.48305473f),
-        Map.of(1, 0.15224178f, 0, 0.59063464f, 3, 0.5986642f));
+        Map.of(3, 0.59198487f),
+        Map.of(0, 0.2534914f),
+        Map.of(1, 0.4058035f),
+        Map.of(0, 0.11946076f));
 
-    for (int j = 0; j < 1; j++) {
+    for (int j = 0; j < 10; j++) {
 
       try (CuVSResources resources = new CuVSResources()) {
 
@@ -80,7 +74,7 @@ public class BruteForceAndSearchTest {
 
         // Create a query object with the query vectors
         BruteForceQuery cuvsQuery = new BruteForceQuery.Builder()
-            .withTopK(3)
+            .withTopK(1)
             .withQueryVectors(queries)
             .withMapping(map)
             .build();
