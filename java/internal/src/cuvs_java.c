@@ -128,9 +128,9 @@ void destroy_brute_force_index(cuvsBruteForceIndex_t index, int *returnValue) {
 }
 
 cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long dimensions, cuvsResources_t cuvsResources,
-  int *returnValue) {
+  int *returnValue, int numWriterThreads) {
 
-  omp_set_num_threads(32);
+  omp_set_num_threads(numWriterThreads);
   cuvsRMMPoolMemoryResourceEnable(95, 95, false);
 
   cudaStream_t stream;

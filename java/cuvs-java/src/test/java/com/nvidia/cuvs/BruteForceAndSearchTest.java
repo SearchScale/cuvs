@@ -66,10 +66,15 @@ public class BruteForceAndSearchTest {
     for (int j = 0; j < 10; j++) {
 
       try (CuVSResources resources = new CuVSResources()) {
+        
+        BruteForceIndexParams indexParams = new BruteForceIndexParams.Builder()
+            .withNumWriterThreads(32)
+            .build();
 
         // Create the index with the dataset
         BruteForceIndex index = new BruteForceIndex.Builder(resources)
             .withDataset(dataset)
+            .withIndexParams(indexParams)
             .build();
 
         // Create a query object with the query vectors

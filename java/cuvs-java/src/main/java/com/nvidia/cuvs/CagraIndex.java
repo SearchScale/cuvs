@@ -135,8 +135,8 @@ public class CagraIndex {
     long rows = dataset.length;
     long cols = rows > 0 ? dataset[0].length : 0;
 
-    MemoryLayout layout = resources.linker.canonicalLayouts().get("int");
-    MemorySegment segment = resources.arena.allocate(layout);
+    MemoryLayout returnValueMemoryLayout = resources.linker.canonicalLayouts().get("int");
+    MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
 
     MemorySegment indexParamsMemorySegment = cagraIndexParameters != null ? cagraIndexParameters.getMemorySegment()
         : MemorySegment.NULL;
@@ -149,7 +149,7 @@ public class CagraIndex {
 
     IndexReference indexReference = new IndexReference((MemorySegment) indexMethodHandle.invokeExact(
         Util.buildMemorySegment(resources.linker, resources.arena, dataset), rows, cols, resources.getMemorySegment(),
-        segment, indexParamsMemorySegment, compressionParamsMemorySegment, numWriterThreads));
+        returnValueMemorySegment, indexParamsMemorySegment, compressionParamsMemorySegment, numWriterThreads));
 
     return indexReference;
   }

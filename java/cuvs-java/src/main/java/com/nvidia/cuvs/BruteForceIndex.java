@@ -42,13 +42,16 @@ public class BruteForceIndex {
   private MethodHandle searchMethodHandle;
   private MethodHandle destroyIndexMethodHandle;
   private IndexReference bruteForceIndexReference;
+  private BruteForceIndexParams bruteForceIndexParams;
 
   /*
    * Constructor for building the index using specified dataset
    */
-  private BruteForceIndex(float[][] dataset, CuVSResources resources) throws Throwable {
+  private BruteForceIndex(float[][] dataset, CuVSResources resources, BruteForceIndexParams bruteForceIndexParams)
+      throws Throwable {
     this.dataset = dataset;
     this.resources = resources;
+    this.bruteForceIndexParams = bruteForceIndexParams;
 
     initializeMethodHandles();
     this.bruteForceIndexReference = build();
@@ -60,7 +63,6 @@ public class BruteForceIndex {
   private BruteForceIndex(InputStream inputStream, CuVSResources resources) throws Throwable {
     this.dataset = null;
     this.resources = resources;
-
     initializeMethodHandles();
   }
 
@@ -70,11 +72,11 @@ public class BruteForceIndex {
    * @throws IOException @{@link IOException} is unable to load the native library
    */
   private void initializeMethodHandles() throws IOException {
-    indexMethodHandle = resources.linker
-        .downcallHandle(resources.getSymbolLookup().find("build_brute_force_index").get(),
-            FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-                resources.linker.canonicalLayouts().get("long"), resources.linker.canonicalLayouts().get("long"),
-                ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    indexMethodHandle = resources.linker.downcallHandle(
+        resources.getSymbolLookup().find("build_brute_force_index").get(),
+        FunctionDescriptor.of(ValueLayout.ADDRESS, ValueLayout.ADDRESS, resources.linker.canonicalLayouts().get("long"),
+            resources.linker.canonicalLayouts().get("long"), ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+            resources.linker.canonicalLayouts().get("int")));
 
     searchMethodHandle = resources.linker.downcallHandle(
         resources.getSymbolLookup().find("search_brute_force_index").get(),
@@ -105,12 +107,12 @@ public class BruteForceIndex {
     long rows = dataset.length;
     long cols = rows > 0 ? dataset[0].length : 0;
 
-    MemoryLayout layout = resources.linker.canonicalLayouts().get("int");
-    MemorySegment segment = resources.arena.allocate(layout);
+    MemoryLayout returnValueMemoryLayout = resources.linker.canonicalLayouts().get("int");
+    MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
 
     IndexReference indexReference = new IndexReference((MemorySegment) indexMethodHandle.invokeExact(
         Util.buildMemorySegment(resources.linker, resources.arena, dataset), rows, cols, resources.getMemorySegment(),
-        segment));
+        returnValueMemorySegment, bruteForceIndexParams.getNumWriterThreads()));
 
     return indexReference;
   }
@@ -119,8 +121,8 @@ public class BruteForceIndex {
    * Invokes the native search_index via the Panama API for searching a CAGRA
    * index.
    * 
-   * @param cuvsQuery an instance of {@link CagraQuery} holding the query vectors and
-   *              other parameters
+   * @param cuvsQuery an instance of {@link CagraQuery} holding the query vectors
+   *                  and other parameters
    * @return an instance of {@link CagraSearchResults} containing the results
    */
   public BruteForceSearchResults search(BruteForceQuery cuvsQuery) throws Throwable {
@@ -153,6 +155,7 @@ public class BruteForceIndex {
 
     private float[][] dataset;
     private CuVSResources cuvsResources;
+    private BruteForceIndexParams bruteForceIndexParams;
     private InputStream inputStream;
 
     /**
@@ -162,6 +165,18 @@ public class BruteForceIndex {
      */
     public Builder(CuVSResources cuvsResources) {
       this.cuvsResources = cuvsResources;
+    }
+
+    /**
+     * Registers an instance of configured {@link BruteForceIndexParams} with this
+     * Builder.
+     * 
+     * @param bruteForceIndexParams An instance of BruteForceIndexParams.
+     * @return An instance of this Builder.
+     */
+    public Builder withIndexParams(BruteForceIndexParams bruteForceIndexParams) {
+      this.bruteForceIndexParams = bruteForceIndexParams;
+      return this;
     }
 
     /**
@@ -196,7 +211,7 @@ public class BruteForceIndex {
       if (inputStream != null) {
         return new BruteForceIndex(inputStream, cuvsResources);
       } else {
-        return new BruteForceIndex(dataset, cuvsResources);
+        return new BruteForceIndex(dataset, cuvsResources, bruteForceIndexParams);
       }
     }
   }
