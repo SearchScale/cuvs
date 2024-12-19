@@ -37,12 +37,12 @@ void destroy_resources(cuvsResources_t cuvsResources, int *returnValue) {
   *returnValue = cuvsResourcesDestroy(cuvsResources);
 }
 
-DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code, int bits) {
+DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code, int bits, int ndim) {
   DLManagedTensor tensor;
 
   tensor.dl_tensor.data = data;
   tensor.dl_tensor.device.device_type = kDLCUDA;
-  tensor.dl_tensor.ndim = 2;
+  tensor.dl_tensor.ndim = ndim;
   tensor.dl_tensor.dtype.code = code;
   tensor.dl_tensor.dtype.bits = bits;
   tensor.dl_tensor.dtype.lanes = 1;
@@ -62,7 +62,7 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
   cuvsRMMPoolMemoryResourceEnable(95, 95, false);
 
   int64_t dataset_shape[2] = {rows, dimensions};
-  DLManagedTensor dataset_tensor = prepare_tensor(dataset, dataset_shape, kDLFloat, 32);
+  DLManagedTensor dataset_tensor = prepare_tensor(dataset, dataset_shape, kDLFloat, 32, 2);
 
   cuvsCagraIndex_t index;
   cuvsCagraIndexCreate(&index);
@@ -103,13 +103,13 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
   cudaMemcpy(queries_d, queries, sizeof(float) * n_queries * dimensions, cudaMemcpyDefault);
 
   int64_t queries_shape[2] = {n_queries, dimensions};
-  DLManagedTensor queries_tensor = prepare_tensor(queries_d, queries_shape, kDLFloat, 32);
+  DLManagedTensor queries_tensor = prepare_tensor(queries_d, queries_shape, kDLFloat, 32, 2);
 
   int64_t neighbors_shape[2] = {n_queries, topk};
-  DLManagedTensor neighbors_tensor = prepare_tensor(neighbors, neighbors_shape, kDLUInt, 32);
+  DLManagedTensor neighbors_tensor = prepare_tensor(neighbors, neighbors_shape, kDLUInt, 32, 2);
 
   int64_t distances_shape[2] = {n_queries, topk};
-  DLManagedTensor distances_tensor = prepare_tensor(distances, distances_shape, kDLFloat, 32);
+  DLManagedTensor distances_tensor = prepare_tensor(distances, distances_shape, kDLFloat, 32, 2);
 
   cuvsStreamSync(cuvsResources);
   *returnValue = cuvsCagraSearch(cuvsResources, search_params, index, &queries_tensor, &neighbors_tensor,
@@ -141,7 +141,7 @@ cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long di
   cudaMemcpy(dataset_d, dataset, sizeof(float) * rows * dimensions, cudaMemcpyDefault);
 
   int64_t dataset_shape[2] = {rows, dimensions};
-  DLManagedTensor dataset_tensor = prepare_tensor(dataset_d, dataset_shape, kDLFloat, 32);
+  DLManagedTensor dataset_tensor = prepare_tensor(dataset_d, dataset_shape, kDLFloat, 32, 2);
 
   cuvsBruteForceIndex_t index;
   cuvsError_t index_create_status = cuvsBruteForceIndexCreate(&index);
@@ -156,30 +156,46 @@ cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long di
 }
 
 void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int topk, long n_queries, int dimensions, 
-    cuvsResources_t cuvsResources, int *neighbors_h, float *distances_h, int *returnValue) {
+    cuvsResources_t cuvsResources, int *neighbors_h, float *distances_h, int *returnValue, long *prefilter_data,
+    long prefilter_data_length) {
 
   cudaStream_t stream;
   cuvsStreamGet(cuvsResources, &stream);
 
   int64_t *neighbors;
   float *distances, *queries_d;
+  long *prefilter_data_d;
   cuvsRMMAlloc(cuvsResources, (void**) &queries_d, sizeof(float) * n_queries * dimensions);
   cuvsRMMAlloc(cuvsResources, (void**) &neighbors, sizeof(int64_t) * n_queries * topk);
   cuvsRMMAlloc(cuvsResources, (void**) &distances, sizeof(float) * n_queries * topk);
+  cuvsRMMAlloc(cuvsResources, (void**) &prefilter_data_d, sizeof(long) * prefilter_data_length);
 
   cudaMemcpy(queries_d, queries, sizeof(float) * n_queries * dimensions, cudaMemcpyDefault);
+  cudaMemcpy(prefilter_data_d, prefilter_data, sizeof(long) * prefilter_data_length, cudaMemcpyDefault);
 
   int64_t queries_shape[2] = {n_queries, dimensions};
-  DLManagedTensor queries_tensor = prepare_tensor(queries_d, queries_shape, kDLFloat, 32);
+  DLManagedTensor queries_tensor = prepare_tensor(queries_d, queries_shape, kDLFloat, 32, 2);
 
   int64_t neighbors_shape[2] = {n_queries, topk};
-  DLManagedTensor neighbors_tensor = prepare_tensor(neighbors, neighbors_shape, kDLInt, 64);
+  DLManagedTensor neighbors_tensor = prepare_tensor(neighbors, neighbors_shape, kDLInt, 64, 2);
 
   int64_t distances_shape[2] = {n_queries, topk};
-  DLManagedTensor distances_tensor = prepare_tensor(distances, distances_shape, kDLFloat, 32);
+  DLManagedTensor distances_tensor = prepare_tensor(distances, distances_shape, kDLFloat, 32, 2);
 
-  DLManagedTensor bitmap;
-  cuvsFilter prefilter = {(uintptr_t)NULL, NO_FILTER};
+  cuvsFilter prefilter;
+  if (prefilter_data == NULL) {
+    prefilter.type = NO_FILTER;
+    prefilter.addr = (uintptr_t)NULL;
+  } else {
+    printf("prefilter_data_length: %ld\n", prefilter_data_length);
+    for (int i = 0; i < prefilter_data_length; i++) {
+      printf("* %ld *\n", *(prefilter_data + 1));
+    }
+    int64_t prefilter_shape[1] = {prefilter_data_length};
+    DLManagedTensor prefilter_tensor = prepare_tensor(prefilter_data_d, prefilter_shape, kDLUInt, 32, 1);
+    prefilter.type = BITMAP;
+    prefilter.addr = (uintptr_t)&prefilter_tensor;
+  }
 
   cuvsStreamSync(cuvsResources);
   *returnValue = cuvsBruteForceSearch(cuvsResources, index, &queries_tensor, &neighbors_tensor, &distances_tensor, prefilter);

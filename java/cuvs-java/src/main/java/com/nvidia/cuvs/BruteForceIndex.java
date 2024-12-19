@@ -17,7 +17,6 @@
 package com.nvidia.cuvs;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
@@ -37,6 +36,7 @@ import com.nvidia.cuvs.panama.cuvsCagraIndex;
 public class BruteForceIndex {
 
   private final float[][] dataset;
+  private final long[] prefilterData;
   private final CuVSResources resources;
   private MethodHandle indexMethodHandle;
   private MethodHandle searchMethodHandle;
@@ -50,9 +50,10 @@ public class BruteForceIndex {
   /*
    * Constructor for building the index using specified dataset
    */
-  private BruteForceIndex(float[][] dataset, CuVSResources resources, BruteForceIndexParams bruteForceIndexParams)
-      throws Throwable {
+  private BruteForceIndex(float[][] dataset, CuVSResources resources, BruteForceIndexParams bruteForceIndexParams,
+      long[] prefilterData) throws Throwable {
     this.dataset = dataset;
+    this.prefilterData = prefilterData;
     this.resources = resources;
     this.bruteForceIndexParams = bruteForceIndexParams;
 
@@ -62,15 +63,6 @@ public class BruteForceIndex {
 
     initializeMethodHandles();
     this.bruteForceIndexReference = build();
-  }
-
-  /**
-   * Constructor for loading the index from an {@link InputStream}
-   */
-  private BruteForceIndex(InputStream inputStream, CuVSResources resources) throws Throwable {
-    this.dataset = null;
-    this.resources = resources;
-    initializeMethodHandles();
   }
 
   /**
@@ -87,7 +79,8 @@ public class BruteForceIndex {
     searchMethodHandle = resources.linker.downcallHandle(
         resources.getSymbolLookup().find("search_brute_force_index").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, intMemoryLayout, longMemoryLayout,
-            intMemoryLayout, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+            intMemoryLayout, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+            ValueLayout.ADDRESS, longMemoryLayout));
 
     destroyIndexMethodHandle = resources.linker.downcallHandle(
         resources.getSymbolLookup().find("destroy_brute_force_index").get(),
@@ -133,6 +126,7 @@ public class BruteForceIndex {
     long numQueries = cuvsQuery.getQueryVectors().length;
     long numBlocks = cuvsQuery.getTopK() * numQueries;
     int vectorDimension = numQueries > 0 ? cuvsQuery.getQueryVectors()[0].length : 0;
+    long prefilterDataLength = prefilterData != null ? prefilterData.length : 0;
 
     SequenceLayout neighborsSequenceLayout = MemoryLayout.sequenceLayout(numBlocks, intMemoryLayout);
     SequenceLayout distancesSequenceLayout = MemoryLayout.sequenceLayout(numBlocks, floatMemoryLayout);
@@ -140,11 +134,14 @@ public class BruteForceIndex {
     MemorySegment distancesMemorySegment = resources.arena.allocate(distancesSequenceLayout);
     MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
+    MemorySegment prefilterDataMemorySegment = prefilterData != null
+        ? Util.buildMemorySegment(resources.linker, resources.arena, prefilterData)
+        : MemorySegment.NULL;
 
     searchMethodHandle.invokeExact(bruteForceIndexReference.getMemorySegment(),
         Util.buildMemorySegment(resources.linker, resources.arena, cuvsQuery.getQueryVectors()), cuvsQuery.getTopK(),
         numQueries, vectorDimension, resources.getMemorySegment(), neighborsMemorySegment, distancesMemorySegment,
-        returnValueMemorySegment);
+        returnValueMemorySegment, prefilterDataMemorySegment, prefilterDataLength);
 
     return new BruteForceSearchResults(neighborsSequenceLayout, distancesSequenceLayout, neighborsMemorySegment,
         distancesMemorySegment, cuvsQuery.getTopK(), cuvsQuery.getMapping(), numQueries);
@@ -156,9 +153,9 @@ public class BruteForceIndex {
   public static class Builder {
 
     private float[][] dataset;
+    private long[] prefilterData;
     private CuVSResources cuvsResources;
     private BruteForceIndexParams bruteForceIndexParams;
-    private InputStream inputStream;
 
     /**
      * Constructs this Builder with an instance of {@link CuVSResources}.
@@ -182,18 +179,6 @@ public class BruteForceIndex {
     }
 
     /**
-     * Sets an instance of InputStream typically used when index deserialization is
-     * needed.
-     * 
-     * @param inputStream an instance of {@link InputStream}
-     * @return an instance of this Builder
-     */
-    public Builder from(InputStream inputStream) {
-      this.inputStream = inputStream;
-      return this;
-    }
-
-    /**
      * Sets the dataset for building the {@link BruteForceIndex}.
      * 
      * @param dataset a two-dimensional float array
@@ -205,16 +190,23 @@ public class BruteForceIndex {
     }
 
     /**
+     * Sets the dataset for building the {@link BruteForceIndex}.
+     * 
+     * @param dataset a two-dimensional float array
+     * @return an instance of this Builder
+     */
+    public Builder withPrefilterData(long[] prefilterData) {
+      this.prefilterData = prefilterData;
+      return this;
+    }
+
+    /**
      * Builds and returns an instance of CagraIndex.
      * 
      * @return an instance of CagraIndex
      */
     public BruteForceIndex build() throws Throwable {
-      if (inputStream != null) {
-        return new BruteForceIndex(inputStream, cuvsResources);
-      } else {
-        return new BruteForceIndex(dataset, cuvsResources, bruteForceIndexParams);
-      }
+      return new BruteForceIndex(dataset, cuvsResources, bruteForceIndexParams, prefilterData);
     }
   }
 
