@@ -152,3 +152,49 @@ void convert_cagra_to_hnsw(cuvsResources_t resources,
     cuvsCagraIndexDestroy(cagra_index);
 }
 
+void search_hnsw_index(cuvsHnswIndex_t index, 
+                       float* queries, 
+                       int topk, 
+                       long n_queries, 
+                       int dimensions, 
+                       cuvsResources_t cuvsResources, 
+                       uint64_t* neighbors_h, 
+                       float* distances_h, 
+                       int* returnValue, 
+                       cuvsHnswSearchParams_t search_params) {
+
+    uint64_t* neighbors;
+    float* distances;
+    float* queries_d;
+
+    cuvsRMMAlloc(cuvsResources, (void**)&queries_d, sizeof(float) * n_queries * dimensions);
+    cuvsRMMAlloc(cuvsResources, (void**)&neighbors, sizeof(uint64_t) * n_queries * topk);
+    cuvsRMMAlloc(cuvsResources, (void**)&distances, sizeof(float) * n_queries * topk);
+
+    cudaMemcpy(queries_d, queries, sizeof(float) * n_queries * dimensions, cudaMemcpyDefault);
+
+    int64_t queries_shape[2] = {n_queries, dimensions};
+    DLManagedTensor queries_tensor = prepare_tensor(queries_d, queries_shape, kDLFloat);
+
+    int64_t neighbors_shape[2] = {n_queries, topk};
+    DLManagedTensor neighbors_tensor = prepare_tensor(neighbors, neighbors_shape, kDLUInt);
+
+    int64_t distances_shape[2] = {n_queries, topk};
+    DLManagedTensor distances_tensor = prepare_tensor(distances, distances_shape, kDLFloat);
+
+    *returnValue = cuvsHnswSearch(cuvsResources, search_params, index, &queries_tensor, &neighbors_tensor, &distances_tensor);
+
+    if (*returnValue != CUVS_SUCCESS) {
+        printf("Error: Search failed. Error code: %d\n", *returnValue);
+    } else {
+        printf("Search completed successfully\n");
+    }
+
+    cudaMemcpy(neighbors_h, neighbors, sizeof(uint64_t) * n_queries * topk, cudaMemcpyDefault);
+    cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
+
+    cuvsRMMFree(cuvsResources, distances, sizeof(float) * n_queries * topk);
+    cuvsRMMFree(cuvsResources, neighbors, sizeof(uint64_t) * n_queries * topk);
+    cuvsRMMFree(cuvsResources, queries_d, sizeof(float) * n_queries * dimensions);
+}
+

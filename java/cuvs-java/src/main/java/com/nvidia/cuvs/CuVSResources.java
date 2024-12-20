@@ -43,6 +43,7 @@ public class CuVSResources implements AutoCloseable {
   private final MethodHandle createResourcesMethodHandle;
   private final MethodHandle destroyResourcesMethodHandle;
   public final MethodHandle cagraToHnswHandle;
+  public final MethodHandle hnswSearchHandle;
   private MemorySegment resourcesMemorySegment;
 
   /**
@@ -65,8 +66,13 @@ public class CuVSResources implements AutoCloseable {
     cagraToHnswHandle = linker.downcallHandle(
         libcuvsNativeLibrary.find("convert_cagra_to_hnsw")
             .orElseThrow(() -> new IllegalStateException("convert_cagra_to_hnsw not found")),
-        FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS)
-    );
+        FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    hnswSearchHandle = linker.downcallHandle(
+        libcuvsNativeLibrary.find("cuvsHnswSearch")
+            .orElseThrow(() -> new IllegalStateException("cuvsHnswSearch not found")),
+        FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+            ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+
   }
 
   /**

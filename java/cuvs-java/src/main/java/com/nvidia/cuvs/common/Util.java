@@ -34,26 +34,8 @@ import org.apache.commons.io.IOUtils;
 import com.nvidia.cuvs.CuVSResources;
 
 public class Util {
-
-  public static void serializeCagraToHnsw(CuVSResources resources, String cagraFilePath, String hnswFilePath) {
-    try (Arena arena = Arena.ofConfined()) {
-      MemorySegment cagraPathSegment = toCString(arena, cagraFilePath);
-      MemorySegment hnswPathSegment = toCString(arena, hnswFilePath);
-
-      int result = (int) resources.cagraToHnswHandle.invokeExact(resources.getMemorySegment(), // resources
-          cagraPathSegment,
-          hnswPathSegment
-      );
-
-      if (result != 0) {
-        throw new RuntimeException("Failed to serialize CAGRA index to HNSW file. Error code: " + result);
-      }
-    } catch (Throwable e) {
-      throw new RuntimeException("Error during serialization: " + e.getMessage(), e);
-    }
-  }
-
-  private static MemorySegment toCString(Arena arena, String string) {
+  
+  public static MemorySegment toCString(Arena arena, String string) {
     byte[] bytes = (string + "\0").getBytes();
     MemorySegment segment = arena.allocate(bytes.length);
     segment.copyFrom(MemorySegment.ofArray(bytes));

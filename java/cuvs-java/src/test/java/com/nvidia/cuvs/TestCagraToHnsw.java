@@ -11,14 +11,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.nvidia.cuvs.common.Util;
+import com.nvidia.cuvs.hnsw.HnswQuery;
+import com.nvidia.cuvs.hnsw.HnswSearchParameters;
+import com.nvidia.cuvs.hnsw.HnswSearchResults;
+import com.nvidia.cuvs.hnsw.HnswUtil;
 
 public class TestCagraToHnsw {
 
     private static final Logger log = LoggerFactory.getLogger(TestCagraToHnsw.class);
 
     @Test
-    public void testSerialization() throws Throwable {
+    public void testSerializationAndSearch() throws Throwable {
         String cagraFilePath = "cagra_index.bin";
         String hnswFilePath = "hnsw_index.bin";
 
@@ -48,11 +51,32 @@ public class TestCagraToHnsw {
             log.info("CAGRA index serialized to: {}", cagraFilePath);
 
             log.info("Converting CAGRA index to HNSW format...");
-            Util.serializeCagraToHnsw(resources, cagraFilePath, hnswFilePath);
+            HnswUtil.serializeCagraToHnsw(resources, cagraFilePath, hnswFilePath);
 
             File hnswFile = new File(hnswFilePath);
             assertTrue("HNSW index file should exist", hnswFile.exists());
             log.info("HNSW index file successfully created at: {}", hnswFilePath);
+
+            // Step 2: Perform a search
+            log.info("Starting HNSW search...");
+            float[][] queryVectors = {
+                {2.0f, 3.0f, 4.0f},
+                {5.0f, 6.0f, 7.0f}
+            };
+            int topK = 2;
+
+            // Create search parameters
+            HnswSearchParameters searchParams = new HnswSearchParameters(20, 2);
+
+            // Create query object
+            HnswQuery query = new HnswQuery(queryVectors, topK, searchParams);
+
+            // Perform the search
+            HnswSearchResults results = HnswUtil.search(resources, query);
+
+            // Validate results
+            assertTrue("Search results should not be null", results != null);
+            log.info("Search results retrieved: {}", results);
 
             Files.deleteIfExists(Path.of(cagraFilePath));
             Files.deleteIfExists(Path.of(hnswFilePath));
