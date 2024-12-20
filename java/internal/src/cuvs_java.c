@@ -187,10 +187,6 @@ void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int t
     prefilter.type = NO_FILTER;
     prefilter.addr = (uintptr_t)NULL;
   } else {
-    printf("prefilter_data_length: %ld\n", prefilter_data_length);
-    for (int i = 0; i < prefilter_data_length; i++) {
-      printf("* %ld *\n", *(prefilter_data + 1));
-    }
     int64_t prefilter_shape[1] = {prefilter_data_length};
     DLManagedTensor prefilter_tensor = prepare_tensor(prefilter_data_d, prefilter_shape, kDLUInt, 32, 1);
     prefilter.type = BITMAP;

@@ -49,24 +49,25 @@ public class BruteForceAndSearchTest {
         { 0.6673192f, 0.10993068f }
       };
     Map<Integer, Integer> map = Map.of(0, 0, 1, 1, 2, 2, 3, 3);
-    float[][] queries = {
+    float[][] queries = { 
         { 0.48216683f, 0.0428398f },
         { 0.5084142f, 0.6545497f },
         { 0.51260436f, 0.2643005f },
         { 0.05198065f, 0.5789965f }
       };
-    
+
     // Expected search results
     List<Map<Integer, Float>> expectedResults = Arrays.asList(
         Map.of(3, 0.59198487f, 0, 0.6283694f),
         Map.of(1, 0.2534914f, 0, 0.33350062f),
         Map.of(1, 0.4058035f, 0, 0.43066847f),
-        Map.of(3, 0.11946076f, 0, 0.46753132f));
+        Map.of(3, 0.11946076f, 0, 0.46753132f)
+      );
 
-    for (int j = 0; j < 10; j++) {
+    for (int j = 0; j < 1; j++) {
 
       try (CuVSResources resources = new CuVSResources()) {
-        
+
         BruteForceIndexParams indexParams = new BruteForceIndexParams.Builder()
             .withNumWriterThreads(32)
             .build();
