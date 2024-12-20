@@ -67,11 +67,15 @@ public class CuVSResources implements AutoCloseable {
         libcuvsNativeLibrary.find("convert_cagra_to_hnsw")
             .orElseThrow(() -> new IllegalStateException("convert_cagra_to_hnsw not found")),
         FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
-    hnswSearchHandle = linker.downcallHandle(
-        libcuvsNativeLibrary.find("cuvsHnswSearch")
-            .orElseThrow(() -> new IllegalStateException("cuvsHnswSearch not found")),
-        FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-            ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    hnswSearchHandle = linker.downcallHandle(libcuvsNativeLibrary.find("cuvsHnswSearch").get(),
+        FunctionDescriptor.of(ValueLayout.JAVA_INT, // Return type
+            ValueLayout.ADDRESS, // cuvsResources_t
+            ValueLayout.ADDRESS, // cuvsHnswSearchParams_t
+            ValueLayout.ADDRESS, // cuvsHnswIndex_t
+            ValueLayout.ADDRESS, // DLManagedTensor* queries
+            ValueLayout.ADDRESS, // DLManagedTensor* neighbors
+            ValueLayout.ADDRESS // DLManagedTensor* distances
+        ));
 
   }
 
