@@ -143,7 +143,7 @@ public class BruteForceIndex {
     int vectorDimension = numQueries > 0 ? cuvsQuery.getQueryVectors()[0].length : 0;
     long prefilterDataLength = prefilterData != null ? prefilterData.length : 0;
 
-    SequenceLayout neighborsSequenceLayout = MemoryLayout.sequenceLayout(numBlocks, intMemoryLayout);
+    SequenceLayout neighborsSequenceLayout = MemoryLayout.sequenceLayout(numBlocks, longMemoryLayout);
     SequenceLayout distancesSequenceLayout = MemoryLayout.sequenceLayout(numBlocks, floatMemoryLayout);
     MemorySegment neighborsMemorySegment = resources.arena.allocate(neighborsSequenceLayout);
     MemorySegment distancesMemorySegment = resources.arena.allocate(distancesSequenceLayout);

@@ -255,7 +255,7 @@ cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long di
  * @param prefilter_data_length prefilter length input
  */
 void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int topk, long n_queries, int dimensions, 
-    cuvsResources_t cuvs_resources, int *neighbors_h, float *distances_h, int *return_value, long *prefilter_data,
+    cuvsResources_t cuvs_resources, int64_t *neighbors_h, float *distances_h, int *return_value, long *prefilter_data,
     long prefilter_data_length) {
 
   cudaStream_t stream;

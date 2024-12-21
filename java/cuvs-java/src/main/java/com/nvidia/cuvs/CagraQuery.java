@@ -81,7 +81,7 @@ public class CagraQuery {
   /**
    * Gets the topK value.
    * 
-   * @return an integer
+   * @return the topK value
    */
   public int getTopK() {
     return topK;

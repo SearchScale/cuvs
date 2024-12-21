@@ -49,7 +49,7 @@ public class BruteForceAndSearchTest {
         { 0.6673192f, 0.10993068f }
       };
     Map<Integer, Integer> map = Map.of(0, 0, 1, 1, 2, 2, 3, 3);
-    float[][] queries = { 
+    float[][] queries = {
         { 0.48216683f, 0.0428398f },
         { 0.5084142f, 0.6545497f },
         { 0.51260436f, 0.2643005f },
@@ -58,10 +58,10 @@ public class BruteForceAndSearchTest {
 
     // Expected search results
     List<Map<Integer, Float>> expectedResults = Arrays.asList(
-        Map.of(3, 0.59198487f, 0, 0.6283694f),
-        Map.of(1, 0.2534914f, 0, 0.33350062f),
-        Map.of(1, 0.4058035f, 0, 0.43066847f),
-        Map.of(3, 0.11946076f, 0, 0.46753132f)
+        Map.of(3, 0.59198487f, 1, 0.6283694f, 2, 0.77246666f),
+        Map.of(1, 0.2534914f, 3, 0.33350062f, 2, 0.8748074f),
+        Map.of(1, 0.4058035f, 3, 0.43066847f, 2, 0.72249544f),
+        Map.of(3, 0.11946076f, 1, 0.46753132f, 2, 1.0337032f)
       );
 
     for (int j = 0; j < 10; j++) {
@@ -80,7 +80,7 @@ public class BruteForceAndSearchTest {
 
         // Create a query object with the query vectors
         BruteForceQuery cuvsQuery = new BruteForceQuery.Builder()
-            .withTopK(2)
+            .withTopK(3)
             .withQueryVectors(queries)
             .withMapping(map)
             .build();
