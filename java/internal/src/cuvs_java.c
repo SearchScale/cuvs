@@ -27,16 +27,36 @@
 #define catch(x) ExitJmp:if(__HadError)
 #define throw(x) {__HadError=true;goto ExitJmp;}
 
-cuvsResources_t create_resources(int *returnValue) {
-  cuvsResources_t cuvsResources;
-  *returnValue = cuvsResourcesCreate(&cuvsResources);
-  return cuvsResources;
+/**
+ * Create an Initialized opaque C handle
+ * 
+ * @param return_value return value for cuvsResourcesCreate function call
+ */
+cuvsResources_t create_resources(int *return_value) {
+  cuvsResources_t cuvs_resources;
+  *return_value = cuvsResourcesCreate(&cuvs_resources);
+  return cuvs_resources;
 }
 
-void destroy_resources(cuvsResources_t cuvsResources, int *returnValue) {
-  *returnValue = cuvsResourcesDestroy(cuvsResources);
+/**
+ * Destroy and de-allocate opaque C handle
+ * 
+ * @param cuvs_resources an opaque C handle
+ * @param return_value return value for cuvsResourcesDestroy function call
+ */
+void destroy_resources(cuvsResources_t cuvs_resources, int *return_value) {
+  *return_value = cuvsResourcesDestroy(cuvs_resources);
 }
 
+/**
+ * Helper function for creating DLManagedTensor instance
+ * 
+ * @param data the data pointer points to the allocated data
+ * @param shape the shape of the tensor
+ * @param code the type code of base types
+ * @param bits the shape of the tensor
+ * @param ndim the number of dimensions
+ */
 DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code, int bits, int ndim) {
   DLManagedTensor tensor;
 
@@ -52,13 +72,25 @@ DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code,
   return tensor;
 }
 
-cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, cuvsResources_t cuvsResources, int *returnValue,
-    cuvsCagraIndexParams_t index_params, cuvsCagraCompressionParams_t compression_params, int numWriterThreads) {
+/**
+ * Function for building CAGRA index
+ * 
+ * @param dataset index dataset
+ * @param rows number of dataset rows
+ * @param dimensions vector dimension of the dataset
+ * @param cuvs_resources reference of the underlying opaque C handle
+ * @param return_value return value for cuvsCagraBuild function call
+ * @param index_params a reference to the index parameters
+ * @param compression_params a reference to the compression parameters
+ * @param n_writer_threads number of omp threads to use
+ */
+cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, cuvsResources_t cuvs_resources, int *return_value,
+    cuvsCagraIndexParams_t index_params, cuvsCagraCompressionParams_t compression_params, int n_writer_threads) {
 
   cudaStream_t stream;
-  cuvsStreamGet(cuvsResources, &stream);
+  cuvsStreamGet(cuvs_resources, &stream);
 
-  omp_set_num_threads(numWriterThreads);
+  omp_set_num_threads(n_writer_threads);
   cuvsRMMPoolMemoryResourceEnable(95, 95, false);
 
   int64_t dataset_shape[2] = {rows, dimensions};
@@ -68,37 +100,73 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
   cuvsCagraIndexCreate(&index);
 
   index_params->compression = compression_params;
-  cuvsStreamSync(cuvsResources);
-  *returnValue = cuvsCagraBuild(cuvsResources, index_params, &dataset_tensor, index);
+  cuvsStreamSync(cuvs_resources);
+  *return_value = cuvsCagraBuild(cuvs_resources, index_params, &dataset_tensor, index);
 
   omp_set_num_threads(1);
 
   return index;
 }
 
-void destroy_cagra_index(cuvsCagraIndex_t index, int *returnValue) {
-  *returnValue = cuvsCagraIndexDestroy(index);
+/**
+ * A function to de-allocate CAGRA index
+ * 
+ * @param index cuvsCagraIndex_t to de-allocate
+ * @param return_value return value for cuvsCagraIndexDestroy function call
+ */
+void destroy_cagra_index(cuvsCagraIndex_t index, int *return_value) {
+  *return_value = cuvsCagraIndexDestroy(index);
 }
 
-void serialize_cagra_index(cuvsResources_t cuvsResources, cuvsCagraIndex_t index, int *returnValue, char* filename) {
-  *returnValue = cuvsCagraSerialize(cuvsResources, filename, index, true);
+/**
+ * A function to serialize a CAGRA index
+ * 
+ * @param cuvs_resources reference of the underlying opaque C handle
+ * @param index cuvsCagraIndex_t reference
+ * @param return_value return value for cuvsCagraSerialize function call
+ * @param filename the filename of the index file
+ */
+void serialize_cagra_index(cuvsResources_t cuvs_resources, cuvsCagraIndex_t index, int *return_value, char* filename) {
+  *return_value = cuvsCagraSerialize(cuvs_resources, filename, index, true);
 }
 
-void deserialize_cagra_index(cuvsResources_t cuvsResources, cuvsCagraIndex_t index, int *returnValue, char* filename) {
-  *returnValue = cuvsCagraDeserialize(cuvsResources, filename, index);
+/**
+ * A function to de-serialize a CAGRA index
+ * 
+ * @param cuvs_resources reference to the underlying opaque C handle
+ * @param index cuvsCagraIndex_t reference
+ * @param return_value return value for cuvsCagraDeserialize function call
+ * @param filename the filename of the index file
+ */
+void deserialize_cagra_index(cuvsResources_t cuvs_resources, cuvsCagraIndex_t index, int *return_value, char* filename) {
+  *return_value = cuvsCagraDeserialize(cuvs_resources, filename, index);
 }
 
+/**
+ * A function to search a CAGRA index and return results
+ * 
+ * @param index reference to a CAGRA index to search on
+ * @param queries query vectors
+ * @param topk topK results to return
+ * @param n_queries number of queries
+ * @param dimensions vector dimension
+ * @param cuvs_resources reference to the underlying opaque C handle
+ * @param neighbors_h reference to the neighbor results on the host memory
+ * @param distances_h reference to the distance results on the host memory
+ * @param return_value return value for cuvsCagraSearch function call
+ * @param search_params reference to cuvsCagraSearchParams_t holding the search parameters
+ */
 void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, int dimensions, 
-    cuvsResources_t cuvsResources, int *neighbors_h, float *distances_h, int *returnValue, cuvsCagraSearchParams_t search_params) {
+    cuvsResources_t cuvs_resources, int *neighbors_h, float *distances_h, int *return_value, cuvsCagraSearchParams_t search_params) {
 
   cudaStream_t stream;
-  cuvsStreamGet(cuvsResources, &stream);
+  cuvsStreamGet(cuvs_resources, &stream);
 
   uint32_t *neighbors;
   float *distances, *queries_d;
-  cuvsRMMAlloc(cuvsResources, (void**) &queries_d, sizeof(float) * n_queries * dimensions);
-  cuvsRMMAlloc(cuvsResources, (void**) &neighbors, sizeof(uint32_t) * n_queries * topk);
-  cuvsRMMAlloc(cuvsResources, (void**) &distances, sizeof(float) * n_queries * topk);
+  cuvsRMMAlloc(cuvs_resources, (void**) &queries_d, sizeof(float) * n_queries * dimensions);
+  cuvsRMMAlloc(cuvs_resources, (void**) &neighbors, sizeof(uint32_t) * n_queries * topk);
+  cuvsRMMAlloc(cuvs_resources, (void**) &distances, sizeof(float) * n_queries * topk);
 
   cudaMemcpy(queries_d, queries, sizeof(float) * n_queries * dimensions, cudaMemcpyDefault);
 
@@ -111,33 +179,49 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
   int64_t distances_shape[2] = {n_queries, topk};
   DLManagedTensor distances_tensor = prepare_tensor(distances, distances_shape, kDLFloat, 32, 2);
 
-  cuvsStreamSync(cuvsResources);
-  *returnValue = cuvsCagraSearch(cuvsResources, search_params, index, &queries_tensor, &neighbors_tensor,
+  cuvsStreamSync(cuvs_resources);
+  *return_value = cuvsCagraSearch(cuvs_resources, search_params, index, &queries_tensor, &neighbors_tensor,
                   &distances_tensor);
 
   cudaMemcpy(neighbors_h, neighbors, sizeof(uint32_t) * n_queries * topk, cudaMemcpyDefault);
   cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
 
-  cuvsRMMFree(cuvsResources, distances, sizeof(float) * n_queries * topk);
-  cuvsRMMFree(cuvsResources, neighbors, sizeof(uint32_t) * n_queries * topk);
-  cuvsRMMFree(cuvsResources, queries_d, sizeof(float) * n_queries * dimensions);
+  cuvsRMMFree(cuvs_resources, distances, sizeof(float) * n_queries * topk);
+  cuvsRMMFree(cuvs_resources, neighbors, sizeof(uint32_t) * n_queries * topk);
+  cuvsRMMFree(cuvs_resources, queries_d, sizeof(float) * n_queries * dimensions);
 }
 
-void destroy_brute_force_index(cuvsBruteForceIndex_t index, int *returnValue) {
-  *returnValue = cuvsBruteForceIndexDestroy(index);
+/**
+ * De-allocate BRUTEFORCE index
+ * 
+ * @param index reference to BRUTEFORCE index
+ * @param return_value return value for cuvsBruteForceIndexDestroy function call
+ */
+void destroy_brute_force_index(cuvsBruteForceIndex_t index, int *return_value) {
+  *return_value = cuvsBruteForceIndexDestroy(index);
 }
 
-cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long dimensions, cuvsResources_t cuvsResources,
-  int *returnValue, int numWriterThreads) {
+/**
+ * A function to build BRUTEFORCE index
+ * 
+ * @param dataset the dataset to be indexed
+ * @param rows the number of rows in the dataset
+ * @param dimensions the vector dimension
+ * @param cuvs_resources reference to the underlying opaque C handle
+ * @param return_value return value for cuvsBruteForceBuild function call
+ * @param n_writer_threads number of threads to use while indexing
+ */
+cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long dimensions, cuvsResources_t cuvs_resources,
+  int *return_value, int n_writer_threads) {
 
-  omp_set_num_threads(numWriterThreads);
+  omp_set_num_threads(n_writer_threads);
   cuvsRMMPoolMemoryResourceEnable(95, 95, false);
 
   cudaStream_t stream;
-  cuvsStreamGet(cuvsResources, &stream);
+  cuvsStreamGet(cuvs_resources, &stream);
 
   float *dataset_d;
-  cuvsRMMAlloc(cuvsResources, (void**) &dataset_d, sizeof(float) * rows * dimensions);
+  cuvsRMMAlloc(cuvs_resources, (void**) &dataset_d, sizeof(float) * rows * dimensions);
   cudaMemcpy(dataset_d, dataset, sizeof(float) * rows * dimensions, cudaMemcpyDefault);
 
   int64_t dataset_shape[2] = {rows, dimensions};
@@ -146,29 +230,44 @@ cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long di
   cuvsBruteForceIndex_t index;
   cuvsError_t index_create_status = cuvsBruteForceIndexCreate(&index);
 
-  cuvsStreamSync(cuvsResources);
-  *returnValue = cuvsBruteForceBuild(cuvsResources, &dataset_tensor, L2Expanded, 0.f, index);
+  cuvsStreamSync(cuvs_resources);
+  *return_value = cuvsBruteForceBuild(cuvs_resources, &dataset_tensor, L2Expanded, 0.f, index);
 
-  cuvsRMMFree(cuvsResources, dataset_d, sizeof(float) * rows * dimensions);
+  cuvsRMMFree(cuvs_resources, dataset_d, sizeof(float) * rows * dimensions);
   omp_set_num_threads(1);
 
   return index;
 }
 
+/**
+ * A function to search the BRUTEFORCE index
+ * 
+ * @param index reference to a BRUTEFORCE index to search on
+ * @param queries reference to query vectors
+ * @param topk the top k results to return
+ * @param n_queries number of queries
+ * @param dimensions vector dimension
+ * @param cuvs_resources reference to the underlying opaque C handle
+ * @param neighbors_h reference to the neighbor results on the host memory
+ * @param distances_h reference to the distance results on the host memory
+ * @param return_value return value for cuvsBruteForceSearch function call
+ * @param prefilter_data cuvsFilter input prefilter that can be used to filter queries and neighbors based on the given bitmap
+ * @param prefilter_data_length prefilter length input
+ */
 void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int topk, long n_queries, int dimensions, 
-    cuvsResources_t cuvsResources, int *neighbors_h, float *distances_h, int *returnValue, long *prefilter_data,
+    cuvsResources_t cuvs_resources, int *neighbors_h, float *distances_h, int *return_value, long *prefilter_data,
     long prefilter_data_length) {
 
   cudaStream_t stream;
-  cuvsStreamGet(cuvsResources, &stream);
+  cuvsStreamGet(cuvs_resources, &stream);
 
   int64_t *neighbors;
   float *distances, *queries_d;
   long *prefilter_data_d;
-  cuvsRMMAlloc(cuvsResources, (void**) &queries_d, sizeof(float) * n_queries * dimensions);
-  cuvsRMMAlloc(cuvsResources, (void**) &neighbors, sizeof(int64_t) * n_queries * topk);
-  cuvsRMMAlloc(cuvsResources, (void**) &distances, sizeof(float) * n_queries * topk);
-  cuvsRMMAlloc(cuvsResources, (void**) &prefilter_data_d, sizeof(long) * prefilter_data_length);
+  cuvsRMMAlloc(cuvs_resources, (void**) &queries_d, sizeof(float) * n_queries * dimensions);
+  cuvsRMMAlloc(cuvs_resources, (void**) &neighbors, sizeof(int64_t) * n_queries * topk);
+  cuvsRMMAlloc(cuvs_resources, (void**) &distances, sizeof(float) * n_queries * topk);
+  cuvsRMMAlloc(cuvs_resources, (void**) &prefilter_data_d, sizeof(long) * prefilter_data_length);
 
   cudaMemcpy(queries_d, queries, sizeof(float) * n_queries * dimensions, cudaMemcpyDefault);
   cudaMemcpy(prefilter_data_d, prefilter_data, sizeof(long) * prefilter_data_length, cudaMemcpyDefault);
@@ -193,13 +292,13 @@ void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int t
     prefilter.addr = (uintptr_t)&prefilter_tensor;
   }
 
-  cuvsStreamSync(cuvsResources);
-  *returnValue = cuvsBruteForceSearch(cuvsResources, index, &queries_tensor, &neighbors_tensor, &distances_tensor, prefilter);
+  cuvsStreamSync(cuvs_resources);
+  *return_value = cuvsBruteForceSearch(cuvs_resources, index, &queries_tensor, &neighbors_tensor, &distances_tensor, prefilter);
 
   cudaMemcpy(neighbors_h, neighbors, sizeof(int64_t) * n_queries * topk, cudaMemcpyDefault);
   cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
 
-  cuvsRMMFree(cuvsResources, neighbors, sizeof(int64_t) * n_queries * topk);
-  cuvsRMMFree(cuvsResources, distances, sizeof(float) * n_queries * topk);
-  cuvsRMMFree(cuvsResources, queries_d, sizeof(float) * n_queries * dimensions);
+  cuvsRMMFree(cuvs_resources, neighbors, sizeof(int64_t) * n_queries * topk);
+  cuvsRMMFree(cuvs_resources, distances, sizeof(float) * n_queries * topk);
+  cuvsRMMFree(cuvs_resources, queries_d, sizeof(float) * n_queries * dimensions);
 }
