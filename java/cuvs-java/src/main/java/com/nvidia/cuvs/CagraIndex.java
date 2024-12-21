@@ -62,8 +62,15 @@ public class CagraIndex {
   private MemoryLayout intMemoryLayout;
   private MemoryLayout floatMemoryLayout;
 
-  /*
+  /**
    * Constructor for building the index using specified dataset
+   * 
+   * @param indexParameters        an instance of {@link CagraIndexParams} holding
+   *                               the index parameters
+   * @param cagraCompressionParams an instance of {@link CagraCompressionParams}
+   *                               holding the compression parameters
+   * @param dataset                the dataset for indexing
+   * @param resources              an instance of {@link CuVSResources}
    */
   private CagraIndex(CagraIndexParams indexParameters, CagraCompressionParams cagraCompressionParams, float[][] dataset,
       CuVSResources resources) throws Throwable {
@@ -82,6 +89,9 @@ public class CagraIndex {
 
   /**
    * Constructor for loading the index from an {@link InputStream}
+   * 
+   * @param inputStream an instance of stream to read the index bytes from
+   * @param resources   an instance of {@link CuVSResources}
    */
   private CagraIndex(InputStream inputStream, CuVSResources resources) throws Throwable {
     this.cagraIndexParameters = null;
@@ -92,7 +102,7 @@ public class CagraIndex {
     longMemoryLayout = resources.linker.canonicalLayouts().get("long");
     intMemoryLayout = resources.linker.canonicalLayouts().get("int");
     floatMemoryLayout = resources.linker.canonicalLayouts().get("float");
-    
+
     initializeMethodHandles();
     this.cagraIndexReference = deserialize(inputStream);
   }
@@ -125,6 +135,9 @@ public class CagraIndex {
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
   }
 
+  /**
+   * Invokes the native destroy_cagra_index to de-allocate the CAGRA index
+   */
   public void destroyIndex() throws Throwable {
     MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
@@ -132,7 +145,7 @@ public class CagraIndex {
   }
 
   /**
-   * Invokes the native build_index function via the Panama API to build the
+   * Invokes the native build_cagra_index function via the Panama API to build the
    * {@link CagraIndex}
    * 
    * @return an instance of {@link IndexReference} that holds the pointer to the
@@ -162,8 +175,8 @@ public class CagraIndex {
   }
 
   /**
-   * Invokes the native search_index via the Panama API for searching a CAGRA
-   * index.
+   * Invokes the native search_cagra_index via the Panama API for searching a
+   * CAGRA index.
    * 
    * @param query an instance of {@link CagraQuery} holding the query vectors and
    *              other parameters
@@ -356,7 +369,7 @@ public class CagraIndex {
   }
 
   /**
-   * Holds the memory reference to an index.
+   * Holds the memory reference to a CAGRA index.
    */
   protected static class IndexReference {
 

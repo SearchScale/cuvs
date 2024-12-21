@@ -94,7 +94,7 @@ public class CagraQuery {
   }
 
   /**
-   * Builder helps configure and create an instance of CuVSQuery.
+   * Builder helps configure and create an instance of CagraQuery.
    */
   public static class Builder {
 

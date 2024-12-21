@@ -26,10 +26,13 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 
 import com.nvidia.cuvs.common.Util;
-import com.nvidia.cuvs.panama.cuvsCagraIndex;
 
 /**
- * {@link BruteForceIndex} ...
+ * The BRUTEFORCE method is running the KNN algorithm. It performs an extensive
+ * search, and in contrast to ANN methods produces an exact result.
+ * 
+ * {@link BruteForceIndex} encapsulates a BRUTEFORCE index, along with methods
+ * to interact with it.
  * 
  * @since 25.02
  */
@@ -47,8 +50,16 @@ public class BruteForceIndex {
   private MemoryLayout intMemoryLayout;
   private MemoryLayout floatMemoryLayout;
 
-  /*
+  /**
    * Constructor for building the index using specified dataset
+   * 
+   * @param dataset               the dataset used for creating the BRUTEFORCE
+   *                              index
+   * @param resources             an instance of {@link CuVSResources}
+   * @param bruteForceIndexParams an instance of {@link BruteForceIndexParams}
+   *                              holding the index parameters
+   * @param prefilterData         the prefilter data to use while searching the
+   *                              BRUTEFORCE index
    */
   private BruteForceIndex(float[][] dataset, CuVSResources resources, BruteForceIndexParams bruteForceIndexParams,
       long[] prefilterData) throws Throwable {
@@ -87,6 +98,10 @@ public class BruteForceIndex {
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
   }
 
+  /**
+   * Invokes the native destroy_brute_force_index function to de-allocate
+   * BRUTEFORCE index
+   */
   public void destroyIndex() throws Throwable {
     MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
@@ -94,8 +109,8 @@ public class BruteForceIndex {
   }
 
   /**
-   * Invokes the native build_index function via the Panama API to build the
-   * {@link BruteForceIndex}
+   * Invokes the native build_brute_force_index function via the Panama API to
+   * build the {@link BruteForceIndex}
    * 
    * @return an instance of {@link IndexReference} that holds the pointer to the
    *         index
@@ -115,12 +130,12 @@ public class BruteForceIndex {
   }
 
   /**
-   * Invokes the native search_index via the Panama API for searching a CAGRA
-   * index.
+   * Invokes the native search_brute_force_index via the Panama API for searching
+   * a BRUTEFORCE index.
    * 
-   * @param cuvsQuery an instance of {@link CagraQuery} holding the query vectors
-   *                  and other parameters
-   * @return an instance of {@link CagraSearchResults} containing the results
+   * @param cuvsQuery an instance of {@link BruteForceQuery} holding the query
+   *                  vectors and other parameters
+   * @return an instance of {@link BruteForceSearchResults} containing the results
    */
   public BruteForceSearchResults search(BruteForceQuery cuvsQuery) throws Throwable {
     long numQueries = cuvsQuery.getQueryVectors().length;
@@ -170,8 +185,8 @@ public class BruteForceIndex {
      * Registers an instance of configured {@link BruteForceIndexParams} with this
      * Builder.
      * 
-     * @param bruteForceIndexParams An instance of BruteForceIndexParams.
-     * @return An instance of this Builder.
+     * @param bruteForceIndexParams An instance of BruteForceIndexParams
+     * @return An instance of this Builder
      */
     public Builder withIndexParams(BruteForceIndexParams bruteForceIndexParams) {
       this.bruteForceIndexParams = bruteForceIndexParams;
@@ -190,9 +205,9 @@ public class BruteForceIndex {
     }
 
     /**
-     * Sets the dataset for building the {@link BruteForceIndex}.
+     * Sets the prefilter data for building the {@link BruteForceIndex}.
      * 
-     * @param dataset a two-dimensional float array
+     * @param prefilterData a one-dimensional long array
      * @return an instance of this Builder
      */
     public Builder withPrefilterData(long[] prefilterData) {
@@ -201,9 +216,9 @@ public class BruteForceIndex {
     }
 
     /**
-     * Builds and returns an instance of CagraIndex.
+     * Builds and returns an instance of {@link BruteForceIndex}.
      * 
-     * @return an instance of CagraIndex
+     * @return an instance of {@link BruteForceIndex}
      */
     public BruteForceIndex build() throws Throwable {
       return new BruteForceIndex(dataset, cuvsResources, bruteForceIndexParams, prefilterData);
@@ -211,22 +226,15 @@ public class BruteForceIndex {
   }
 
   /**
-   * Holds the memory reference to an index.
+   * Holds the memory reference to a BRUTEFORCE index.
    */
   protected static class IndexReference {
 
     private final MemorySegment memorySegment;
 
     /**
-     * Constructs CagraIndexReference and allocate the MemorySegment.
-     */
-    protected IndexReference(CuVSResources resources) {
-      memorySegment = cuvsCagraIndex.allocate(resources.arena);
-    }
-
-    /**
-     * Constructs CagraIndexReference with an instance of MemorySegment passed as a
-     * parameter.
+     * Constructs BruteForceIndexReference with an instance of MemorySegment passed
+     * as a parameter.
      * 
      * @param indexMemorySegment the MemorySegment instance to use for containing
      *                           index reference

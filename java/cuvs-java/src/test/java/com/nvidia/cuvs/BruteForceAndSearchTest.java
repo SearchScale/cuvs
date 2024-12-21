@@ -64,7 +64,7 @@ public class BruteForceAndSearchTest {
         Map.of(3, 0.11946076f, 0, 0.46753132f)
       );
 
-    for (int j = 0; j < 1; j++) {
+    for (int j = 0; j < 10; j++) {
 
       try (CuVSResources resources = new CuVSResources()) {
 

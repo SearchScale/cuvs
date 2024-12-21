@@ -17,7 +17,7 @@
 package com.nvidia.cuvs;
 
 /**
- * Supplemental parameters to build brute force index.
+ * Supplemental parameters to build BRUTEFORCE index.
  * 
  * @since 25.02
  */

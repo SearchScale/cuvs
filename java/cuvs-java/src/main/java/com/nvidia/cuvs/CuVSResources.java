@@ -38,14 +38,10 @@ public class CuVSResources implements AutoCloseable {
   public final Arena arena;
   public final Linker linker;
   public final SymbolLookup symbolLookup;
-
   protected File nativeLibrary;
-
   private final MethodHandle createResourcesMethodHandle;
   private final MethodHandle destroyResourcesMethodHandle;
-
   private MemorySegment resourcesMemorySegment;
-
   private MemoryLayout intMemoryLayout;
 
   /**
@@ -90,7 +86,7 @@ public class CuVSResources implements AutoCloseable {
     } catch (Throwable e) {
       e.printStackTrace();
     }
-     nativeLibrary.delete();
+    nativeLibrary.delete();
   }
 
   /**
