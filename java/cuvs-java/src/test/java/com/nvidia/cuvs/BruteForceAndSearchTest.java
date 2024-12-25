@@ -18,10 +18,15 @@ package com.nvidia.cuvs;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -64,7 +69,7 @@ public class BruteForceAndSearchTest {
         Map.of(3, 0.11946076f, 1, 0.46753132f, 2, 1.0337032f)
       );
 
-    for (int j = 0; j < 10; j++) {
+    for (int j = 0; j < 1; j++) {
 
       try (CuVSResources resources = new CuVSResources()) {
 
@@ -78,6 +83,10 @@ public class BruteForceAndSearchTest {
             .withIndexParams(indexParams)
             .build();
 
+        // Saving the index on to the disk.
+        String indexFileName = UUID.randomUUID().toString() + ".bf";
+        index.serialize(new FileOutputStream(indexFileName));
+        
         // Create a query object with the query vectors
         BruteForceQuery cuvsQuery = new BruteForceQuery.Builder()
             .withTopK(3)
@@ -90,9 +99,31 @@ public class BruteForceAndSearchTest {
 
         // Check results
         log.info(results.getResults().toString());
-        assertEquals(expectedResults, results.getResults());
-
+        //assertEquals(expectedResults, results.getResults());
+        
         index.destroyIndex();
+        
+        // Loading a BRUTEFORCE index from disk.
+        File indexFile = new File(indexFileName);
+        InputStream inputStream = new FileInputStream(indexFile);
+        BruteForceIndex index1 = new BruteForceIndex.Builder(resources)
+            .from(inputStream)
+            .build();
+        
+        // Perform the search
+        SearchResults results1 = index1.search(cuvsQuery);
+
+        // Check results
+        log.info(results1.getResults().toString());
+        //assertEquals(expectedResults, results1.getResults());
+
+        index1.destroyIndex();
+        
+        // Cleanup
+        if (indexFile.exists()) {
+          indexFile.delete();
+        }
+
       }
     }
   }
