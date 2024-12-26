@@ -233,7 +233,6 @@ cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long di
   cuvsStreamSync(cuvs_resources);
   *return_value = cuvsBruteForceBuild(cuvs_resources, &dataset_tensor, L2Expanded, 0.0f, index);
 
-  cuvsRMMFree(cuvs_resources, dataset_d, sizeof(float) * rows * dimensions);
   omp_set_num_threads(1);
 
   return index;
