@@ -37,7 +37,7 @@ public class HnswUtil {
       Arena arena = resources.arena;
 
       // Prepare flat memory for queries
-      MemorySegment queriesMemory = toFlatArray(arena, queryVectors);
+      MemorySegment queriesMemory = Util.buildMemorySegment(resources.linker, resources.arena, queryVectors);
       MemorySegment neighborsMemory = arena.allocate(ValueLayout.JAVA_LONG.byteSize() * topK * numQueries);
       MemorySegment distancesMemory = arena.allocate(ValueLayout.JAVA_FLOAT.byteSize() * topK * numQueries);
 
@@ -73,18 +73,6 @@ public class HnswUtil {
     } catch (Throwable e) {
       throw new RuntimeException("Error during HNSW search", e);
     }
-  }
-
-  private static MemorySegment toFlatArray(Arena arena, float[][] array) {
-    int rows = array.length;
-    int cols = array[0].length;
-    MemorySegment flatArray = arena.allocate(ValueLayout.JAVA_FLOAT.byteSize() * rows * cols);
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j < cols; j++) {
-        flatArray.setAtIndex(ValueLayout.JAVA_FLOAT, i * cols + j, array[i][j]);
-      }
-    }
-    return flatArray;
   }
 
   private static long[] extractLongArray(MemorySegment memory, int size) {
