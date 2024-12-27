@@ -27,75 +27,84 @@ public class HnswUtil {
 
   public static HnswSearchResults search(CuVSResources resources, HnswQuery query) {
     try {
-      // Extract query parameters
+      // Extract parameters from query
       float[][] queryVectors = query.getQueryVectors();
       int topK = query.getTopK();
-      HnswSearchParameters searchParams = query.getSearchParameters();
-
+      int dimensions = queryVectors[0].length;
       int numQueries = queryVectors.length;
 
-      // Prepare tensors and allocate memory for results
-      MemorySegment queryTensor = toTensor(resources.arena, queryVectors);
-      MemorySegment neighborsMemory = resources.arena.allocate(ValueLayout.JAVA_INT.byteSize() * topK * numQueries);
-      MemorySegment distancesMemory = resources.arena.allocate(ValueLayout.JAVA_FLOAT.byteSize() * topK * numQueries);
+      // Use the shared arena from resources
+      Arena arena = resources.arena;
+
+      // Prepare flat memory for queries
+      MemorySegment queriesMemory = toFlatArray(arena, queryVectors);
+      MemorySegment neighborsMemory = arena.allocate(ValueLayout.JAVA_LONG.byteSize() * topK * numQueries);
+      MemorySegment distancesMemory = arena.allocate(ValueLayout.JAVA_FLOAT.byteSize() * topK * numQueries);
 
       // Configure search parameters
-      MemorySegment efSegment = resources.arena.allocate(ValueLayout.JAVA_INT.byteSize());
-      efSegment.set(ValueLayout.JAVA_INT, 0, searchParams.getEf());
+      MemorySegment searchParamsMemory = arena.allocate(ValueLayout.JAVA_INT.byteSize() * 2);
+      searchParamsMemory.setAtIndex(ValueLayout.JAVA_INT, 0, query.getSearchParameters().getEf());
+      searchParamsMemory.setAtIndex(ValueLayout.JAVA_INT, 1, query.getSearchParameters().getNumThreads());
 
-      MemorySegment numThreadsSegment = resources.arena.allocate(ValueLayout.JAVA_INT.byteSize());
-      numThreadsSegment.set(ValueLayout.JAVA_INT, 0, searchParams.getNumThreads());
-
-      // Perform the search using the native handle
-      int result = (int) resources.hnswSearchHandle.invokeExact(resources.getMemorySegment(), // Resources
-          queryTensor, // Query tensor
+      // Invoke the HNSW search function using the native handle
+      int result = (int) resources.hnswSearchHandle.invokeExact(resources.getMemorySegment(), // cuVS resources
+          query.getIndexMemorySegment(), // cuvsHnswIndex_t
+          queriesMemory, // Queries
+          topK, // topK
+          numQueries, // n_queries
+          dimensions, // dimensions
           neighborsMemory, // Neighbors output
           distancesMemory, // Distances output
-          efSegment, // Search parameter (ef)
-          numThreadsSegment // Search parameter (numThreads)
+          searchParamsMemory // Search parameters
       );
 
       if (result != 0) {
-        throw new RuntimeException("Failed to perform HNSW search. Error code: " + result);
+        throw new RuntimeException("HNSW search failed. Error code: " + result);
       }
 
-      // Extract results from memory segments
-      int[] flatNeighbors = new int[topK * numQueries];
-      float[] flatDistances = new float[topK * numQueries];
+      // Extract neighbors and distances from memory
+      long[] flatNeighbors = extractLongArray(neighborsMemory, topK * numQueries);
+      float[] flatDistances = extractFloatArray(distancesMemory, topK * numQueries);
 
-      for (int i = 0; i < flatNeighbors.length; i++) {
-        flatNeighbors[i] = neighborsMemory.getAtIndex(ValueLayout.JAVA_INT, i);
-      }
-      for (int i = 0; i < flatDistances.length; i++) {
-        flatDistances[i] = distancesMemory.getAtIndex(ValueLayout.JAVA_FLOAT, i);
-      }
-
-      // Reshape the flat results into 2D arrays
-      int[][] neighbors = reshape(flatNeighbors, numQueries, topK);
+      long[][] neighbors = reshape(flatNeighbors, numQueries, topK);
       float[][] distances = reshape(flatDistances, numQueries, topK);
 
       return new HnswSearchResults(neighbors, distances, topK, numQueries);
     } catch (Throwable e) {
-      throw new RuntimeException("Error during HNSW search: " + e.getMessage(), e);
+      throw new RuntimeException("Error during HNSW search", e);
     }
   }
 
-  private static MemorySegment toTensor(Arena arena, float[][] vectors) {
-    int rows = vectors.length;
-    int cols = vectors[0].length;
-    MemorySegment tensor = arena.allocate(ValueLayout.JAVA_FLOAT.byteSize() * rows * cols);
-
+  private static MemorySegment toFlatArray(Arena arena, float[][] array) {
+    int rows = array.length;
+    int cols = array[0].length;
+    MemorySegment flatArray = arena.allocate(ValueLayout.JAVA_FLOAT.byteSize() * rows * cols);
     for (int i = 0; i < rows; i++) {
       for (int j = 0; j < cols; j++) {
-        tensor.setAtIndex(ValueLayout.JAVA_FLOAT, i * cols + j, vectors[i][j]);
+        flatArray.setAtIndex(ValueLayout.JAVA_FLOAT, i * cols + j, array[i][j]);
       }
     }
-
-    return tensor;
+    return flatArray;
   }
 
-  private static int[][] reshape(int[] flatArray, int rows, int cols) {
-    int[][] reshaped = new int[rows][cols];
+  private static long[] extractLongArray(MemorySegment memory, int size) {
+    long[] result = new long[size];
+    for (int i = 0; i < size; i++) {
+      result[i] = memory.get(ValueLayout.JAVA_LONG, i * ValueLayout.JAVA_LONG.byteSize());
+    }
+    return result;
+  }
+
+  private static float[] extractFloatArray(MemorySegment memory, int size) {
+    float[] result = new float[size];
+    for (int i = 0; i < size; i++) {
+      result[i] = memory.get(ValueLayout.JAVA_FLOAT, i * ValueLayout.JAVA_FLOAT.byteSize());
+    }
+    return result;
+  }
+
+  private static long[][] reshape(long[] flatArray, int rows, int cols) {
+    long[][] reshaped = new long[rows][cols];
     for (int i = 0; i < rows; i++) {
       System.arraycopy(flatArray, i * cols, reshaped[i], 0, cols);
     }

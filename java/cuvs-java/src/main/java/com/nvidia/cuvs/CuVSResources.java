@@ -43,8 +43,8 @@ public class CuVSResources implements AutoCloseable {
   private final MethodHandle createResourcesMethodHandle;
   private final MethodHandle destroyResourcesMethodHandle;
   public final MethodHandle cagraToHnswHandle;
-  public final MethodHandle hnswSearchHandle;
   private MemorySegment resourcesMemorySegment;
+  public final MethodHandle hnswSearchHandle;
 
   /**
    * Constructor that allocates the resources needed for cuVS
@@ -63,20 +63,26 @@ public class CuVSResources implements AutoCloseable {
     destroyResourcesMethodHandle = linker.downcallHandle(libcuvsNativeLibrary.find("destroy_resources").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
     createResources();
+
     cagraToHnswHandle = linker.downcallHandle(
         libcuvsNativeLibrary.find("convert_cagra_to_hnsw")
             .orElseThrow(() -> new IllegalStateException("convert_cagra_to_hnsw not found")),
         FunctionDescriptor.of(ValueLayout.JAVA_INT, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
-    hnswSearchHandle = linker.downcallHandle(libcuvsNativeLibrary.find("cuvsHnswSearch").get(),
+
+    hnswSearchHandle = linker.downcallHandle(
+        libcuvsNativeLibrary.find("search_hnsw_index")
+            .orElseThrow(() -> new RuntimeException("search_hnsw_index function not found in native library")),
         FunctionDescriptor.of(ValueLayout.JAVA_INT, // Return type
             ValueLayout.ADDRESS, // cuvsResources_t
-            ValueLayout.ADDRESS, // cuvsHnswSearchParams_t
             ValueLayout.ADDRESS, // cuvsHnswIndex_t
-            ValueLayout.ADDRESS, // DLManagedTensor* queries
-            ValueLayout.ADDRESS, // DLManagedTensor* neighbors
-            ValueLayout.ADDRESS // DLManagedTensor* distances
+            ValueLayout.ADDRESS, // float* queries
+            ValueLayout.JAVA_INT, // topK
+            ValueLayout.JAVA_INT, // n_queries
+            ValueLayout.JAVA_INT, // dimensions
+            ValueLayout.ADDRESS, // neighbors_h
+            ValueLayout.ADDRESS, // distances_h
+            ValueLayout.ADDRESS // search_params
         ));
-
   }
 
   /**
@@ -114,7 +120,7 @@ public class CuVSResources implements AutoCloseable {
   /**
    * Returns the loaded libcuvs_java.so as a {@link SymbolLookup}
    */
-  protected SymbolLookup getLibcuvsNativeLibrary() {
+  public SymbolLookup getLibcuvsNativeLibrary() {
     return libcuvsNativeLibrary;
   }
 }
