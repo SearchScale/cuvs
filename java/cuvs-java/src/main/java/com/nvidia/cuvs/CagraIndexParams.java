@@ -296,12 +296,12 @@ public class CagraIndexParams {
     }
 
     /**
-     * Sets the CuvsDistanceType to use.
+     * Sets the metric to use.
      * 
-     * @param cuvsDistanceType the CuvsDistanceType to use
+     * @param cuvsDistanceType the {@link CuvsDistanceType} to use
      * @return an instance of Builder
      */
-    public Builder withCuvsDistanceType(CuvsDistanceType cuvsDistanceType) {
+    public Builder withMetric(CuvsDistanceType cuvsDistanceType) {
       this.cuvsDistanceType = cuvsDistanceType;
       return this;
     }
