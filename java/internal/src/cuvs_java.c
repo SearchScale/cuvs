@@ -263,13 +263,17 @@ void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int t
   int64_t *neighbors;
   float *distances, *queries_d;
   long *prefilter_data_d;
+
+  long prefilter_data_32_size = sizeof(uint32_t) * prefilter_data_length * 2;
+  uint32_t *prefilter_data_32 = (uint32_t *)malloc(prefilter_data_32_size);
+
   cuvsRMMAlloc(cuvs_resources, (void**) &queries_d, sizeof(float) * n_queries * dimensions);
   cuvsRMMAlloc(cuvs_resources, (void**) &neighbors, sizeof(int64_t) * n_queries * topk);
   cuvsRMMAlloc(cuvs_resources, (void**) &distances, sizeof(float) * n_queries * topk);
-  cuvsRMMAlloc(cuvs_resources, (void**) &prefilter_data_d, sizeof(long) * prefilter_data_length);
+  cuvsRMMAlloc(cuvs_resources, (void**) &prefilter_data_d, prefilter_data_32_size);
 
   cudaMemcpy(queries_d, queries, sizeof(float) * n_queries * dimensions, cudaMemcpyDefault);
-  cudaMemcpy(prefilter_data_d, prefilter_data, sizeof(long) * prefilter_data_length, cudaMemcpyDefault);
+  cudaMemcpy(prefilter_data_d, prefilter_data_32, prefilter_data_32_size, cudaMemcpyDefault);
 
   int64_t queries_shape[2] = {n_queries, dimensions};
   DLManagedTensor queries_tensor = prepare_tensor(queries_d, queries_shape, kDLFloat, 32, 2);
@@ -279,6 +283,12 @@ void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int t
 
   int64_t distances_shape[2] = {n_queries, topk};
   DLManagedTensor distances_tensor = prepare_tensor(distances, distances_shape, kDLFloat, 32, 2);
+
+  // unpack the incoming long into two 32bit ints
+  for (long i = 0; i < prefilter_data_length; i++) {
+    *(prefilter_data_32 + (2 * i)) = (int)(*(prefilter_data + i) >> 32);
+    *(prefilter_data_32 + ((2 * i) + 1)) = (int)*(prefilter_data + i);
+  }
 
   cuvsFilter prefilter;
   if (prefilter_data == NULL) {
