@@ -118,7 +118,7 @@ public class BruteForceIndex {
         resources.getSymbolLookup().find("search_brute_force_index").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, intMemoryLayout, longMemoryLayout,
             intMemoryLayout, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
-            ValueLayout.ADDRESS, longMemoryLayout));
+            ValueLayout.ADDRESS, longMemoryLayout, longMemoryLayout));
 
     destroyIndexMethodHandle = resources.linker.downcallHandle(
         resources.getSymbolLookup().find("destroy_brute_force_index").get(),
@@ -177,6 +177,7 @@ public class BruteForceIndex {
     long numBlocks = cuvsQuery.getTopK() * numQueries;
     int vectorDimension = numQueries > 0 ? cuvsQuery.getQueryVectors()[0].length : 0;
     long prefilterDataLength = prefilterData != null ? prefilterData.length : 0;
+    long numRows = dataset != null ? dataset.length : 0;
 
     SequenceLayout neighborsSequenceLayout = MemoryLayout.sequenceLayout(numBlocks, longMemoryLayout);
     SequenceLayout distancesSequenceLayout = MemoryLayout.sequenceLayout(numBlocks, floatMemoryLayout);
@@ -191,7 +192,7 @@ public class BruteForceIndex {
     searchMethodHandle.invokeExact(bruteForceIndexReference.getMemorySegment(),
         Util.buildMemorySegment(resources.linker, resources.arena, cuvsQuery.getQueryVectors()), cuvsQuery.getTopK(),
         numQueries, vectorDimension, resources.getMemorySegment(), neighborsMemorySegment, distancesMemorySegment,
-        returnValueMemorySegment, prefilterDataMemorySegment, prefilterDataLength);
+        returnValueMemorySegment, prefilterDataMemorySegment, prefilterDataLength, numRows);
 
     return new BruteForceSearchResults(neighborsSequenceLayout, distancesSequenceLayout, neighborsMemorySegment,
         distancesMemorySegment, cuvsQuery.getTopK(), cuvsQuery.getMapping(), numQueries);
