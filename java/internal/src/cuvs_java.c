@@ -31,6 +31,7 @@
  * @brief Create an Initialized opaque C handle
  * 
  * @param[out] return_value return value for cuvsResourcesCreate function call
+ * @return cuvsResources_t
  */
 cuvsResources_t create_resources(int *return_value) {
   cuvsResources_t cuvs_resources;
@@ -56,6 +57,7 @@ void destroy_resources(cuvsResources_t cuvs_resources, int *return_value) {
  * @param[in] code the type code of base types
  * @param[in] bits the shape of the tensor
  * @param[in] ndim the number of dimensions
+ * @return DLManagedTensor
  */
 DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code, int bits, int ndim) {
   DLManagedTensor tensor;
@@ -83,6 +85,7 @@ DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code,
  * @param[in] index_params a reference to the index parameters
  * @param[in] compression_params a reference to the compression parameters
  * @param[in] n_writer_threads number of omp threads to use
+ * @return cuvsCagraIndex_t
  */
 cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, cuvsResources_t cuvs_resources, int *return_value,
     cuvsCagraIndexParams_t index_params, cuvsCagraCompressionParams_t compression_params, int n_writer_threads) {
@@ -210,6 +213,7 @@ void destroy_brute_force_index(cuvsBruteForceIndex_t index, int *return_value) {
  * @param[in] cuvs_resources reference to the underlying opaque C handle
  * @param[out] return_value return value for cuvsBruteForceBuild function call
  * @param[in] n_writer_threads number of threads to use while indexing
+ * @return cuvsBruteForceIndex_t
  */
 cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long dimensions, cuvsResources_t cuvs_resources,
   int *return_value, int n_writer_threads) {
