@@ -289,6 +289,7 @@ void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int t
   for (long i = 0; i < prefilter_data_length; i++) {
     *(prefilter_data_32 + (2 * i)) = (int)(*(prefilter_data + i) >> 32);
     *(prefilter_data_32 + ((2 * i) + 1)) = (int)*(prefilter_data + i);
+    //long l = (((long)*(prefilter_data_32 + (2 * i))) << 32) | (*(prefilter_data_32 + ((2 * i) + 1)) & 0xffffffffL);
   }
 
   cuvsFilter prefilter;
