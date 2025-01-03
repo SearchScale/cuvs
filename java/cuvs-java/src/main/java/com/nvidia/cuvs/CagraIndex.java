@@ -345,6 +345,19 @@ public class CagraIndex {
    * @return an instance of {@link IndexReference}.
    */
   private IndexReference deserialize(InputStream inputStream) throws Throwable {
+    return deserialize(inputStream, 1024);
+  }
+
+  /**
+   * Gets an instance of {@link IndexReference} by deserializing a CAGRA index
+   * using an {@link InputStream}.
+   * 
+   * @param inputStream  an instance of {@link InputStream}
+   * @param bufferLength the length of the buffer to use while reading the bytes
+   *                     from the stream. Default value is 1024.
+   * @return an instance of {@link IndexReference}.
+   */
+  private IndexReference deserialize(InputStream inputStream, int bufferLength) throws Throwable {
     MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = resources.arena.allocate(returnValueMemoryLayout);
     String tmpIndexFile = "/tmp/" + UUID.randomUUID().toString() + ".cag";
@@ -352,7 +365,7 @@ public class CagraIndex {
 
     File tempFile = new File(tmpIndexFile);
     FileOutputStream fileOutputStream = new FileOutputStream(tempFile);
-    byte[] chunk = new byte[1024];
+    byte[] chunk = new byte[bufferLength];
     int chunkLength = 0;
     while ((chunkLength = inputStream.read(chunk)) != -1) {
       fileOutputStream.write(chunk, 0, chunkLength);
