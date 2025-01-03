@@ -17,6 +17,7 @@
 #include <cuvs/core/c_api.h>
 #include <cuvs/neighbors/cagra.h>
 #include <cuvs/neighbors/brute_force.h>
+#include <cuvs/neighbors/hnsw.h>
 #include <dlpack/dlpack.h>
 #include <cuda_runtime.h>
 #include <stdio.h>
@@ -340,4 +341,16 @@ void serialize_brute_force_index(cuvsResources_t cuvs_resources, cuvsBruteForceI
  */
 void deserialize_brute_force_index(cuvsResources_t cuvs_resources, cuvsBruteForceIndex_t index, int *return_value, char* filename) {
   *return_value = cuvsBruteForceDeserialize(cuvs_resources, filename, index);
+}
+
+/**
+ * @brief A function to create and serialize an HNSW index from CAGRA index
+ * 
+ * @param[in] cuvs_resources reference to the underlying opaque C handle
+ * @param[in] file_path the path to the file of the created HNSW index
+ * @param[in] index cuvsCagraIndex_t reference to the existing CAGRA index
+ * @param[out] return_value return value for cuvsCagraSerializeToHnswlib function call
+ */
+void serialize_cagra_index_to_hnsw(cuvsResources_t cuvs_resources, char *file_path, cuvsCagraIndex_t index, int *return_value) {
+  *return_value = cuvsCagraSerializeToHnswlib(cuvs_resources, file_path, index);
 }
