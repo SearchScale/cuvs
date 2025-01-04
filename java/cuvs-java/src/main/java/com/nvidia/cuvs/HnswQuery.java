@@ -41,7 +41,8 @@ public class HnswQuery {
    * @param mapping          an instance of ID mapping
    * @param topK             the top k results to return
    */
-  private HnswQuery(HnswSearchParams hnswSearchParams, float[][] queryVectors, Map<Integer, Integer> mapping, int topK) {
+  private HnswQuery(HnswSearchParams hnswSearchParams, float[][] queryVectors, Map<Integer, Integer> mapping,
+      int topK) {
     this.hnswSearchParams = hnswSearchParams;
     this.queryVectors = queryVectors;
     this.mapping = mapping;

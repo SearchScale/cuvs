@@ -70,9 +70,10 @@ public class HnswSearchResults implements SearchResults {
     Map<Integer, Float> intermediateResultMap = new LinkedHashMap<Integer, Float>();
     int count = 0;
     for (long i = 0; i < topK * numberOfQueries; i++) {
-      int id = (int) neighboursVarHandle.get(neighboursMemorySegment, 0L, i);
+      long id = (long) neighboursVarHandle.get(neighboursMemorySegment, 0L, i);
       float dst = (float) distancesVarHandle.get(distancesMemorySegment, 0L, i);
-      intermediateResultMap.put(mapping != null ? mapping.get(id) : id, dst);
+      intermediateResultMap.put(mapping != null ? mapping.get((int) id) : (int) id, dst); // TODO: need to avoid this
+                                                                                          // casting.
       count += 1;
       if (count == topK) {
         results.add(intermediateResultMap);
