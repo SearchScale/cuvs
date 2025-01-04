@@ -356,7 +356,14 @@ void serialize_cagra_index_to_hnsw(cuvsResources_t cuvs_resources, char *file_pa
 }
 
 /**
+ * @brief A function to deserialize the persisted HNSW index
  * 
+ * @param cuvs_resources reference to the underlying opaque C handle
+ * @param file_path the path to the persisted HNSW index file
+ * @param hnsw_params reference to the HNSW index params
+ * @param return_value return value for cuvsHnswDeserialize function call
+ * @param vector_dimension the dimension of the vectors in the HNSW index
+ * @returns cuvsHnswIndex_t reference to the created HNSW index
  */
 cuvsHnswIndex_t deserialize_hnsw_index(cuvsResources_t cuvs_resources, char *file_path,
   cuvsHnswIndexParams_t hnsw_params, int *return_value, int vector_dimension) {
@@ -370,7 +377,18 @@ cuvsHnswIndex_t deserialize_hnsw_index(cuvsResources_t cuvs_resources, char *fil
 }
 
 /**
+ * @brief A Function to search in the HNSW index
  * 
+ * @param[in] cuvs_resources reference to the underlying opaque C handle
+ * @param[in] hnsw_index the HNSW index reference
+ * @param[in] search_params reference to the HNSW search parameters
+ * @param[out] return_value return value for cuvsHnswSearch function call
+ * @param[out] neighbors_h result container on host holding the neighbor ids
+ * @param[out] distances_h result container on host holding the distances
+ * @param[in] queries reference to the queries
+ * @param[in] topk the top k results to return
+ * @param[in] query_dimension the dimension of the query vectors
+ * @param[in] n_queries the number of queries passed to the function
  */
 void search_hnsw_index(cuvsResources_t cuvs_resources, cuvsHnswIndex_t hnsw_index, cuvsHnswSearchParams_t search_params,
   int *return_value, uint64_t *neighbors_h, float *distances_h, float *queries, int topk, int query_dimension, int n_queries) {
@@ -389,9 +407,11 @@ void search_hnsw_index(cuvsResources_t cuvs_resources, cuvsHnswIndex_t hnsw_inde
 }
 
 /**
+ * @brief A function to destroy the HNSW index
  * 
+ * @param[in] hnsw_index the HNSW index reference
+ * @param[out] return_value return value for cuvsHnswIndexDestroy function call
  */
 void destroy_hnsw_index(cuvsHnswIndex_t hnsw_index, int *return_value) {
   *return_value = cuvsHnswIndexDestroy(hnsw_index);
-  printf("cuvsHnswIndexDestroy: %d\n", *return_value);
 }

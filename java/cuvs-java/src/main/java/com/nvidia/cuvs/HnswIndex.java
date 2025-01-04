@@ -86,7 +86,8 @@ public class HnswIndex {
             longMemoryLayout));
 
     destroyHnswIndexMethodHandle = resources.linker.downcallHandle(
-        resources.getSymbolLookup().find("destroy_hnsw_index").get(), FunctionDescriptor.of(ValueLayout.ADDRESS));
+        resources.getSymbolLookup().find("destroy_hnsw_index").get(),
+        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
   }
 
   /**
