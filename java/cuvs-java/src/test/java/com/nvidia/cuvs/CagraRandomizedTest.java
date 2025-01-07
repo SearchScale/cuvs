@@ -95,12 +95,7 @@ public class CagraRandomizedTest extends CuVSTestCase {
       log.info("Query built successfully. Executing search...");
       CagraSearchResults results = index.search(query);
 
-      for (int i = 0; i < numQueries; i++) {
-        log.info("Results returned for query " + i + ": " + results.getResults().get(i).keySet());
-        log.info("Expected results for query " + i + ": " + expected.get(i).subList(0, Math.min(topK, datasetSize)));
-      }
-
-      compareResults(results, expected, topK, datasetSize);
+      compareResults(results, expected, topK, datasetSize, numQueries);
     }
   }
 }

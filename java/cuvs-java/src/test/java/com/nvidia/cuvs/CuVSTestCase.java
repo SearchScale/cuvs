@@ -59,7 +59,14 @@ public abstract class CuVSTestCase {
     return neighborsResult;
   }
 
-  protected void compareResults(SearchResults results, List<List<Integer>> expected, int topK, int datasetSize) {
+  protected void compareResults(SearchResults results, List<List<Integer>> expected, int topK, int datasetSize,
+      int numQueries) {
+
+    for (int i = 0; i < numQueries; i++) {
+      log.info("Results returned for query " + i + ": " + results.getResults().get(i).keySet());
+      log.info("Expected results for query " + i + ": " + expected.get(i).subList(0, Math.min(topK, datasetSize)));
+    }
+
     // actual vs. expected results
     for (int i = 0; i < results.getResults().size(); i++) {
       Map<Integer, Float> result = results.getResults().get(i);
