@@ -1,11 +1,7 @@
 package com.nvidia.cuvs;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.lang.invoke.MethodHandles;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +29,7 @@ public class BruteforceRandomizedTest extends CuVSTestCase {
     }
   }
 
-  public void tmpResultsTopKWithRandomValues() throws Throwable {
+  private void tmpResultsTopKWithRandomValues() throws Throwable {
     int DATASET_SIZE_LIMIT = 10_000;
     int DIMENSIONS_LIMIT = 2048;
     int NUM_QUERIES_LIMIT = 10;
@@ -48,10 +44,10 @@ public class BruteforceRandomizedTest extends CuVSTestCase {
       datasetSize = topK;
 
     // Generate a random dataset
-    float[][] dataset = TestUtil.generateData(random, datasetSize, dimensions);
+    float[][] dataset = generateData(random, datasetSize, dimensions);
 
     // Generate random query vectors
-    float[][] queries = TestUtil.generateData(random, numQueries, dimensions);
+    float[][] queries = generateData(random, numQueries, dimensions);
 
     log.info("Dataset size: {}x{}", datasetSize, dimensions);
     log.info("Query size: {}x{}", numQueries, dimensions);
@@ -75,7 +71,7 @@ public class BruteforceRandomizedTest extends CuVSTestCase {
     assert topK > 0 && topK <= datasetSize : "Invalid topK value.";
 
     // Generate expected results using brute force
-    List<List<Integer>> expected = TestUtil.generateExpectedResults(topK, dataset, queries, log);
+    List<List<Integer>> expected = generateExpectedResults(topK, dataset, queries, log);
 
     // Create CuVS index and query
     try (CuVSResources resources = new CuVSResources()) {
@@ -102,23 +98,7 @@ public class BruteforceRandomizedTest extends CuVSTestCase {
         log.info("Expected results for query " + i + ": " + expected.get(i).subList(0, Math.min(topK, datasetSize)));
       }
 
-      // actual vs. expected results
-      for (int i = 0; i < results.getResults().size(); i++) {
-        Map<Integer, Float> result = results.getResults().get(i);
-        assertEquals("TopK mismatch for query.", Math.min(topK, datasetSize), result.size());
-
-        // Sort result by values (distances) and extract keys
-        List<Integer> sortedResultKeys = result.entrySet().stream().sorted(Map.Entry.comparingByValue())
-            .map(Map.Entry::getKey) // Extract sorted keys
-            .toList();
-
-        // just make sure that the first 5 results are in the expected list (which
-        // comprises of 2*topK results)
-        for (int j = 0; j < Math.min(5, sortedResultKeys.size()); j++) {
-          assertTrue("Not found in expected list: " + sortedResultKeys.get(j),
-              expected.get(i).contains(sortedResultKeys.get(j)));
-        }
-      }
+      compareResults(results, expected, topK, datasetSize);
     }
   }
 }
