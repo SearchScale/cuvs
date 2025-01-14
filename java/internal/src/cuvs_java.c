@@ -415,3 +415,30 @@ void search_hnsw_index(cuvsResources_t cuvs_resources, cuvsHnswIndex_t hnsw_inde
 void destroy_hnsw_index(cuvsHnswIndex_t hnsw_index, int *return_value) {
   *return_value = cuvsHnswIndexDestroy(hnsw_index);
 }
+
+/**
+ * @brief A function to get the number of GPUs
+ * 
+ * @param[out] return_value return value for cudaGetDeviceCount function call
+ * @param[out] num_gpus the number of GPUs detected
+ */
+void get_num_gpus(int *return_value, int *num_gpus) {
+  *return_value = cudaGetDeviceCount(num_gpus);
+}
+
+/**
+ * @brief A function to get GPU details
+ * 
+ */
+void get_gpu_info(int *return_value, int num_gpus, int *gpu_id, long *free_memory, long *total_memory) {
+  size_t free, total;
+  for (int i = 0; i < num_gpus; i++) {
+    cudaSetDevice(i);
+    int id;
+    cudaGetDevice(&id);
+    cudaMemGetInfo(&free, &total);
+    *(gpu_id + i) = id;
+    *(free_memory + i) = free;
+    *(total_memory + i) = total;
+  }
+}
