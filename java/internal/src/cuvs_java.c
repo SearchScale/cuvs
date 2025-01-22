@@ -434,10 +434,8 @@ void get_gpu_info(int *return_value, int num_gpus, int *gpu_id, long *free_memor
   size_t free, total;
   for (int i = 0; i < num_gpus; i++) {
     cudaSetDevice(i);
-    int id;
-    cudaGetDevice(&id);
     cudaMemGetInfo(&free, &total);
-    *(gpu_id + i) = id;
+    *(gpu_id + i) = i;
     *(free_memory + i) = free;
     *(total_memory + i) = total;
   }
