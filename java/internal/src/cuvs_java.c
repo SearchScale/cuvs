@@ -429,12 +429,17 @@ void get_num_gpus(int *return_value, int *num_gpus) {
 /**
  * @brief A function to get GPU details
  * 
+ * @param[out] return_value return value for cudaGetDeviceCount function call
+ * @param[in] num_gpus the count of gpus passed to expect details on
+ * @param[out] gpu_id an integer array of gpu ids returned
+ * @param[out] free_memory an array of free memory (free_memory[n] for gpu[n]; 0 <= n <= (cudaGetDeviceCount() - 1))
+ * @param[out] total_memory an array of total memory (total_memory[n] for gpu[n]; 0 <= n <= (cudaGetDeviceCount() - 1))
  */
 void get_gpu_info(int *return_value, int num_gpus, int *gpu_id, long *free_memory, long *total_memory) {
   size_t free, total;
   for (int i = 0; i < num_gpus; i++) {
     cudaSetDevice(i);
-    cudaMemGetInfo(&free, &total);
+    *return_value = cudaMemGetInfo(&free, &total);
     *(gpu_id + i) = i;
     *(free_memory + i) = free;
     *(total_memory + i) = total;
