@@ -95,3 +95,5 @@ done
 
 # Update Java API version
 sed_runner "s/VERSION=\".*\"/VERSION=\"${NEXT_FULL_TAG}\"/g" java/build.sh
+sed_runner "/<!--CUVS_JAVA#VERSION_UPDATE_MARKER_START-->.*<!--CUVS_JAVA#VERSION_UPDATE_MARKER_END-->/s//<!--CUVS_JAVA#VERSION_UPDATE_MARKER_START--><version>${NEXT_FULL_TAG}<\/version><!--CUVS_JAVA#VERSION_UPDATE_MARKER_END-->/g" java/cuvs-java/pom.xml
+sed_runner "/<!--CUVS_JAVA#VERSION_UPDATE_MARKER_START-->.*<!--CUVS_JAVA#VERSION_UPDATE_MARKER_END-->/s//<!--CUVS_JAVA#VERSION_UPDATE_MARKER_START--><version>${NEXT_FULL_TAG}<\/version><!--CUVS_JAVA#VERSION_UPDATE_MARKER_END-->/g" java/examples/pom.xml
