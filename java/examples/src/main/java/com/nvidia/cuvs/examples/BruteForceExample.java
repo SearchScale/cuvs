@@ -10,16 +10,13 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.nvidia.cuvs.CagraIndex;
-import com.nvidia.cuvs.CagraIndexParams;
-import com.nvidia.cuvs.CagraIndexParams.CagraGraphBuildAlgo;
-import com.nvidia.cuvs.CagraIndexParams.CuvsDistanceType;
-import com.nvidia.cuvs.CagraQuery;
-import com.nvidia.cuvs.CagraSearchParams;
+import com.nvidia.cuvs.BruteForceIndex;
+import com.nvidia.cuvs.BruteForceIndexParams;
+import com.nvidia.cuvs.BruteForceQuery;
 import com.nvidia.cuvs.CuVSResources;
 import com.nvidia.cuvs.common.SearchResults;
 
-public class CagraExample {
+public class BruteForceExample {
 
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -42,41 +39,38 @@ public class CagraExample {
 
     try (CuVSResources resources = new CuVSResources()) {
 
-      // Configure index parameters
-      CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
-          .withCagraGraphBuildAlgo(CagraGraphBuildAlgo.NN_DESCENT)
-          .withGraphDegree(1)
-          .withIntermediateGraphDegree(2)
-          .withMetric(CuvsDistanceType.L2Expanded)
+      // Create a query object with the query vectors
+      BruteForceQuery cuvsQuery = new BruteForceQuery.Builder()
+          .withTopK(3)
+          .withQueryVectors(queries)
+          .build();
+
+      // Set index parameters
+      BruteForceIndexParams indexParams = new BruteForceIndexParams.Builder()
           .build();
 
       // Create the index with the dataset
-      CagraIndex index = new CagraIndex.Builder(resources)
+      BruteForceIndex index = new BruteForceIndex.Builder(resources)
           .withDataset(dataset)
           .withIndexParams(indexParams)
           .build();
 
       // Saving the index on to the disk.
-      String indexFileName = UUID.randomUUID().toString() + ".cag";
+      String indexFileName = UUID.randomUUID().toString() + ".bf";
       index.serialize(new FileOutputStream(indexFileName));
 
-      // Loading a CAGRA index from disk.
+      // Loading a BRUTEFORCE index from disk.
       File indexFile = new File(indexFileName);
       InputStream inputStream = new FileInputStream(indexFile);
-      CagraIndex loadedIndex = new CagraIndex.Builder(resources)
+      BruteForceIndex loadedIndex = new BruteForceIndex.Builder(resources)
           .from(inputStream)
           .build();
 
-      // Configure search parameters
-      CagraSearchParams searchParams = new CagraSearchParams.Builder(resources)
-          .build();
+      // Perform the search
+      SearchResults resultsFromLoadedIndex = loadedIndex.search(cuvsQuery);
 
-      // Create a query object with the query vectors
-      CagraQuery cuvsQuery = new CagraQuery.Builder()
-          .withTopK(3)
-          .withSearchParams(searchParams)
-          .withQueryVectors(queries)
-          .build();
+      // Check results
+      log.info(resultsFromLoadedIndex.getResults().toString());
 
       // Perform the search
       SearchResults results = index.search(cuvsQuery);
@@ -84,17 +78,13 @@ public class CagraExample {
       // Check results
       log.info(results.getResults().toString());
 
-      // Search from deserialized index
-      results = loadedIndex.search(cuvsQuery);
-
-      // Check results
-      log.info(results.getResults().toString());
-
       // Cleanup
+      index.destroyIndex();
+      loadedIndex.destroyIndex();
+
       if (indexFile.exists()) {
         indexFile.delete();
       }
-      index.destroyIndex();
     }
   }
 }

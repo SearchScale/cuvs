@@ -14,12 +14,14 @@ import com.nvidia.cuvs.CagraIndex;
 import com.nvidia.cuvs.CagraIndexParams;
 import com.nvidia.cuvs.CagraIndexParams.CagraGraphBuildAlgo;
 import com.nvidia.cuvs.CagraIndexParams.CuvsDistanceType;
-import com.nvidia.cuvs.CagraQuery;
-import com.nvidia.cuvs.CagraSearchParams;
 import com.nvidia.cuvs.CuVSResources;
-import com.nvidia.cuvs.common.SearchResults;
+import com.nvidia.cuvs.HnswIndex;
+import com.nvidia.cuvs.HnswIndexParams;
+import com.nvidia.cuvs.HnswQuery;
+import com.nvidia.cuvs.HnswSearchParams;
+import com.nvidia.cuvs.HnswSearchResults;
 
-public class CagraExample {
+public class HnswExample {
 
   private static final Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -44,9 +46,10 @@ public class CagraExample {
 
       // Configure index parameters
       CagraIndexParams indexParams = new CagraIndexParams.Builder(resources)
-          .withCagraGraphBuildAlgo(CagraGraphBuildAlgo.NN_DESCENT)
-          .withGraphDegree(1)
-          .withIntermediateGraphDegree(2)
+          .withCagraGraphBuildAlgo(CagraGraphBuildAlgo.IVF_PQ)
+          .withGraphDegree(64)
+          .withIntermediateGraphDegree(128)
+          .withNumWriterThreads(32)
           .withMetric(CuvsDistanceType.L2Expanded)
           .build();
 
@@ -56,45 +59,41 @@ public class CagraExample {
           .withIndexParams(indexParams)
           .build();
 
-      // Saving the index on to the disk.
-      String indexFileName = UUID.randomUUID().toString() + ".cag";
-      index.serialize(new FileOutputStream(indexFileName));
+      // Saving the HNSW index on to the disk.
+      String hnswIndexFileName = UUID.randomUUID().toString() + ".hnsw";
+      index.serializeToHNSW(new FileOutputStream(hnswIndexFileName));
 
-      // Loading a CAGRA index from disk.
-      File indexFile = new File(indexFileName);
-      InputStream inputStream = new FileInputStream(indexFile);
-      CagraIndex loadedIndex = new CagraIndex.Builder(resources)
-          .from(inputStream)
+      HnswIndexParams hnswIndexParams = new HnswIndexParams.Builder(resources)
+          .withVectorDimension(2)
+          .build();
+      InputStream inputStreamHNSW = new FileInputStream(hnswIndexFileName);
+      File hnswIndexFile = new File(hnswIndexFileName);
+
+      HnswIndex hnswIndex = new HnswIndex.Builder(resources)
+          .from(inputStreamHNSW)
+          .withIndexParams(hnswIndexParams)
           .build();
 
-      // Configure search parameters
-      CagraSearchParams searchParams = new CagraSearchParams.Builder(resources)
+      HnswSearchParams hnswSearchParams = new HnswSearchParams.Builder(resources)
           .build();
 
-      // Create a query object with the query vectors
-      CagraQuery cuvsQuery = new CagraQuery.Builder()
-          .withTopK(3)
-          .withSearchParams(searchParams)
+      HnswQuery hnswQuery = new HnswQuery.Builder()
           .withQueryVectors(queries)
+          .withSearchParams(hnswSearchParams)
+          .withTopK(3)
           .build();
 
-      // Perform the search
-      SearchResults results = index.search(cuvsQuery);
-
-      // Check results
-      log.info(results.getResults().toString());
-
-      // Search from deserialized index
-      results = loadedIndex.search(cuvsQuery);
+      HnswSearchResults results = hnswIndex.search(hnswQuery);
 
       // Check results
       log.info(results.getResults().toString());
 
       // Cleanup
-      if (indexFile.exists()) {
-        indexFile.delete();
+      if (hnswIndexFile.exists()) {
+        hnswIndexFile.delete();
       }
       index.destroyIndex();
+      hnswIndex.destroyIndex();
     }
   }
 }
