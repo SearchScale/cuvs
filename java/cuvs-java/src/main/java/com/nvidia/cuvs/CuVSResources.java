@@ -78,9 +78,7 @@ public class CuVSResources implements AutoCloseable {
     getGpuInfoMethodHandle = linker.downcallHandle(symbolLookup.find("get_gpu_info").get(), FunctionDescriptor
         .ofVoid(ValueLayout.ADDRESS, intMemoryLayout, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-    if (getNumGPUs() == 0)
-      throw new GPUException("No GPUs found! The CuVS Java API needs GPU to work.");
-
+    getNumGPUs(); // To check if GPUs can be found to proceed.
     createResources();
   }
 
@@ -101,7 +99,10 @@ public class CuVSResources implements AutoCloseable {
 
     switch (returnValue) {
     case 0: // cudaSuccess
-      return numGPUsMemorySegment.get(ValueLayout.JAVA_INT, 0);
+      int result = numGPUsMemorySegment.get(ValueLayout.JAVA_INT, 0);
+      if (result == 0)
+        throw new GPUException("No GPUs found! The CuVS Java API needs GPU to work.");
+      return result;
     case 3: // cudaErrorInitializationError
       throw new GPUException("The API call failed because the CUDA driver and runtime could not be initialized.");
     case 35: // cudaErrorInsufficientDriver
