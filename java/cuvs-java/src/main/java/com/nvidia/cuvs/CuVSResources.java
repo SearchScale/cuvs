@@ -78,7 +78,9 @@ public class CuVSResources implements AutoCloseable {
     getGpuInfoMethodHandle = linker.downcallHandle(symbolLookup.find("get_gpu_info").get(), FunctionDescriptor
         .ofVoid(ValueLayout.ADDRESS, intMemoryLayout, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-    getNumGPUs();
+    if (getNumGPUs() == 0)
+      throw new GPUException("No GPUs found! The CuVS Java API needs GPU to work.");
+
     createResources();
   }
 
@@ -115,6 +117,7 @@ public class CuVSResources implements AutoCloseable {
   /**
    * Gets the GPU information
    * 
+   * @return a list of {@link GPUInfo} objects with GPU details
    */
   public List<GPUInfo> getGPUInfo() throws Throwable {
     int numGPUs = getNumGPUs();
@@ -139,10 +142,10 @@ public class CuVSResources implements AutoCloseable {
     VarHandle totalMemVarHandle = totalMemSequenceLayout.varHandle(PathElement.sequenceElement());
 
     for (int i = 0; i < numGPUs; i++) {
-      int id = (int) gpuIdVarHandle.get(gpuIdMemorySegment, 0L, i);
-      long freeMem = (long) freeMemVarHandle.get(freeMemMemorySegment, 0L, i);
-      long totalMem = (long) totalMemVarHandle.get(totalMemMemorySegment, 0L, i);
-      results.add(new GPUInfo(id, freeMem, totalMem));
+      int gpuId = (int) gpuIdVarHandle.get(gpuIdMemorySegment, 0L, i);
+      long freeMemory = (long) freeMemVarHandle.get(freeMemMemorySegment, 0L, i);
+      long totalMemory = (long) totalMemVarHandle.get(totalMemMemorySegment, 0L, i);
+      results.add(new GPUInfo(gpuId, freeMemory, totalMemory));
     }
 
     return results;
