@@ -78,7 +78,7 @@ public class CuVSResources implements AutoCloseable {
     getGpuInfoMethodHandle = linker.downcallHandle(symbolLookup.find("get_gpu_info").get(), FunctionDescriptor
         .ofVoid(ValueLayout.ADDRESS, intMemoryLayout, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-    getNumGPUs(); // To check if GPUs can be found to proceed.
+    getNumGPUs(); // To check if GPUs are found before proceeding.
     createResources();
   }
 
@@ -87,7 +87,7 @@ public class CuVSResources implements AutoCloseable {
    * 
    * @return the number of GPUs on the machine
    */
-  public int getNumGPUs() throws Throwable {
+  protected int getNumGPUs() throws Throwable {
     MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
 
@@ -110,8 +110,8 @@ public class CuVSResources implements AutoCloseable {
     case 100: // cudaErrorNoDevice
       throw new GPUException("No CUDA-capable devices were detected by the installed CUDA driver");
     default:
-      throw new GPUException("Return value: " + returnValue
-          + " Please find details here: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g3f51e3575c2178246db0a94a430e0038");
+      throw new GPUException("Returned value: " + returnValue
+          + " Please find more details here: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g3f51e3575c2178246db0a94a430e0038");
     }
   }
 
@@ -120,7 +120,7 @@ public class CuVSResources implements AutoCloseable {
    * 
    * @return a list of {@link GPUInfo} objects with GPU details
    */
-  public List<GPUInfo> getGPUInfo() throws Throwable {
+  protected List<GPUInfo> getGPUInfo() throws Throwable {
     int numGPUs = getNumGPUs();
     List<GPUInfo> results = new ArrayList<GPUInfo>();
     MemoryLayout returnValueMemoryLayout = intMemoryLayout;
@@ -194,7 +194,7 @@ public class CuVSResources implements AutoCloseable {
   /**
    * Container for GPU information
    */
-  public class GPUInfo {
+  protected class GPUInfo {
 
     private int gpuId;
     private long freeMemory;
