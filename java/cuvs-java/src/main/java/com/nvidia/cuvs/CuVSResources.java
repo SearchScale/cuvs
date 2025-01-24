@@ -29,7 +29,6 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import com.nvidia.cuvs.common.Util;
@@ -84,64 +83,48 @@ public class CuVSResources implements AutoCloseable {
 
     createResources();
   }
-  
+
   /**
-   * Checks if at least one of the GPUs available meet the CuVS hardware Prerequisites
+   * Get the list of compatible GPUs based on compute capability >= 7.0 and total
+   * memory >= 8GB
    * 
-   * @return a list of {@link GPUInfo} objects containing GPU information
-   * @throws GPUException a {@link GPUException} if the minimum compute capability is not met
+   * @return a list of compatible GPUs. See {@link GPUInfo}
    */
-  public List<GPUInfo> checkGPUComputeCapability() throws Throwable {
-    List<GPUInfo> gpus = getGPUInfo();
-    GPUInfo maxCC = gpus.stream().max(Comparator.comparing(GPUInfo::getComputeCapability)).orElse(null);
-    // https://docs.rapids.ai/api/cuvs/stable/build/#prerequisites
-    if (maxCC.getComputeCapability() < 7.0) {
-      throw new GPUException("Volta architecture or better (compute capability >= 7.0) is required");
-    }
-    return gpus;
+  public List<GPUInfo> compatibleGPUs() throws Throwable {
+    return compatibleGPUs(7.0f, 8192);
   }
 
   /**
-   * Gets the number of GPUs on the machine
+   * Get the list of compatible GPUs based on given compute capability and total
+   * memory
    * 
-   * @return the number of GPUs on the machine
+   * @param minComputeCapability the minimum compute capability
+   * @param minDeviceMemoryMB    the minimum total available memory in MB
+   * @return a list of compatible GPUs. See {@link GPUInfo}
    */
-  private int getNumGPUs() throws Throwable {
-    MemoryLayout returnValueMemoryLayout = intMemoryLayout;
-    MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
-
-    MemoryLayout numGPUsMemoryLayout = intMemoryLayout;
-    MemorySegment numGPUsMemorySegment = arena.allocate(numGPUsMemoryLayout);
-
-    getNumGpusMethodHandle.invokeExact(returnValueMemorySegment, numGPUsMemorySegment);
-    int returnValue = returnValueMemorySegment.get(ValueLayout.JAVA_INT, 0);
-
-    switch (returnValue) {
-    case 0: // cudaSuccess
-      int result = numGPUsMemorySegment.get(ValueLayout.JAVA_INT, 0);
-      if (result == 0)
-        throw new GPUException("No GPUs found! The CuVS Java API needs GPU to work.");
-      return result;
-    case 3: // cudaErrorInitializationError
-      throw new GPUException("The API call failed because the CUDA driver and runtime could not be initialized.");
-    case 35: // cudaErrorInsufficientDriver
-      throw new GPUException("The installed NVIDIA CUDA driver is older than the CUDA runtime library");
-    case 100: // cudaErrorNoDevice
-      throw new GPUException("No CUDA-capable devices were detected by the installed CUDA driver");
-    default:
-      throw new GPUException("Returned value: " + returnValue
-          + " Please find more details here: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g3f51e3575c2178246db0a94a430e0038");
+  public List<GPUInfo> compatibleGPUs(float minComputeCapability, int minDeviceMemoryMB) throws Throwable {
+    List<GPUInfo> compatibleGPUs = new ArrayList<GPUInfo>();
+    double minDeviceMemoryB = Math.pow(2, 20) * minDeviceMemoryMB;
+    for (GPUInfo gpuInfo : availableGPUs()) {
+      if (gpuInfo.getComputeCapability() >= minComputeCapability && gpuInfo.getTotalMemory() >= minDeviceMemoryB) {
+        compatibleGPUs.add(gpuInfo);
+      }
     }
+    return compatibleGPUs;
   }
 
   /**
-   * Gets the GPU information
+   * Gets all the available GPUs
    * 
    * @return a list of {@link GPUInfo} objects with GPU details
    */
-  protected List<GPUInfo> getGPUInfo() throws Throwable {
+  public List<GPUInfo> availableGPUs() throws Throwable {
     int numGPUs = getNumGPUs();
     List<GPUInfo> results = new ArrayList<GPUInfo>();
+
+    if (numGPUs == 0)
+      return results;
+
     MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
 
@@ -174,6 +157,36 @@ public class CuVSResources implements AutoCloseable {
     }
 
     return results;
+  }
+
+  /**
+   * Gets the number of GPUs on the machine
+   * 
+   * @return the number of GPUs on the machine
+   */
+  private int getNumGPUs() throws Throwable {
+    MemoryLayout returnValueMemoryLayout = intMemoryLayout;
+    MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
+
+    MemoryLayout numGPUsMemoryLayout = intMemoryLayout;
+    MemorySegment numGPUsMemorySegment = arena.allocate(numGPUsMemoryLayout);
+
+    getNumGpusMethodHandle.invokeExact(returnValueMemorySegment, numGPUsMemorySegment);
+    int returnValue = returnValueMemorySegment.get(ValueLayout.JAVA_INT, 0);
+
+    switch (returnValue) {
+    case 0: // cudaSuccess
+      return numGPUsMemorySegment.get(ValueLayout.JAVA_INT, 0);
+    case 3: // cudaErrorInitializationError
+      throw new GPUException("The API call failed because the CUDA driver and runtime could not be initialized.");
+    case 35: // cudaErrorInsufficientDriver
+      throw new GPUException("The installed NVIDIA CUDA driver is older than the CUDA runtime library");
+    case 100: // cudaErrorNoDevice
+      throw new GPUException("No CUDA-capable devices were detected by the installed CUDA driver");
+    default:
+      throw new GPUException("Returned value: " + returnValue
+          + " Please find more details here: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1g3f51e3575c2178246db0a94a430e0038");
+    }
   }
 
   /**
