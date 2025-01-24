@@ -29,6 +29,7 @@ import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import com.nvidia.cuvs.common.Util;
@@ -50,6 +51,7 @@ public class CuVSResources implements AutoCloseable {
   private final MethodHandle getNumGpusMethodHandle;
   private MemorySegment resourcesMemorySegment;
   private MemoryLayout intMemoryLayout;
+  private MemoryLayout floatMemoryLayout;
   private MemoryLayout longMemoryLayout;
 
   /**
@@ -64,6 +66,7 @@ public class CuVSResources implements AutoCloseable {
     nativeLibrary = Util.loadLibraryFromJar("/libcuvs_java.so");
     symbolLookup = SymbolLookup.libraryLookup(nativeLibrary.getAbsolutePath(), arena);
     intMemoryLayout = linker.canonicalLayouts().get("int");
+    floatMemoryLayout = linker.canonicalLayouts().get("float");
     longMemoryLayout = linker.canonicalLayouts().get("long");
 
     createResourcesMethodHandle = linker.downcallHandle(symbolLookup.find("create_resources").get(),
@@ -75,11 +78,27 @@ public class CuVSResources implements AutoCloseable {
     getNumGpusMethodHandle = linker.downcallHandle(symbolLookup.find("get_num_gpus").get(),
         FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-    getGpuInfoMethodHandle = linker.downcallHandle(symbolLookup.find("get_gpu_info").get(), FunctionDescriptor
-        .ofVoid(ValueLayout.ADDRESS, intMemoryLayout, ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
+    getGpuInfoMethodHandle = linker.downcallHandle(symbolLookup.find("get_gpu_info").get(),
+        FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, intMemoryLayout, ValueLayout.ADDRESS, ValueLayout.ADDRESS,
+            ValueLayout.ADDRESS, ValueLayout.ADDRESS));
 
-    getNumGPUs(); // To check if GPUs are found before proceeding.
     createResources();
+  }
+  
+  /**
+   * Checks if at least one of the GPUs available meet the CuVS hardware Prerequisites
+   * 
+   * @return a list of {@link GPUInfo} objects containing GPU information
+   * @throws GPUException a {@link GPUException} if the minimum compute capability is not met
+   */
+  public List<GPUInfo> checkGPUComputeCapability() throws Throwable {
+    List<GPUInfo> gpus = getGPUInfo();
+    GPUInfo maxCC = gpus.stream().max(Comparator.comparing(GPUInfo::getComputeCapability)).orElse(null);
+    // https://docs.rapids.ai/api/cuvs/stable/build/#prerequisites
+    if (maxCC.getComputeCapability() < 7.0) {
+      throw new GPUException("Volta architecture or better (compute capability >= 7.0) is required");
+    }
+    return gpus;
   }
 
   /**
@@ -87,7 +106,7 @@ public class CuVSResources implements AutoCloseable {
    * 
    * @return the number of GPUs on the machine
    */
-  protected int getNumGPUs() throws Throwable {
+  private int getNumGPUs() throws Throwable {
     MemoryLayout returnValueMemoryLayout = intMemoryLayout;
     MemorySegment returnValueMemorySegment = arena.allocate(returnValueMemoryLayout);
 
@@ -135,18 +154,23 @@ public class CuVSResources implements AutoCloseable {
     SequenceLayout totalMemSequenceLayout = MemoryLayout.sequenceLayout(numGPUs, longMemoryLayout);
     MemorySegment totalMemMemorySegment = arena.allocate(totalMemSequenceLayout);
 
+    SequenceLayout computeCapabilitySequenceLayout = MemoryLayout.sequenceLayout(numGPUs, floatMemoryLayout);
+    MemorySegment computeCapabilityMemorySegment = arena.allocate(computeCapabilitySequenceLayout);
+
     getGpuInfoMethodHandle.invokeExact(returnValueMemorySegment, numGPUs, gpuIdMemorySegment, freeMemMemorySegment,
-        totalMemMemorySegment);
+        totalMemMemorySegment, computeCapabilityMemorySegment);
 
     VarHandle gpuIdVarHandle = gpuIdSequenceLayout.varHandle(PathElement.sequenceElement());
     VarHandle freeMemVarHandle = freeMemSequenceLayout.varHandle(PathElement.sequenceElement());
     VarHandle totalMemVarHandle = totalMemSequenceLayout.varHandle(PathElement.sequenceElement());
+    VarHandle computeCapabilityVarHandle = computeCapabilitySequenceLayout.varHandle(PathElement.sequenceElement());
 
     for (int i = 0; i < numGPUs; i++) {
       int gpuId = (int) gpuIdVarHandle.get(gpuIdMemorySegment, 0L, i);
       long freeMemory = (long) freeMemVarHandle.get(freeMemMemorySegment, 0L, i);
       long totalMemory = (long) totalMemVarHandle.get(totalMemMemorySegment, 0L, i);
-      results.add(new GPUInfo(gpuId, freeMemory, totalMemory));
+      float computeCapability = (float) computeCapabilityVarHandle.get(computeCapabilityMemorySegment, 0L, i);
+      results.add(new GPUInfo(gpuId, freeMemory, totalMemory, computeCapability));
     }
 
     return results;
@@ -194,17 +218,19 @@ public class CuVSResources implements AutoCloseable {
   /**
    * Container for GPU information
    */
-  protected class GPUInfo {
+  public class GPUInfo {
 
-    private int gpuId;
-    private long freeMemory;
-    private long totalMemory;
+    private final int gpuId;
+    private final long freeMemory;
+    private final long totalMemory;
+    private final float computeCapability;
 
-    public GPUInfo(int gpuId, long freeMemory, long totalMemory) {
+    public GPUInfo(int gpuId, long freeMemory, long totalMemory, float computeCapability) {
       super();
       this.gpuId = gpuId;
       this.freeMemory = freeMemory;
       this.totalMemory = totalMemory;
+      this.computeCapability = computeCapability;
     }
 
     public int getGpuId() {
@@ -219,9 +245,15 @@ public class CuVSResources implements AutoCloseable {
       return totalMemory;
     }
 
+    public float getComputeCapability() {
+      return computeCapability;
+    }
+
     @Override
     public String toString() {
-      return "GPUInfo [gpuId=" + gpuId + ", freeMemory=" + freeMemory + ", totalMemory=" + totalMemory + "]";
+      return "GPUInfo [gpuId=" + gpuId + ", freeMemory=" + freeMemory + ", totalMemory=" + totalMemory
+          + ", computeCapability=" + computeCapability + "]";
     }
+
   }
 }
