@@ -35,7 +35,7 @@ import com.nvidia.cuvs.common.SearchResults;
 public class BruteForceSearchResults implements SearchResults {
 
   private final List<Map<Integer, Float>> results;
-  private final Map<Integer, Integer> mapping; // TODO: Is this performant in a user application?
+  private final List<Integer> mapping; // TODO: Is this performant in a user application?
   private final SequenceLayout neighboursSequenceLayout;
   private final SequenceLayout distancesSequenceLayout;
   private final MemorySegment neighboursMemorySegment;
@@ -45,7 +45,7 @@ public class BruteForceSearchResults implements SearchResults {
 
   protected BruteForceSearchResults(SequenceLayout neighboursSequenceLayout, SequenceLayout distancesSequenceLayout,
       MemorySegment neighboursMemorySegment, MemorySegment distancesMemorySegment, int topK,
-      Map<Integer, Integer> mapping, long numberOfQueries) {
+      List<Integer> mapping, long numberOfQueries) {
     this.topK = topK;
     this.numberOfQueries = numberOfQueries;
     this.neighboursSequenceLayout = neighboursSequenceLayout;
