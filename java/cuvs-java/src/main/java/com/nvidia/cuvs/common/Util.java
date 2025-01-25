@@ -45,12 +45,12 @@ import com.nvidia.cuvs.panama.GpuInfo;
  */
 public class Util {
 
-  public static Arena arena = null;
-  public static Linker linker = null;
-  public static SymbolLookup symbolLookup = null;
+  private static Arena arena = null;
+  private static Linker linker = null;
+  private static SymbolLookup symbolLookup = null;
   private static MemoryLayout intMemoryLayout;
   private static MethodHandle getGpuInfoMethodHandle = null;
-  protected static File nativeLibrary;
+  private static File nativeLibrary;
 
   static {
     try {
@@ -73,7 +73,7 @@ public class Util {
    * @return a list of compatible GPUs. See {@link GPUInfo}
    */
   public static List<GPUInfo> compatibleGPUs() throws Throwable {
-    return compatibleGPUs(7.0f, 8192);
+    return compatibleGPUs(7.0, 8192);
   }
 
   /**
@@ -84,7 +84,7 @@ public class Util {
    * @param minDeviceMemoryMB    the minimum total available memory in MB
    * @return a list of compatible GPUs. See {@link GPUInfo}
    */
-  public static List<GPUInfo> compatibleGPUs(float minComputeCapability, int minDeviceMemoryMB) throws Throwable {
+  public static List<GPUInfo> compatibleGPUs(double minComputeCapability, int minDeviceMemoryMB) throws Throwable {
     List<GPUInfo> compatibleGPUs = new ArrayList<GPUInfo>();
     double minDeviceMemoryB = Math.pow(2, 20) * minDeviceMemoryMB;
     for (GPUInfo gpuInfo : availableGPUs()) {
@@ -109,6 +109,11 @@ public class Util {
     MemoryLayout numGpuMemoryLayout = intMemoryLayout;
     MemorySegment numGpuMemorySegment = arena.allocate(numGpuMemoryLayout);
 
+    /*
+     * Setting a value of 1024 because we cannot predict how much memory to allocate
+     * before the function is invoked as cudaGetDeviceCount is inside the
+     * get_gpu_info function.
+     */
     MemorySegment GpuInfoArrayMemorySegment = GpuInfo.allocateArray(1024, arena);
 
     getGpuInfoMethodHandle.invokeExact(returnValueMemorySegment, numGpuMemorySegment, GpuInfoArrayMemorySegment);

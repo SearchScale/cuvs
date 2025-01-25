@@ -1,5 +1,8 @@
 package com.nvidia.cuvs;
 
+/**
+ * Contains GPU information
+ */
 public class GPUInfo {
 
   private final int gpuId;
@@ -8,6 +11,15 @@ public class GPUInfo {
   private final long totalMemory;
   private final float computeCapability;
 
+  /**
+   * Constructor for GPUInfo
+   * 
+   * @param gpuId             id of the GPU starting from 0
+   * @param name              ASCII string identifying device
+   * @param freeMemory        returned free memory in bytes
+   * @param totalMemory       returned total memory in bytes
+   * @param computeCapability the compute capability of the device
+   */
   public GPUInfo(int gpuId, String name, long freeMemory, long totalMemory, float computeCapability) {
     super();
     this.gpuId = gpuId;

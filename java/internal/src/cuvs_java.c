@@ -428,16 +428,17 @@ typedef struct gpuInfo {
  * @brief A function to get GPU details
  * 
  * @param[out] return_value return value for cudaMemGetInfo function call
- * @param[out] num_gpus the number of GPUs
- * @param[out] gpu_info_arr reference of the array of gpuInfo objects
+ * @param[out] num_gpus the number of devices found
+ * @param[out] gpu_info_arr reference to the array of gpuInfo objects
  */
 void get_gpu_info(int *return_value, int *num_gpus, gpuInfo *gpu_info_arr) {
 
   cudaGetDeviceCount(num_gpus);
-  // Limiting the num_gpus to 1024. See comments in Util.availableGPUs()
+  // Limiting the num_gpus to 1024. For more details please see comments in Util.availableGPUs()
   *num_gpus = (*num_gpus > 1024) ? 1024 : *num_gpus;
   struct gpuInfo gpuInfos[*num_gpus];
   size_t free, total;
+  // https://docs.nvidia.com/cuda/cuda-runtime-api/structcudaDeviceProp.html#structcudaDeviceProp
   struct cudaDeviceProp deviceProp;
 
   for (int i = 0; i < *num_gpus; i++) {
