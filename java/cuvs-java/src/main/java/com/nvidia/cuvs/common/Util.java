@@ -229,8 +229,6 @@ public class Util {
     }
     // Prepare temporary file
     File temp = File.createTempFile(prefix, suffix);
-    System.out.println("Classloader: " + Util.class.getClassLoader().getClass());
-    // System.out.println("Classloader: " + Util.class.getClassLoader().);
     InputStream libraryStream = Util.class.getModule().getResourceAsStream(path); // Util.class.getResourceAsStream(path);
     streamCopy(libraryStream, new FileOutputStream(temp));
 
