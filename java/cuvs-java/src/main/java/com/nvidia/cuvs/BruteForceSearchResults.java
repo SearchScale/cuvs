@@ -26,7 +26,7 @@ import com.nvidia.cuvs.common.SearchResults;
 
 /**
  * SearchResult encapsulates the logic for reading and holding search results.
- * 
+ *
  * @since 25.02
  */
 public class BruteForceSearchResults extends SearchResults {

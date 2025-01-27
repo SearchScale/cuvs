@@ -27,7 +27,7 @@
 
 /**
  * @brief Create an Initialized opaque C handle
- * 
+ *
  * @param[out] return_value return value for cuvsResourcesCreate function call
  * @return cuvsResources_t
  */
@@ -39,7 +39,7 @@ cuvsResources_t create_resources(int *return_value) {
 
 /**
  * @brief Destroy and de-allocate opaque C handle
- * 
+ *
  * @param[in] cuvs_resources an opaque C handle
  * @param[out] return_value return value for cuvsResourcesDestroy function call
  */
@@ -49,7 +49,7 @@ void destroy_resources(cuvsResources_t cuvs_resources, int *return_value) {
 
 /**
  * @brief Helper function for creating DLManagedTensor instance
- * 
+ *
  * @param[in] data the data pointer points to the allocated data
  * @param[in] shape the shape of the tensor
  * @param[in] code the type code of base types
@@ -74,7 +74,7 @@ DLManagedTensor prepare_tensor(void *data, int64_t shape[], DLDataTypeCode code,
 
 /**
  * @brief Function for building CAGRA index
- * 
+ *
  * @param[in] dataset index dataset
  * @param[in] rows number of dataset rows
  * @param[in] dimensions vector dimension of the dataset
@@ -111,7 +111,7 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
 
 /**
  * @brief A function to de-allocate CAGRA index
- * 
+ *
  * @param[in] index cuvsCagraIndex_t to de-allocate
  * @param[out] return_value return value for cuvsCagraIndexDestroy function call
  */
@@ -121,7 +121,7 @@ void destroy_cagra_index(cuvsCagraIndex_t index, int *return_value) {
 
 /**
  * @brief A function to serialize a CAGRA index
- * 
+ *
  * @param[in] cuvs_resources reference of the underlying opaque C handle
  * @param[in] index cuvsCagraIndex_t reference
  * @param[out] return_value return value for cuvsCagraSerialize function call
@@ -133,7 +133,7 @@ void serialize_cagra_index(cuvsResources_t cuvs_resources, cuvsCagraIndex_t inde
 
 /**
  * @brief A function to de-serialize a CAGRA index
- * 
+ *
  * @param[in] cuvs_resources reference to the underlying opaque C handle
  * @param[in] index cuvsCagraIndex_t reference
  * @param[out] return_value return value for cuvsCagraDeserialize function call
@@ -145,7 +145,7 @@ void deserialize_cagra_index(cuvsResources_t cuvs_resources, cuvsCagraIndex_t in
 
 /**
  * @brief A function to search a CAGRA index and return results
- * 
+ *
  * @param[in] index reference to a CAGRA index to search on
  * @param[in] queries query vectors
  * @param[in] topk topK results to return
@@ -157,7 +157,7 @@ void deserialize_cagra_index(cuvsResources_t cuvs_resources, cuvsCagraIndex_t in
  * @param[out] return_value return value for cuvsCagraSearch function call
  * @param[in] search_params reference to cuvsCagraSearchParams_t holding the search parameters
  */
-void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, int dimensions, 
+void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n_queries, int dimensions,
     cuvsResources_t cuvs_resources, int *neighbors_h, float *distances_h, int *return_value, cuvsCagraSearchParams_t search_params) {
 
   cudaStream_t stream;
@@ -199,7 +199,7 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
 
 /**
  * @brief De-allocate BRUTEFORCE index
- * 
+ *
  * @param[in] index reference to BRUTEFORCE index
  * @param[out] return_value return value for cuvsBruteForceIndexDestroy function call
  */
@@ -209,7 +209,7 @@ void destroy_brute_force_index(cuvsBruteForceIndex_t index, int *return_value) {
 
 /**
  * @brief A function to build BRUTEFORCE index
- * 
+ *
  * @param[in] dataset the dataset to be indexed
  * @param[in] rows the number of rows in the dataset
  * @param[in] dimensions the vector dimension
@@ -247,7 +247,7 @@ cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long di
 
 /**
  * @brief A function to search the BRUTEFORCE index
- * 
+ *
  * @param[in] index reference to a BRUTEFORCE index to search on
  * @param[in] queries reference to query vectors
  * @param[in] topk the top k results to return
@@ -261,7 +261,7 @@ cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long di
  * @param[in] prefilter_data_length prefilter length input
  * @param[in] n_rows number of rows in the dataset
  */
-void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int topk, long n_queries, int dimensions, 
+void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int topk, long n_queries, int dimensions,
     cuvsResources_t cuvs_resources, int64_t *neighbors_h, float *distances_h, int *return_value, long *prefilter_data,
     long prefilter_data_length, long n_rows) {
 
@@ -323,7 +323,7 @@ void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int t
 
 /**
  * @brief A function to serialize a BRUTEFORCE index
- * 
+ *
  * @param[in] cuvs_resources reference of the underlying opaque C handle
  * @param[in] index cuvsBruteForceIndex_t reference
  * @param[out] return_value return value for cuvsBruteForceSerialize function call
@@ -335,7 +335,7 @@ void serialize_brute_force_index(cuvsResources_t cuvs_resources, cuvsBruteForceI
 
 /**
  * @brief A function to de-serialize a BRUTEFORCE index
- * 
+ *
  * @param[in] cuvs_resources reference to the underlying opaque C handle
  * @param[in] index cuvsBruteForceIndex_t reference
  * @param[out] return_value return value for cuvsBruteForceDeserialize function call
@@ -347,7 +347,7 @@ void deserialize_brute_force_index(cuvsResources_t cuvs_resources, cuvsBruteForc
 
 /**
  * @brief A function to create and serialize an HNSW index from CAGRA index
- * 
+ *
  * @param[in] cuvs_resources reference to the underlying opaque C handle
  * @param[in] file_path the path to the file of the created HNSW index
  * @param[in] index cuvsCagraIndex_t reference to the existing CAGRA index
@@ -359,7 +359,7 @@ void serialize_cagra_index_to_hnsw(cuvsResources_t cuvs_resources, char *file_pa
 
 /**
  * @brief A function to deserialize the persisted HNSW index
- * 
+ *
  * @param[in] cuvs_resources reference to the underlying opaque C handle
  * @param[in] file_path the path to the persisted HNSW index file
  * @param[in] hnsw_params reference to the HNSW index params
@@ -380,7 +380,7 @@ cuvsHnswIndex_t deserialize_hnsw_index(cuvsResources_t cuvs_resources, char *fil
 
 /**
  * @brief A Function to search in the HNSW index
- * 
+ *
  * @param[in] cuvs_resources reference to the underlying opaque C handle
  * @param[in] hnsw_index the HNSW index reference
  * @param[in] search_params reference to the HNSW search parameters
@@ -410,7 +410,7 @@ void search_hnsw_index(cuvsResources_t cuvs_resources, cuvsHnswIndex_t hnsw_inde
 
 /**
  * @brief A function to destroy the HNSW index
- * 
+ *
  * @param[in] hnsw_index the HNSW index reference
  * @param[out] return_value return value for cuvsHnswIndexDestroy function call
  */
@@ -431,7 +431,7 @@ typedef struct gpuInfo {
 
 /**
  * @brief A function to get GPU details
- * 
+ *
  * @param[out] return_value return value for cudaMemGetInfo function call
  * @param[out] num_gpus the number of devices found
  * @param[out] gpu_info_arr reference to the array of gpuInfo objects

@@ -30,7 +30,7 @@ import com.nvidia.cuvs.common.Util;
 
 /**
  * Used for allocating resources for cuVS
- * 
+ *
  * @since 25.02
  */
 public class CuVSResources implements AutoCloseable {
@@ -46,7 +46,7 @@ public class CuVSResources implements AutoCloseable {
 
   /**
    * Constructor that allocates the resources needed for cuVS
-   * 
+   *
    * @throws Throwable exception thrown when native function is invoked
    */
   public CuVSResources() throws Throwable {
@@ -68,7 +68,7 @@ public class CuVSResources implements AutoCloseable {
 
   /**
    * Creates the resources used internally and returns its reference.
-   * 
+   *
    * @throws Throwable exception thrown when native function is invoked
    */
   public void createResources() throws Throwable {
@@ -86,13 +86,15 @@ public class CuVSResources implements AutoCloseable {
     } catch (Throwable e) {
       e.printStackTrace();
     }
-    arena.close();
+    if (!arena.scope().isAlive()) {
+      arena.close();
+    }
     nativeLibrary.delete();
   }
 
   /**
    * Gets the reference to the cuvsResources MemorySegment.
-   * 
+   *
    * @return cuvsResources MemorySegment
    */
   protected MemorySegment getMemorySegment() {
