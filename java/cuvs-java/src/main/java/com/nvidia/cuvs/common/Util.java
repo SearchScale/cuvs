@@ -207,11 +207,20 @@ public class Util {
   }
 
   /**
-   * Load a file from the classpath to a temporary file. Suitable for loading .so
-   * files from the jar.
+   * Load the CuVS .so file from environment variable CUVS_JAVA_SO_PATH. If not found there,
+   * try to load it from the classpath to a temporary file.
    */
-  public static File loadLibraryFromJar(String path) throws LibraryNotFoundException, IOException {
+   public static File loadNativeLibrary() throws IOException {
+     String libraryPathFromEnvironment = System.getenv("CUVS_JAVA_SO_PATH");
+     if (libraryPathFromEnvironment != null) {
+        File file = new File(libraryPathFromEnvironment);
+        if (!file.exists()) throw new RuntimeException("Environment variable CUVS_JAVA_SO_PATH points to non-existent file: " + libraryPathFromEnvironment);
+        return file;
+     }
+     return loadLibraryFromJar("/libcuvs_java.so");
+   }
 
+   private static File loadLibraryFromJar(String path) throws IOException {
     if (!path.startsWith("/")) {
       throw new IllegalArgumentException("The path has to be absolute (start with '/').");
     }

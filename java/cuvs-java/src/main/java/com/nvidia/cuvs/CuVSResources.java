@@ -53,7 +53,7 @@ public class CuVSResources implements AutoCloseable {
     linker = Linker.nativeLinker();
     arena = Arena.ofShared();
 
-    nativeLibrary = Util.loadLibraryFromJar("/libcuvs_java.so");
+    nativeLibrary = Util.loadNativeLibrary();
     symbolLookup = SymbolLookup.libraryLookup(nativeLibrary.getAbsolutePath(), arena);
     intMemoryLayout = linker.canonicalLayouts().get("int");
 
