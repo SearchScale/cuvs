@@ -36,6 +36,7 @@ import java.util.List;
 
 import com.nvidia.cuvs.GPUInfo;
 import com.nvidia.cuvs.LibraryNotFoundException;
+import com.nvidia.cuvs.LibraryNotLoadedException;
 import com.nvidia.cuvs.panama.GpuInfo;
 
 public class Util {
@@ -46,6 +47,7 @@ public class Util {
   private static MemoryLayout intMemoryLayout;
   private static MethodHandle getGpuInfoMethodHandle = null;
   protected static File nativeLibrary;
+
   static {
     try {
       linker = Linker.nativeLinker();
@@ -56,7 +58,7 @@ public class Util {
       getGpuInfoMethodHandle = linker.downcallHandle(symbolLookup.find("get_gpu_info").get(),
           FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new LibraryNotLoadedException("Libcuvs java library not loaded");
     }
   }
 
