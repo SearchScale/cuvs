@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class SearchResults {
+
   protected final List<Map<Integer, Float>> results;
   protected final List<Integer> mapping; // TODO: Is this performant in a user application?
   protected final SequenceLayout neighboursSequenceLayout;

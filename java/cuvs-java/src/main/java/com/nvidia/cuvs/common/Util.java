@@ -35,8 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.nvidia.cuvs.GPUInfo;
-import com.nvidia.cuvs.LibraryNotFoundException;
-import com.nvidia.cuvs.LibraryNotLoadedException;
+import com.nvidia.cuvs.LibraryException;
 import com.nvidia.cuvs.panama.GpuInfo;
 
 public class Util {
@@ -58,7 +57,7 @@ public class Util {
       getGpuInfoMethodHandle = linker.downcallHandle(symbolLookup.find("get_gpu_info").get(),
           FunctionDescriptor.ofVoid(ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.ADDRESS));
     } catch (Exception e) {
-      throw new LibraryNotLoadedException("Libcuvs java library not loaded");
+      throw new LibraryException("LibCuVS Java Library Not Loaded", e);
     }
   }
 
@@ -234,9 +233,9 @@ public class Util {
     return temp;
   }
 
-  private static void streamCopy(InputStream is, OutputStream os) throws LibraryNotFoundException {
+  private static void streamCopy(InputStream is, OutputStream os) throws LibraryException {
     if (is == null) {
-      throw new LibraryNotFoundException("CuVS Library Not Found in ClassPath");
+      throw new LibraryException("CuVS Library Not Found in ClassPath");
     }
     byte[] buffer = new byte[1024];
     int readBytes;
@@ -246,7 +245,7 @@ public class Util {
         os.write(buffer, 0, readBytes);
       }
     } catch (IOException e) {
-      throw new LibraryNotFoundException(e);
+      throw new LibraryException(e);
     } finally {
       // If read/write fails, close streams safely before throwing an exception
       if (os != null)
