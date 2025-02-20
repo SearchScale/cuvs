@@ -118,11 +118,11 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
   index_params->compression = compression_params;
   cuvsStreamSync(cuvs_resources);
 
-  printf("+++++++++++++++++++ (C) build_cagra_index - before build: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) build_cagra_index - before build: <C_CAG_I_BB>%ld</C_CAG_I_BB>\n", (millis() - start));
 
   start = millis();
   *return_value = cuvsCagraBuild(cuvs_resources, index_params, &dataset_tensor, index);
-  printf("+++++++++++++++++++ (C) build_cagra_index - build time: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) build_cagra_index - build time: <C_CAG_I_BT>%ld</C_CAG_I_BT>\n", (millis() - start));
 
   omp_set_num_threads(1);
 
@@ -138,7 +138,7 @@ cuvsCagraIndex_t build_cagra_index(float *dataset, long rows, long dimensions, c
 void destroy_cagra_index(cuvsCagraIndex_t index, int *return_value) {
   long start = millis();
   *return_value = cuvsCagraIndexDestroy(index);
-  printf("+++++++++++++++++++ (C) destroy_cagra_index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) destroy_cagra_index: <C_CAG_DI>%ld</C_CAG_DI>\n", (millis() - start));
 }
 
 /**
@@ -152,7 +152,7 @@ void destroy_cagra_index(cuvsCagraIndex_t index, int *return_value) {
 void serialize_cagra_index(cuvsResources_t cuvs_resources, cuvsCagraIndex_t index, int *return_value, char* filename) {
   long start = millis();
   *return_value = cuvsCagraSerialize(cuvs_resources, filename, index, true);
-  printf("+++++++++++++++++++ (C) serialize_cagra_index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) serialize_cagra_index: <C_CAG_SI>%ld</C_CAG_SI>\n", (millis() - start));
 }
 
 /**
@@ -166,7 +166,7 @@ void serialize_cagra_index(cuvsResources_t cuvs_resources, cuvsCagraIndex_t inde
 void deserialize_cagra_index(cuvsResources_t cuvs_resources, cuvsCagraIndex_t index, int *return_value, char* filename) {
   long start = millis();
   *return_value = cuvsCagraDeserialize(cuvs_resources, filename, index);
-  printf("+++++++++++++++++++ (C) deserialize_cagra_index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) deserialize_cagra_index: <C_CAG_DSI>%ld</C_CAG_DSI>\n", (millis() - start));
 }
 
 /**
@@ -214,13 +214,13 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
   filter.type = NO_FILTER;
   filter.addr = (uintptr_t)NULL;
 
-  printf("+++++++++++++++++++ (C) search_cagra_index - before search: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) search_cagra_index - before search: <C_CAG_SCIB>%ld</C_CAG_SCIB>\n", (millis() - start));
   start = millis();
 
   *return_value = cuvsCagraSearch(cuvs_resources, search_params, index, &queries_tensor, &neighbors_tensor,
                   &distances_tensor, filter);
 
-  printf("+++++++++++++++++++ (C) search_cagra_index - search time: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) search_cagra_index - search time: <C_CAG_SCIT>%ld</C_CAG_SCIT>\n", (millis() - start));
 
   cudaMemcpy(neighbors_h, neighbors, sizeof(uint32_t) * n_queries * topk, cudaMemcpyDefault);
   cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
@@ -239,7 +239,7 @@ void search_cagra_index(cuvsCagraIndex_t index, float *queries, int topk, long n
 void destroy_brute_force_index(cuvsBruteForceIndex_t index, int *return_value) {
   long start = millis();
   *return_value = cuvsBruteForceIndexDestroy(index);
-  printf("+++++++++++++++++++ (C) destroy_brute_force_index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) destroy_brute_force_index: <C_BF_DI>%ld</C_BF_DI>\n", (millis() - start));
 }
 
 /**
@@ -275,12 +275,12 @@ cuvsBruteForceIndex_t build_brute_force_index(float *dataset, long rows, long di
   cuvsError_t index_create_status = cuvsBruteForceIndexCreate(&index);
 
   cuvsStreamSync(cuvs_resources);
-  printf("+++++++++++++++++++ (C) build_brute_force_index - before index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) build_brute_force_index - before index: <C_BF_BIB>%ld</C_BF_BIB>\n", (millis() - start));
   start = millis();
 
   *return_value = cuvsBruteForceBuild(cuvs_resources, &dataset_tensor, L2Expanded, 0.0f, index);
 
-  printf("+++++++++++++++++++ (C) build_brute_force_index - index time: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) build_brute_force_index - index time: <C_BF_BIT>%ld</C_BF_BIT>\n", (millis() - start));
 
   omp_set_num_threads(1);
 
@@ -355,11 +355,11 @@ void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int t
   }
 
   cuvsStreamSync(cuvs_resources);
-  printf("+++++++++++++++++++ (C) search_brute_force_index - before search: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) search_brute_force_index - before search: <C_BF_SBIB>%ld</C_BF_SBIB>\n", (millis() - start));
   start = millis();
 
   *return_value = cuvsBruteForceSearch(cuvs_resources, index, &queries_tensor, &neighbors_tensor, &distances_tensor, prefilter);
-  printf("+++++++++++++++++++ (C) search_brute_force_index - search time: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) search_brute_force_index - search time: <C_BF_SBIT>%ld</C_BF_SBIT>\n", (millis() - start));
 
   cudaMemcpy(neighbors_h, neighbors, sizeof(int64_t) * n_queries * topk, cudaMemcpyDefault);
   cudaMemcpy(distances_h, distances, sizeof(float) * n_queries * topk, cudaMemcpyDefault);
@@ -380,7 +380,7 @@ void search_brute_force_index(cuvsBruteForceIndex_t index, float *queries, int t
 void serialize_brute_force_index(cuvsResources_t cuvs_resources, cuvsBruteForceIndex_t index, int *return_value, char* filename) {
   long start = millis();
   *return_value = cuvsBruteForceSerialize(cuvs_resources, filename, index);
-  printf("+++++++++++++++++++ (C) serialize_brute_force_index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) serialize_brute_force_index: <C_BF_SERBI>%ld</C_BF_SERBI>\n", (millis() - start));
 }
 
 /**
@@ -394,7 +394,7 @@ void serialize_brute_force_index(cuvsResources_t cuvs_resources, cuvsBruteForceI
 void deserialize_brute_force_index(cuvsResources_t cuvs_resources, cuvsBruteForceIndex_t index, int *return_value, char* filename) {
   long start = millis();
   *return_value = cuvsBruteForceDeserialize(cuvs_resources, filename, index);
-  printf("+++++++++++++++++++ (C) deserialize_brute_force_index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) deserialize_brute_force_index: <C_BF_DESERBI>%ld</C_BF_DESERBI>\n", (millis() - start));
 }
 
 /**
@@ -408,7 +408,7 @@ void deserialize_brute_force_index(cuvsResources_t cuvs_resources, cuvsBruteForc
 void serialize_cagra_index_to_hnsw(cuvsResources_t cuvs_resources, char *file_path, cuvsCagraIndex_t index, int *return_value) {
   long start = millis();
   *return_value = cuvsCagraSerializeToHnswlib(cuvs_resources, file_path, index);
-  printf("+++++++++++++++++++ (C) serialize_cagra_index_to_hnsw: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) serialize_cagra_index_to_hnsw: <C_CH_SERI>%ld</C_CH_SERI>\n", (millis() - start));
 }
 
 /**
@@ -430,7 +430,7 @@ cuvsHnswIndex_t deserialize_hnsw_index(cuvsResources_t cuvs_resources, char *fil
   hnsw_index->dtype.code = kDLFloat;
   hnsw_index->dtype.lanes = 1;
   *return_value = cuvsHnswDeserialize(cuvs_resources, hnsw_params, file_path, vector_dimension, L2Expanded, hnsw_index);
-  printf("+++++++++++++++++++ (C) deserialize_hnsw_index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) deserialize_hnsw_index: <C_CH_DSERI>%ld</C_CH_DSERI>\n", (millis() - start));
   return hnsw_index;
 }
 
@@ -463,7 +463,7 @@ void search_hnsw_index(cuvsResources_t cuvs_resources, cuvsHnswIndex_t hnsw_inde
 
   *return_value = cuvsHnswSearch(
     cuvs_resources, search_params, hnsw_index, &queries_tensor, &neighbors_tensor, &distances_tensor);
-  printf("+++++++++++++++++++ (C) search_hnsw_index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) search_hnsw_index: <C_CH_SI>%ld</C_CH_SI>\n", (millis() - start));
 
 }
 
@@ -476,7 +476,7 @@ void search_hnsw_index(cuvsResources_t cuvs_resources, cuvsHnswIndex_t hnsw_inde
 void destroy_hnsw_index(cuvsHnswIndex_t hnsw_index, int *return_value) {
   long start = millis();
   *return_value = cuvsHnswIndexDestroy(hnsw_index);
-  printf("+++++++++++++++++++ (C) destroy_hnsw_index: %ld\n", (millis() - start));
+  printf("+++++++++++++++++++ (C) destroy_hnsw_index: <C_CH_DI>%ld</C_CH_DI>\n", (millis() - start));
 }
 
 /**
