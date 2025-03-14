@@ -100,6 +100,11 @@ public interface CagraIndex {
     void serialize(OutputStream outputStream, Path tempFile, int bufferLength) throws Throwable;
 
     /**
+     * Write the CAGRA index to a particular path
+     */
+    void serialize(Path filename) throws Throwable;
+    
+    /**
      * A method to create and persist HNSW index from CAGRA index using an instance
      * of {@link OutputStream} and path to the intermediate temporary file.
      *

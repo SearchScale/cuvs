@@ -266,6 +266,22 @@ public class CagraIndexImpl implements CagraIndex {
   }
 
   @Override
+  public void serialize(Path filename) throws Throwable {
+    checkNotDestroyed();
+    MemorySegment pathSeg = Util.buildMemorySegment(resources.getArena(), filename.toString());
+    try (var localArena = Arena.ofConfined()) {
+      MemorySegment returnValue = localArena.allocate(C_INT);
+      serializeMethodHandle.invokeExact(
+        resources.getMemorySegment(),
+        cagraIndexReference.getMemorySegment(),
+        returnValue,
+        pathSeg
+      );
+      checkError(returnValue.get(C_INT, 0L), "serializeMethodHandle");
+    }
+  }
+
+  @Override
   public void serializeToHNSW(OutputStream outputStream) throws Throwable {
     Path p = Files.createTempFile(resources.tempDirectory(), UUID.randomUUID().toString(), ".hnsw");
     serializeToHNSW(outputStream, p, 1024);
