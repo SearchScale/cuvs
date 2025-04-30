@@ -18,7 +18,9 @@ package com.nvidia.cuvs;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.foreign.MemorySegment;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 
 import com.nvidia.cuvs.spi.CuVSProvider;
@@ -190,6 +192,10 @@ public interface CagraIndex {
          * @return an instance of this Builder
          */
         Builder withDataset(float[][] dataset);
+
+        Builder withDataset(List<float[]> dataset);
+
+        Builder withDataset(MemorySegment datasetMemorySegment, int size, int dimensions);
 
         /**
          * Registers an instance of configured {@link CagraIndexParams} with this

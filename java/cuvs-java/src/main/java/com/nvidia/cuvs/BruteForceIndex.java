@@ -19,6 +19,7 @@ package com.nvidia.cuvs;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 
 import com.nvidia.cuvs.spi.CuVSProvider;
@@ -108,6 +109,8 @@ public interface BruteForceIndex {
      * @return an instance of this Builder
      */
     Builder withDataset(float[][] dataset);
+
+    Builder withDataset(List<float[]> dataset);
 
     /**
      * Builds and returns an instance of {@link BruteForceIndex}.

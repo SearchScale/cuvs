@@ -211,6 +211,17 @@ public class Util {
     return dataMemorySegment;
   }
 
+  public static MemorySegment buildMemorySegment(Arena arena, List<float[]> data) {
+	  long rows = data.size();
+	  long cols = rows > 0 ? data.get(0).length : 0;
+	  MemoryLayout dataMemoryLayout = MemoryLayout.sequenceLayout(rows * cols, C_FLOAT);
+	  MemorySegment dataMemorySegment = arena.allocate(dataMemoryLayout);
+	  for (int r = 0; r < rows; r++) {
+		  MemorySegment.copy(data.get(r), 0, dataMemorySegment, C_FLOAT, (r * cols * C_FLOAT.byteSize()), (int) cols);
+	  }
+	  return dataMemorySegment;
+  }
+
   public static BitSet concatenate(BitSet[] arr, int maxSizeOfEachBitSet) {
     BitSet ret = new BitSet(maxSizeOfEachBitSet * arr.length);
     for (int i = 0; i < arr.length; i++) {

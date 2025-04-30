@@ -36,6 +36,7 @@ import java.lang.invoke.MethodHandle;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.BitSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -71,7 +72,8 @@ public class BruteForceIndexImpl implements BruteForceIndex{
   private static final MethodHandle deserializeMethodHandle = downcallHandle("deserialize_brute_force_index",
       FunctionDescriptor.ofVoid(ADDRESS, ADDRESS, ADDRESS, ADDRESS));
 
-  private final float[][] dataset;
+  private final float[][] datasetArr;
+  private final List<float[]> datasetList;
   private final CuVSResourcesImpl resources;
   private final IndexReference bruteForceIndexReference;
   private final BruteForceIndexParams bruteForceIndexParams;
@@ -86,9 +88,10 @@ public class BruteForceIndexImpl implements BruteForceIndex{
    * @param bruteForceIndexParams an instance of {@link BruteForceIndexParams}
    *                              holding the index parameters
    */
-  private BruteForceIndexImpl(float[][] dataset, CuVSResourcesImpl resources, BruteForceIndexParams bruteForceIndexParams)
-      throws Throwable {
-    this.dataset = dataset;
+  private BruteForceIndexImpl(float[][] datasetArr, List<float[]> datasetList, CuVSResourcesImpl resources,
+       BruteForceIndexParams bruteForceIndexParams) throws Throwable {
+    this.datasetArr = datasetArr;
+    this.datasetList = datasetList;
     this.resources = resources;
     this.bruteForceIndexParams = bruteForceIndexParams;
     this.bruteForceIndexReference = build();
@@ -102,7 +105,8 @@ public class BruteForceIndexImpl implements BruteForceIndex{
    */
   private BruteForceIndexImpl(InputStream inputStream, CuVSResourcesImpl resources) throws Throwable {
     this.bruteForceIndexParams = null;
-    this.dataset = null;
+    this.datasetArr = null;
+    this.datasetList = null;
     this.resources = resources;
     this.bruteForceIndexReference = deserialize(inputStream);
   }
@@ -137,10 +141,12 @@ public class BruteForceIndexImpl implements BruteForceIndex{
    *         index
    */
   private IndexReference build() throws Throwable {
-    long rows = dataset.length;
-    long cols = rows > 0 ? dataset[0].length : 0;
+    long rows = datasetArr != null? datasetArr.length: datasetList.size();
+    long cols = rows > 0 ? (datasetArr != null? datasetArr[0]: datasetList.get(0)).length : 0;
 
-    MemorySegment dataSeg = Util.buildMemorySegment(resources.getArena(), dataset);
+    MemorySegment dataSeg = datasetArr != null?
+    		Util.buildMemorySegment(resources.getArena(), datasetArr):
+    			Util.buildMemorySegment(resources.getArena(), datasetList);
     try (var localArena = Arena.ofConfined()) {
       MemorySegment returnValue = localArena.allocate(C_INT);
       MemorySegment indexSeg = (MemorySegment) indexMethodHandle.invokeExact(
@@ -284,7 +290,8 @@ public class BruteForceIndexImpl implements BruteForceIndex{
    */
   public static class Builder implements BruteForceIndex.Builder {
 
-    private float[][] dataset;
+    private float[][] datasetArr;
+    private List<float[]> datasetList;
     private final CuVSResourcesImpl cuvsResources;
     private BruteForceIndexParams bruteForceIndexParams;
     private InputStream inputStream;
@@ -327,12 +334,18 @@ public class BruteForceIndexImpl implements BruteForceIndex{
     /**
      * Sets the dataset for building the {@link BruteForceIndex}.
      *
-     * @param dataset a two-dimensional float array
+     * @param datasetArr a two-dimensional float array
      * @return an instance of this Builder
      */
     @Override
-    public Builder withDataset(float[][] dataset) {
-      this.dataset = dataset;
+    public Builder withDataset(float[][] datasetArr) {
+      this.datasetArr = datasetArr;
+      return this;
+    }
+
+    @Override
+    public Builder withDataset(List<float[]> datasetList) {
+      this.datasetList = datasetList;
       return this;
     }
 
@@ -346,7 +359,10 @@ public class BruteForceIndexImpl implements BruteForceIndex{
       if (inputStream != null) {
         return new BruteForceIndexImpl(inputStream, cuvsResources);
       } else {
-        return new BruteForceIndexImpl(dataset, cuvsResources, bruteForceIndexParams);
+      	if (datasetArr != null && datasetList != null) {
+      	  throw new RuntimeException("Dataset added twice.");
+      	}
+        return new BruteForceIndexImpl(datasetArr, datasetList, cuvsResources, bruteForceIndexParams);
       }
     }
   }
