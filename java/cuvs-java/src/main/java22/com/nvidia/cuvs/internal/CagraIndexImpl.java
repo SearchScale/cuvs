@@ -33,6 +33,7 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SequenceLayout;
 import java.lang.invoke.MethodHandle;
+import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -90,7 +91,7 @@ public class CagraIndexImpl implements CagraIndex {
 
   private final float[][] datasetArr;
   private final List<float[]> datasetList;
-  private final MemorySegment datasetMemorySegment;
+  private final FloatBuffer datasetBuffer;
   private final int datasetSize;
   private final int datasetDimensions;
 
@@ -111,13 +112,13 @@ public class CagraIndexImpl implements CagraIndex {
    * @param resources              an instance of {@link CuVSResources}
    */
   private CagraIndexImpl(CagraIndexParams indexParameters, CagraCompressionParams cagraCompressionParams, float[][] datasetArr,
-		  List<float[]> datasetList, MemorySegment datasetMemorySegment, int datasetSize, int datasetDimensions,
+		  List<float[]> datasetList, FloatBuffer datasetBuffer, int datasetSize, int datasetDimensions,
 		  CuVSResourcesImpl resources) throws Throwable {
     this.cagraIndexParameters = indexParameters;
     this.cagraCompressionParams = cagraCompressionParams;
     this.datasetArr = datasetArr;
     this.datasetList = datasetList;
-    this.datasetMemorySegment = datasetMemorySegment;
+    this.datasetBuffer = datasetBuffer;
     this.datasetSize = datasetSize;
     this.datasetDimensions = datasetDimensions;
     this.resources = resources;
@@ -135,7 +136,7 @@ public class CagraIndexImpl implements CagraIndex {
     this.cagraCompressionParams = null;
     this.datasetArr = null;
     this.datasetList = null;
-    this.datasetMemorySegment = null;
+    this.datasetBuffer = null;
     this.datasetSize = -1;
     this.datasetDimensions = -1;
     this.resources = resources;
@@ -181,7 +182,7 @@ public class CagraIndexImpl implements CagraIndex {
         ? segmentFromCompressionParams(cagraCompressionParams)
         : MemorySegment.NULL;
 
-    MemorySegment dataSeg = datasetMemorySegment; 
+    MemorySegment dataSeg = datasetBuffer==null? null: MemorySegment.ofBuffer(datasetBuffer); 
     if (dataSeg == null) dataSeg = datasetArr != null?
     		Util.buildMemorySegment(resources.getArena(), datasetArr):
     			Util.buildMemorySegment(resources.getArena(), datasetList);
@@ -487,7 +488,7 @@ public class CagraIndexImpl implements CagraIndex {
 
     private float[][] datasetArr;
     private List<float[]> datasetList;
-    private MemorySegment datasetMemorySegment;
+    private FloatBuffer datasetBuffer;
     private int datasetSize = 0;
     private int datasetDimensions = 0;
 
@@ -523,8 +524,8 @@ public class CagraIndexImpl implements CagraIndex {
     }
 
     @Override
-    public Builder withDataset(MemorySegment datasetMemorySegment, int size, int dimensions) {
-      this.datasetMemorySegment = datasetMemorySegment;
+    public Builder withDataset(FloatBuffer datasetBuffer, int size, int dimensions) {
+      this.datasetBuffer = datasetBuffer;
       this.datasetSize = size;
       this.datasetDimensions = dimensions;
       return this;
@@ -548,7 +549,7 @@ public class CagraIndexImpl implements CagraIndex {
         return new CagraIndexImpl(inputStream, cuvsResources);
       } else {
         return new CagraIndexImpl(cagraIndexParams, cagraCompressionParams, datasetArr, datasetList,
-        		datasetMemorySegment, datasetSize, datasetDimensions, cuvsResources);
+        		datasetBuffer, datasetSize, datasetDimensions, cuvsResources);
       }
     }
   }

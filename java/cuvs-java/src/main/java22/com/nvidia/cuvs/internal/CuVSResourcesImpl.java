@@ -17,11 +17,13 @@
 package com.nvidia.cuvs.internal;
 
 import com.nvidia.cuvs.CuVSResources;
+import com.nvidia.cuvs.NativeFloatBufferProvider;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
+import java.nio.FloatBuffer;
 import java.nio.file.Path;
 
 import static com.nvidia.cuvs.internal.common.LinkerHelper.C_INT;
@@ -150,5 +152,11 @@ public class CuVSResourcesImpl implements CuVSResources {
           + ", computeCapability=" + computeCapability + "]";
     }
 
+  }
+
+  @Override
+  public NativeFloatBufferProvider getNativeFloatBuffer(long size) {
+  // TODO Auto-generated method stub
+    return new NativeFloatBufferProviderImpl(size);
   }
 }

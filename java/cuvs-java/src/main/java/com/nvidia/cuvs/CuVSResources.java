@@ -18,6 +18,7 @@ package com.nvidia.cuvs;
 
 import com.nvidia.cuvs.spi.CuVSProvider;
 
+import java.nio.FloatBuffer;
 import java.nio.file.Path;
 
 /**
@@ -61,4 +62,6 @@ public interface CuVSResources extends AutoCloseable {
   static CuVSResources create(Path tempDirectory) throws Throwable {
     return CuVSProvider.provider().newCuVSResources(tempDirectory);
   }
+  
+  public NativeFloatBufferProvider getNativeFloatBuffer(long size);
 }
