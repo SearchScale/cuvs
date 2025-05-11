@@ -157,6 +157,6 @@ public class CuVSResourcesImpl implements CuVSResources {
   @Override
   public NativeFloatBufferProvider getNativeFloatBuffer(long size) {
   // TODO Auto-generated method stub
-    return new NativeFloatBufferProviderImpl(size);
+    return new NativeFloatBufferProviderImpl(arena, size);
   }
 }

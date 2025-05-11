@@ -18,10 +18,12 @@ package com.nvidia.cuvs;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.FloatBuffer;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
+import com.nvidia.cuvs.CagraIndex.Builder;
 import com.nvidia.cuvs.spi.CuVSProvider;
 
 /**
@@ -111,6 +113,8 @@ public interface BruteForceIndex {
     Builder withDataset(float[][] dataset);
 
     Builder withDataset(List<float[]> dataset);
+
+    Builder withDataset(FloatBuffer buffer, int size, int dimensions);
 
     /**
      * Builds and returns an instance of {@link BruteForceIndex}.

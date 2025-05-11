@@ -33,6 +33,7 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SequenceLayout;
 import java.lang.invoke.MethodHandle;
+import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.BitSet;
@@ -45,6 +46,7 @@ import com.nvidia.cuvs.BruteForceIndexParams;
 import com.nvidia.cuvs.BruteForceQuery;
 import com.nvidia.cuvs.CuVSResources;
 import com.nvidia.cuvs.SearchResults;
+import com.nvidia.cuvs.internal.CagraIndexImpl.Builder;
 import com.nvidia.cuvs.internal.common.Util;
 import com.nvidia.cuvs.internal.panama.cuvsBruteForceIndex;
 
@@ -74,6 +76,9 @@ public class BruteForceIndexImpl implements BruteForceIndex{
 
   private final float[][] datasetArr;
   private final List<float[]> datasetList;
+  private final FloatBuffer datasetBuffer;
+  private final int datasetSize;
+  private final int datasetDimensions;
   private final CuVSResourcesImpl resources;
   private final IndexReference bruteForceIndexReference;
   private final BruteForceIndexParams bruteForceIndexParams;
@@ -88,10 +93,13 @@ public class BruteForceIndexImpl implements BruteForceIndex{
    * @param bruteForceIndexParams an instance of {@link BruteForceIndexParams}
    *                              holding the index parameters
    */
-  private BruteForceIndexImpl(float[][] datasetArr, List<float[]> datasetList, CuVSResourcesImpl resources,
-       BruteForceIndexParams bruteForceIndexParams) throws Throwable {
+  private BruteForceIndexImpl(float[][] datasetArr, List<float[]> datasetList, FloatBuffer datasetBuffer, int datasetSize, 
+		  int datasetDimensions, CuVSResourcesImpl resources, BruteForceIndexParams bruteForceIndexParams) throws Throwable {
     this.datasetArr = datasetArr;
     this.datasetList = datasetList;
+    this.datasetBuffer = datasetBuffer;
+    this.datasetSize = datasetSize;
+    this.datasetDimensions = datasetDimensions;
     this.resources = resources;
     this.bruteForceIndexParams = bruteForceIndexParams;
     this.bruteForceIndexReference = build();
@@ -107,6 +115,9 @@ public class BruteForceIndexImpl implements BruteForceIndex{
     this.bruteForceIndexParams = null;
     this.datasetArr = null;
     this.datasetList = null;
+    this.datasetBuffer = null;
+    this.datasetSize = -1;
+    this.datasetDimensions = -1;
     this.resources = resources;
     this.bruteForceIndexReference = deserialize(inputStream);
   }
@@ -141,18 +152,16 @@ public class BruteForceIndexImpl implements BruteForceIndex{
    *         index
    */
   private IndexReference build() throws Throwable {
-    long rows = datasetArr != null? datasetArr.length: datasetList.size();
-    long cols = rows > 0 ? (datasetArr != null? datasetArr[0]: datasetList.get(0)).length : 0;
-
-    MemorySegment dataSeg = datasetArr != null?
+    MemorySegment dataSeg = datasetBuffer==null? null: MemorySegment.ofBuffer(datasetBuffer); 
+    if (dataSeg == null) dataSeg = datasetArr != null?
     		Util.buildMemorySegment(resources.getArena(), datasetArr):
     			Util.buildMemorySegment(resources.getArena(), datasetList);
     try (var localArena = Arena.ofConfined()) {
       MemorySegment returnValue = localArena.allocate(C_INT);
       MemorySegment indexSeg = (MemorySegment) indexMethodHandle.invokeExact(
         dataSeg,
-        rows,
-        cols,
+        (long)datasetSize,
+        (long)datasetDimensions,
         resources.getMemorySegment(),
         returnValue,
         bruteForceIndexParams.getNumWriterThreads()
@@ -292,6 +301,9 @@ public class BruteForceIndexImpl implements BruteForceIndex{
 
     private float[][] datasetArr;
     private List<float[]> datasetList;
+    private FloatBuffer datasetBuffer;
+    private int datasetSize = 0;
+    private int datasetDimensions = 0;
     private final CuVSResourcesImpl cuvsResources;
     private BruteForceIndexParams bruteForceIndexParams;
     private InputStream inputStream;
@@ -340,12 +352,24 @@ public class BruteForceIndexImpl implements BruteForceIndex{
     @Override
     public Builder withDataset(float[][] datasetArr) {
       this.datasetArr = datasetArr;
+      this.datasetSize = datasetArr.length;
+      if (this.datasetSize > 0) this.datasetDimensions = datasetArr[0].length;
       return this;
     }
 
     @Override
     public Builder withDataset(List<float[]> datasetList) {
       this.datasetList = datasetList;
+      this.datasetSize = datasetList.size();
+      if (this.datasetSize > 0) this.datasetDimensions = datasetList.get(0).length;
+      return this;
+    }
+
+    @Override
+    public Builder withDataset(FloatBuffer datasetBuffer, int size, int dimensions) {
+      this.datasetBuffer = datasetBuffer;
+      this.datasetSize = size;
+      this.datasetDimensions = dimensions;
       return this;
     }
 
@@ -362,7 +386,7 @@ public class BruteForceIndexImpl implements BruteForceIndex{
       	if (datasetArr != null && datasetList != null) {
       	  throw new RuntimeException("Dataset added twice.");
       	}
-        return new BruteForceIndexImpl(datasetArr, datasetList, cuvsResources, bruteForceIndexParams);
+        return new BruteForceIndexImpl(datasetArr, datasetList, datasetBuffer, datasetSize, datasetDimensions, cuvsResources, bruteForceIndexParams);
       }
     }
   }

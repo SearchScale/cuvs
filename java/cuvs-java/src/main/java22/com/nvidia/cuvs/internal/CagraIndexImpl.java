@@ -36,6 +36,7 @@ import java.lang.invoke.MethodHandle;
 import java.nio.FloatBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -182,6 +183,8 @@ public class CagraIndexImpl implements CagraIndex {
         ? segmentFromCompressionParams(cagraCompressionParams)
         : MemorySegment.NULL;
 
+    //if (datasetBuffer != null)
+    	//System.out.println("First vector: " + datasetBuffer.array()[0]);
     MemorySegment dataSeg = datasetBuffer==null? null: MemorySegment.ofBuffer(datasetBuffer); 
     if (dataSeg == null) dataSeg = datasetArr != null?
     		Util.buildMemorySegment(resources.getArena(), datasetArr):
