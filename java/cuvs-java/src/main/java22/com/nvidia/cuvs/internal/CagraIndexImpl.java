@@ -77,6 +77,7 @@ import com.nvidia.cuvs.internal.panama.cuvsFilter;
 import com.nvidia.cuvs.internal.panama.cuvsIvfPqIndexParams;
 import com.nvidia.cuvs.internal.panama.cuvsIvfPqParams;
 import com.nvidia.cuvs.internal.panama.cuvsIvfPqSearchParams;
+import java.util.BitSet;
 
 /**
  * {@link CagraIndex} encapsulates a CAGRA index, along with methods to interact
