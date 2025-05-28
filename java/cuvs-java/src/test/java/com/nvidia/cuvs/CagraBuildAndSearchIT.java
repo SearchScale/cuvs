@@ -148,6 +148,10 @@ public class CagraBuildAndSearchIT extends CuVSTestCase {
               .withIndexParams(indexParams)
               .build();
 
+          int vectorDimension = index.getIndexDimensions();
+          log.info("Index dimensions: {}", vectorDimension);
+          assertEquals(dataset[0].length, vectorDimension);
+
           // Saving the index on to the disk.
           String indexFileName = UUID.randomUUID().toString() + ".cag";
           index.serialize(new FileOutputStream(indexFileName));

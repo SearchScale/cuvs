@@ -205,6 +205,13 @@ public interface CagraIndex {
     }
 
     /**
+     * Gets the CAGRA index dimensions
+     *
+     * @return the CAGRA index dimensions
+     */
+    int getIndexDimensions();
+
+    /**
      * Builder helps configure and create an instance of {@link CagraIndex}.
      */
     interface Builder {
@@ -242,15 +249,6 @@ public interface CagraIndex {
          * @return An instance of this Builder.
          */
         Builder withIndexParams(CagraIndexParams cagraIndexParameters);
-
-        /**
-         * Registers an instance of configured {@link CagraCompressionParams} with this
-         * Builder.
-         *
-         * @param cagraCompressionParams An instance of CagraCompressionParams.
-         * @return An instance of this Builder.
-         */
-        public Builder withCompressionParams(CagraCompressionParams cagraCompressionParams);
 
         /**
          * Builds and returns an instance of CagraIndex.
