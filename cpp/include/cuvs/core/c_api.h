@@ -29,7 +29,7 @@ extern "C" {
  * @{
  */
 /**
- * @brief An enum denoting return values for function calls
+ * @brief An enum denoting error statuses for function calls
  *
  */
 typedef enum { CUVS_ERROR, CUVS_SUCCESS } cuvsError_t;
@@ -166,6 +166,15 @@ cuvsError_t cuvsRMMHostAlloc(void** ptr, size_t bytes);
  * @return cuvsError_t
  */
 cuvsError_t cuvsRMMHostFree(void* ptr, size_t bytes);
+
+/**
+ * @brief Get the version of the cuVS library
+ * @param[out] major Major version
+ * @param[out] minor Minor version
+ * @param[out] patch Patch version
+ * @return cuvsError_t
+ */
+cuvsError_t cuvsVersionGet(uint16_t* major, uint16_t* minor, uint16_t* patch);
 
 /** @} */
 

@@ -29,6 +29,10 @@
 #include <rmm/mr/host/pinned_memory_resource.hpp>
 #include <thread>
 
+uint16_t constexpr CUVS_VERSION_MAJOR = 25;
+uint16_t constexpr CUVS_VERSION_MINOR = 06;
+uint16_t constexpr CUVS_VERSION_PATCH = 0;
+
 extern "C" cuvsError_t cuvsResourcesCreate(cuvsResources_t* res)
 {
   return cuvs::core::translate_exceptions([=] {
@@ -154,3 +158,11 @@ extern "C" const char* cuvsGetLastErrorText()
 }
 
 extern "C" void cuvsSetLastErrorText(const char* error) { last_error_text = error ? error : ""; }
+
+extern "C" cuvsError_t cuvsVersionGet(uint16_t* major, uint16_t* minor, uint16_t* patch)
+{
+  *major = CUVS_VERSION_MAJOR;
+  *minor = CUVS_VERSION_MINOR;
+  *patch = CUVS_VERSION_PATCH;
+  return CUVS_SUCCESS;
+}
