@@ -53,4 +53,9 @@ final class UnsupportedProvider implements CuVSProvider {
   public Dataset newDataset(int size, int dimensions) throws UnsupportedOperationException {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public CagraIndex mergeCagraIndexes(CagraIndex[] indexes) throws Throwable {
+    throw new UnsupportedOperationException();
+  }
 }
