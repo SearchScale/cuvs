@@ -31,6 +31,9 @@ import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraIndexCreate;
 import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraIndexDestroy;
 import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraIndexGetDims;
 import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraIndex_t;
+import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraMerge;
+import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraMergeParamsCreate;
+import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraMergeParams_t;
 import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraSearch;
 import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraSerialize;
 import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraSerializeToHnswlib;
@@ -40,8 +43,11 @@ import static com.nvidia.cuvs.internal.panama.headers_h.cuvsResources_t;
 import static com.nvidia.cuvs.internal.panama.headers_h.cuvsStreamGet;
 import static com.nvidia.cuvs.internal.panama.headers_h.cuvsStreamSync;
 import static com.nvidia.cuvs.internal.panama.headers_h.omp_set_num_threads;
-import static com.nvidia.cuvs.internal.panama.headers_h.cudaMemcpy;
-import static com.nvidia.cuvs.internal.panama.headers_h.cudaStream_t;
+import static com.nvidia.cuvs.internal.panama.headers_h_1.cudaMemcpy;
+import static com.nvidia.cuvs.internal.panama.headers_h_1.cudaStream_t;
+import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraIndexParamsCreate;
+import static com.nvidia.cuvs.internal.panama.headers_h.cuvsCagraIndexParams_t;
+
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -51,6 +57,7 @@ import java.lang.foreign.Arena;
 import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SequenceLayout;
+import java.lang.foreign.ValueLayout;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -77,7 +84,6 @@ import com.nvidia.cuvs.internal.panama.cuvsFilter;
 import com.nvidia.cuvs.internal.panama.cuvsIvfPqIndexParams;
 import com.nvidia.cuvs.internal.panama.cuvsIvfPqParams;
 import com.nvidia.cuvs.internal.panama.cuvsIvfPqSearchParams;
-import java.util.BitSet;
 
 /**
  * {@link CagraIndex} encapsulates a CAGRA index, along with methods to interact
@@ -289,8 +295,45 @@ public class CagraIndexImpl implements CagraIndex {
       checkCuVSError(returnValue, "cuvsStreamSync");
 
       MemorySegment filter = cuvsFilter.allocate(arena);
-      cuvsFilter.type(filter, 0);
-      cuvsFilter.addr(filter, 0);
+
+      long prefilterDataLength = 0;
+      MemorySegment prefilterData = MemorySegment.NULL;
+      if (query.getPrefilter() != null) {
+        long[] longArray = query.getPrefilter().toLongArray();
+        prefilterData = buildMemorySegment(resources.getArena(), longArray);
+        prefilterDataLength = query.getNumDocs();
+      }
+
+      MemorySegment prefilter_d = arena.allocate(C_POINTER);
+      long prefilter_len = 0;
+      MemorySegment prefilter_tensor_ptr;
+
+      if (prefilterData == MemorySegment.NULL || prefilterDataLength == 0) {
+        cuvsFilter.type(filter, 0);
+        cuvsFilter.addr(filter, 0);
+      } else {
+
+        long prefilter_shape[] = {(prefilterDataLength + 31) / 32};
+        prefilter_len = prefilter_shape[0];
+
+      returnValue =   cuvsRMMAlloc(cuvsRes, prefilter_d, C_INT_BYTE_SIZE * prefilter_len);
+      checkCuVSError(returnValue, "cuvsRMMAlloc");
+
+      // IMPORTANT: this should only come AFTER cuvsRMMAlloc call
+      MemorySegment prefilter_dp = prefilter_d.get(C_POINTER, 0);
+
+      returnValue =   cudaMemcpy(prefilter_dp, prefilterData, C_INT_BYTE_SIZE * prefilter_len, 4);
+      checkCudaError(returnValue, "cudaMemcpy");
+
+      prefilter_tensor_ptr = prepareTensor(arena, prefilter_d, prefilter_shape, 1, 32, 1, 2, 1);
+
+      System.out.println(prefilter_tensor_ptr.address());
+
+      cuvsFilter.type(filter, 1); //BITSET
+      cuvsFilter.addr(filter, prefilter_tensor_ptr.address());
+
+
+      }
 
       returnValue = cuvsStreamSync(cuvsRes);
       checkCuVSError(returnValue, "cuvsStreamSync");
@@ -313,6 +356,10 @@ public class CagraIndexImpl implements CagraIndex {
       checkCuVSError(returnValue, "cuvsRMMFree");
       returnValue = cuvsRMMFree(cuvsRes, queriesDP, queriesBytes);
       checkCuVSError(returnValue, "cuvsRMMFree");
+
+      returnValue = cuvsRMMFree(cuvsRes, prefilter_d, C_INT_BYTE_SIZE * prefilter_len);
+      checkCuVSError(returnValue, "cuvsRMMFree");
+
 
       return new CagraSearchResults(neighborsSequenceLayout, distancesSequenceLayout, neighborsMemorySegment,
           distancesMemorySegment, topK, query.getMapping(), numQueries);
@@ -582,37 +629,36 @@ public class CagraIndexImpl implements CagraIndex {
    * @throws Throwable if an error occurs during the merge operation
    */
   public static CagraIndex merge(CagraIndex[] indexes, CagraMergeParams mergeParams) throws Throwable {
-//    CuVSResourcesImpl resources = (CuVSResourcesImpl) indexes[0].getCuVSResources();
-//    IndexReference mergedIndexReference = new IndexReference(resources);
-//
-//    try (var arena = Arena.ofConfined()) {
-//      MemorySegment indexesSegment = arena.allocate(indexes.length * ADDRESS.byteSize());
-//      for (int i = 0; i < indexes.length; i++) {
-//        CagraIndexImpl indexImpl = (CagraIndexImpl) indexes[i];
-//        indexesSegment.setAtIndex(ADDRESS, i, indexImpl.cagraIndexReference.getMemorySegment());
-//      }
-//
-//      MemorySegment returnValue = arena.allocate(C_INT);
-//
-//      MemorySegment mergeParamsSegment = MemorySegment.NULL;
-//      if (mergeParams != null) {
-//        mergeParamsSegment = createMergeParamsSegment(mergeParams, resources);
-//      }
-//
-//      mergeMethodHandle.invokeExact(
-//        resources.getMemorySegment(),
-//        indexesSegment,
-//        mergedIndexReference.getMemorySegment(),
-//        indexes.length,
-//        returnValue,
-//        mergeParamsSegment
-//      );
-//
-//      checkError(returnValue.get(C_INT, 0L), "mergeMethodHandle");
-//    }
-//
-//    return new CagraIndexImpl(mergedIndexReference, resources);
-    return null;
+
+    CuVSResourcesImpl resources = (CuVSResourcesImpl) indexes[0].getCuVSResources();
+    IndexReference mergedIndexReference = new IndexReference(resources);
+    long cuvsRes = resources.getMemorySegment().get(cuvsResources_t, 0);
+
+    try (var arena = Arena.ofConfined()) {
+      MemorySegment indexesSegment = arena.allocate(indexes.length * ValueLayout.ADDRESS.byteSize());
+
+      for (int i = 0; i < indexes.length; i++) {
+        CagraIndexImpl indexImpl = (CagraIndexImpl) indexes[i];
+        indexesSegment.setAtIndex(ValueLayout.ADDRESS, i, indexImpl.cagraIndexReference.getMemorySegment());
+      }
+
+      MemorySegment mergeParamsSegment = arena.allocate(cuvsCagraMergeParams_t);
+      int returnValue;
+
+      mergeParamsSegment = createMergeParamsSegment(mergeParams, resources);
+
+      returnValue = cuvsCagraMerge(
+          cuvsRes,
+          mergeParamsSegment,
+          indexesSegment,
+          indexes.length,
+          mergedIndexReference.getMemorySegment());
+
+      checkCuVSError(returnValue, "cuvsCagraMerge");
+
+    }
+
+    return new CagraIndexImpl(mergedIndexReference, resources);
   }
 
   /**
@@ -625,14 +671,19 @@ public class CagraIndexImpl implements CagraIndex {
   private static MemorySegment createMergeParamsSegment(CagraMergeParams mergeParams, CuVSResourcesImpl resources) {
     MemorySegment seg = cuvsCagraMergeParams.allocate(resources.getArena());
 
-    if (mergeParams.getOutputIndexParams() != null) {
-      MemorySegment outputIndexParamsSeg = segmentFromIndexParams(resources, mergeParams.getOutputIndexParams());
-      cuvsCagraMergeParams.output_index_params(seg, outputIndexParamsSeg);
-    } else {
-      cuvsCagraMergeParams.output_index_params(seg, MemorySegment.NULL);
-    }
+    if (mergeParams != null) {
+      if (mergeParams.getOutputIndexParams() != null) {
+        MemorySegment outputIndexParamsSeg = segmentFromIndexParams(resources, mergeParams.getOutputIndexParams());
+        cuvsCagraMergeParams.output_index_params(seg, outputIndexParamsSeg);
+      } else {
+        cuvsCagraMergeParams.output_index_params(seg, MemorySegment.NULL);
+      }
 
-    cuvsCagraMergeParams.strategy(seg, mergeParams.getStrategy().value);
+      cuvsCagraMergeParams.strategy(seg, mergeParams.getStrategy().value);
+    } else {
+      MemorySegment outputIndexParamsSeg = segmentFromIndexParams(resources, new CagraIndexParams.Builder().build());
+      cuvsCagraMergeParams.output_index_params(seg, outputIndexParamsSeg);
+    }
 
     return seg;
   }
