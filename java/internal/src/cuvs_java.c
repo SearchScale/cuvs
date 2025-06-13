@@ -18,6 +18,7 @@
 #include <cuvs/neighbors/cagra.h>
 #include <cuvs/neighbors/brute_force.h>
 #include <cuvs/neighbors/hnsw.h>
+#include <cuvs/neighbors/tiered_index.h>
 #include <dlpack/dlpack.h>
 #include <cuda_runtime.h>
 #include <stdio.h>
@@ -496,6 +497,140 @@ void search_hnsw_index(cuvsResources_t cuvs_resources, cuvsHnswIndex_t hnsw_inde
 void destroy_hnsw_index(cuvsHnswIndex_t hnsw_index, int *return_value) {
   *return_value = cuvsHnswIndexDestroy(hnsw_index);
 }
+
+/**
+ * Build a tiered index from dataset 
+ */
+cuvsTieredIndex_t build_tiered_index(
+    float *dataset, long rows, long dimensions,
+    cuvsResources_t resources,
+    cuvsTieredIndexParams_t params,
+    int *return_value
+) {
+    cudaStream_t stream;
+    cuvsStreamGet(resources, &stream);
+
+    float *dataset_d;
+    size_t dataset_size = sizeof(float) * rows * dimensions;
+    cuvsRMMAlloc(resources, (void**)&dataset_d, dataset_size);
+    cudaMemcpy(dataset_d, dataset, dataset_size, cudaMemcpyDefault);
+
+    cuvsTieredIndex_t index;
+    cuvsTieredIndexCreate(&index);
+
+    int64_t dataset_shape[2] = {rows, dimensions};
+    DLManagedTensor dataset_tensor = prepare_tensor(dataset_d, dataset_shape, kDLFloat, 32, 2, kDLCUDA);
+    cuvsStreamSync(resources);
+    
+    *return_value = cuvsTieredIndexBuild(resources, params, &dataset_tensor, index);
+    return index;
+}
+
+
+/**
+ * Extend an existing TieredIndex with new data
+ */
+void extend_tiered_index(float *dataset, long rows,
+    long dimensions, cuvsResources_t cuvs_resources, cuvsTieredIndex_t index,  int *return_value) {
+
+    cudaStream_t stream;
+    cuvsStreamGet(cuvs_resources, &stream);
+
+    float *dataset_d;
+    size_t data_size = sizeof(float) * rows * dimensions;
+    cuvsRMMAlloc(cuvs_resources, (void**) &dataset_d, data_size);
+    cudaMemcpy(dataset_d, dataset, data_size, cudaMemcpyDefault);
+
+    int64_t dataset_shape[2] = {rows, dimensions};
+    DLManagedTensor dataset_tensor = prepare_tensor(dataset_d, dataset_shape, kDLFloat, 32, 2, kDLCUDA);
+    cuvsStreamSync(cuvs_resources);
+
+    *return_value = cuvsTieredIndexExtend(cuvs_resources, &dataset_tensor, index);
+
+    cuvsRMMFree(cuvs_resources, dataset_d, data_size);
+}
+
+void destroy_tiered_index(cuvsTieredIndex_t index, int *return_value) {
+    // Function returns cuvsError_t directly
+    *return_value = cuvsTieredIndexDestroy(index);
+}
+
+/**
+ * Search using a TieredIndex
+ * 
+ * @param resources The CuVS resources handle
+ * @param search_params The search parameters (e.g. CagraSearchParams)
+ * @param index The TieredIndex to search
+ * @param queries The query vectors
+ * @param topk Number of nearest neighbors to find 
+ * @param n_queries Number of query vectors
+ * @param dimensions Vector dimension
+ * @param neighbors Output array for neighbor indices
+ * @param distances Output array for neighbor distances
+ * @param return_value Return status code
+ */
+void search_tiered_index(
+    cuvsResources_t resources,
+    void* search_params,
+    cuvsTieredIndex_t index,
+    float *queries_h,
+    int topk,
+    long n_queries,
+    int dimension,
+    int64_t *neighbors_h,
+    float *distances_h,     
+    int *returnValue
+  ) {
+
+    cudaStream_t stream;
+    cuvsStreamGet(resources, &stream);
+    // Device allocations
+    float *queries_d = NULL, *distances_d = NULL;
+    int64_t *neighbors_d = NULL;
+
+    cuvsRMMAlloc(resources, (void**)&queries_d, sizeof(float) * n_queries * dimension);
+    cuvsRMMAlloc(resources, (void**)&neighbors_d, sizeof(int64_t) * n_queries * topk);
+    cuvsRMMAlloc(resources, (void**)&distances_d, sizeof(float) * n_queries * topk);
+
+    cudaMemcpy(queries_d, queries_h, sizeof(float) * n_queries * dimension, cudaMemcpyHostToDevice);
+
+    int64_t queries_shape[2]   = {n_queries, dimension};
+    int64_t neighbors_shape[2] = {n_queries, topk};
+    int64_t distances_shape[2] = {n_queries, topk};
+
+    DLManagedTensor queries_tensor = prepare_tensor(
+        queries_d, queries_shape, kDLFloat, 32, 2, kDLCUDA);
+    DLManagedTensor neighbors_tensor = prepare_tensor(
+        neighbors_d, neighbors_shape, kDLInt, 64, 2, kDLCUDA);
+    DLManagedTensor distances_tensor = prepare_tensor(
+        distances_d, distances_shape, kDLFloat, 32, 2, kDLCUDA);
+
+    cuvsStreamSync(resources);
+
+    cuvsFilter empty_filter;
+    empty_filter.type = NO_FILTER;
+    empty_filter.addr = (uintptr_t) NULL;
+
+    *returnValue = cuvsTieredIndexSearch(
+        resources,
+        search_params,
+        index,
+        &queries_tensor,
+        &neighbors_tensor,
+        &distances_tensor,
+        empty_filter
+    );
+
+    // Copy results back to host
+    cudaMemcpy(neighbors_h, neighbors_d, sizeof(int64_t) * n_queries * topk, cudaMemcpyDeviceToHost);
+    cudaMemcpy(distances_h, distances_d, sizeof(float) * n_queries * topk, cudaMemcpyDeviceToHost);
+
+    cuvsRMMFree(resources, queries_d, sizeof(float) * n_queries * dimension);
+    cuvsRMMFree(resources, neighbors_d, sizeof(int64_t) * n_queries * topk);
+    cuvsRMMFree(resources, distances_d, sizeof(float) * n_queries * topk);
+}
+
+
 
 /**
  * @brief struct for containing gpu information
