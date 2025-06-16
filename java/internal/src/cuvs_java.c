@@ -568,6 +568,8 @@ void destroy_tiered_index(cuvsTieredIndex_t index, int *return_value) {
  * @param neighbors Output array for neighbor indices
  * @param distances Output array for neighbor distances
  * @param return_value Return status code
+ * @param prefilter_data Prefilter bitmap data
+ * @param prefilter_data_length Length of prefilter data
  */
 void search_tiered_index(
     cuvsResources_t resources,
@@ -579,12 +581,14 @@ void search_tiered_index(
     int dimension,
     int64_t *neighbors_h,
     float *distances_h,     
-    int *returnValue
+    int *returnValue,
+    uint32_t *prefilter_data,
+    long prefilter_data_length
   ) {
 
     cudaStream_t stream;
     cuvsStreamGet(resources, &stream);
-    // Device allocations
+
     float *queries_d = NULL, *distances_d = NULL;
     int64_t *neighbors_d = NULL;
 
@@ -607,10 +611,28 @@ void search_tiered_index(
 
     cuvsStreamSync(resources);
 
-    cuvsFilter empty_filter;
-    empty_filter.type = NO_FILTER;
-    empty_filter.addr = (uintptr_t) NULL;
+    cuvsFilter filter;
+    uint32_t *prefilter_d = NULL;
+    int64_t prefilter_len = 0;
+    DLManagedTensor *prefilter_tensor_ptr = NULL;
 
+    if (prefilter_data == NULL || prefilter_data_length == 0) {
+        filter.type = NO_FILTER;
+        filter.addr = (uintptr_t) NULL;
+    } else {
+        int64_t prefilter_shape[1] = {(prefilter_data_length + 31) / 32};
+        prefilter_len = prefilter_shape[0];
+
+        cuvsRMMAlloc(resources, (void **) &prefilter_d, sizeof(uint32_t) * prefilter_len);
+        cudaMemcpy(prefilter_d, prefilter_data, sizeof(uint32_t) * prefilter_len, cudaMemcpyHostToDevice);
+
+        prefilter_tensor_ptr = (DLManagedTensor *) malloc(sizeof(DLManagedTensor));
+        *prefilter_tensor_ptr = prepare_tensor(prefilter_d, prefilter_shape, kDLUInt, 32, 1, kDLCUDA);
+
+        filter.type = BITSET;
+        filter.addr = (uintptr_t) prefilter_tensor_ptr;
+    }
+    
     *returnValue = cuvsTieredIndexSearch(
         resources,
         search_params,
@@ -618,9 +640,9 @@ void search_tiered_index(
         &queries_tensor,
         &neighbors_tensor,
         &distances_tensor,
-        empty_filter
+        filter
     );
-
+    
     // Copy results back to host
     cudaMemcpy(neighbors_h, neighbors_d, sizeof(int64_t) * n_queries * topk, cudaMemcpyDeviceToHost);
     cudaMemcpy(distances_h, distances_d, sizeof(float) * n_queries * topk, cudaMemcpyDeviceToHost);
@@ -628,6 +650,13 @@ void search_tiered_index(
     cuvsRMMFree(resources, queries_d, sizeof(float) * n_queries * dimension);
     cuvsRMMFree(resources, neighbors_d, sizeof(int64_t) * n_queries * topk);
     cuvsRMMFree(resources, distances_d, sizeof(float) * n_queries * topk);
+    
+    if (prefilter_d != NULL) {
+        cuvsRMMFree(resources, prefilter_d, sizeof(uint32_t) * prefilter_len);
+    }
+    if (prefilter_tensor_ptr != NULL) {
+        free(prefilter_tensor_ptr);
+    }
 }
 
 

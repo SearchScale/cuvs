@@ -46,7 +46,7 @@ class TieredSearchResultsImpl extends SearchResultsImpl {
             long neighborIdLong = (long) neighboursVarHandle.get(neighboursMemorySegment, 0L, i);
             float dst = (float) distancesVarHandle.get(distancesMemorySegment, 0L, i);
             if (neighborIdLong != -1L && neighborIdLong != Long.MAX_VALUE) {
-                int id = (int) neighborIdLong; // Safe to cast after validation
+                int id = (int) neighborIdLong;
                 intermediateResultMap.put(mapping != null ? mapping.get(id) : id, dst);
             }
             count++;

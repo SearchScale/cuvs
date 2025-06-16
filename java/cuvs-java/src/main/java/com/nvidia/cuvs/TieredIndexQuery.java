@@ -31,22 +31,23 @@ import java.util.BitSet;
  * @since 25.02
  */
 public class TieredIndexQuery {
-    private final TieredIndexType indexType;
-    private final CagraSearchParams cagraSearchParameters;
-    private final List<Integer> mapping;
-    private final float[][] queryVectors;
-    private final int topK;
-    private final BitSet prefilter;
-    private final int numDocs;
+    private TieredIndexType indexType;
+    private CagraSearchParams cagraSearchParameters;
+    private List<Integer> mapping;
+    private float[][] queryVectors;
+    private int topK;
+    private BitSet prefilter;
+    private long numDocs;
 
-    private TieredIndexQuery(Builder builder) {
-        this.indexType = builder.indexType;
-        this.cagraSearchParameters = builder.cagraSearchParams;
-        this.mapping = builder.mapping;
-        this.queryVectors = builder.queryVectors;
-        this.topK = builder.topK;
-        this.prefilter = builder.prefilter;
-        this.numDocs = builder.numDocs;
+    private TieredIndexQuery(TieredIndexType indexType, CagraSearchParams cagraSearchParameters, List<Integer> mapping, float[][] queryVectors, int topK, BitSet prefilter, long numDocs) {
+        super();
+        this.indexType = indexType;
+        this.cagraSearchParameters = cagraSearchParameters;
+        this.mapping = mapping;
+        this.queryVectors = queryVectors;
+        this.topK = topK;
+        this.prefilter = prefilter;
+        this.numDocs = numDocs;
     }
 
     /**
@@ -108,7 +109,7 @@ public class TieredIndexQuery {
      *
      * @return number of documents as an integer
      */
-    public int getNumDocs() {
+    public long getNumDocs() {
         return numDocs;
     }
 
@@ -138,7 +139,7 @@ public class TieredIndexQuery {
         private List<Integer> mapping;
         private int topK = 2;
         private BitSet prefilter;
-        private int numDocs;
+        private long numDocs;
 
         /**
          * Sets the index type for this query.
@@ -217,19 +218,7 @@ public class TieredIndexQuery {
          * @throws IllegalStateException if required parameters are missing
          */
         public TieredIndexQuery build() {
-            if (queryVectors == null) {
-                throw new IllegalStateException("Query vectors are required");
-            }
-            if (cagraSearchParams == null) {
-                throw new IllegalStateException("Search parameters are required");
-            }
-            if (indexType != TieredIndexType.CAGRA) {
-                throw new IllegalStateException("Only CAGRA index type is supported");
-            }
-            if (prefilter != null && numDocs <= 0) {
-                throw new IllegalStateException("numDocs must be positive when using prefilter");
-            }
-            return new TieredIndexQuery(this);
+            return new TieredIndexQuery(indexType, cagraSearchParams, mapping, queryVectors, topK, prefilter, numDocs);
         }
     }
 }

@@ -17,11 +17,14 @@ package com.nvidia.cuvs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.BitSet;
 import java.lang.invoke.MethodHandles;
 
 import org.junit.Before;
@@ -206,6 +209,67 @@ public class TieredIndexIT extends CuVSTestCase {
 
             SearchResults results3 = index.search(query3);
             assertEquals(3, results3.getResults().get(0).size());
+        }
+    }
+
+    /**
+     * Test prefilter functionality with debug logging
+     */
+    @Test
+    public void testPrefilter() throws Throwable {
+        float[][] dataset = {{0.0f, 0.0f}, {1.0f, 1.0f}, {2.0f, 2.0f}, {3.0f, 3.0f}};
+        float[][] queryVectors = {{0.1f, 0.1f}};
+
+        try (CuVSResources resources = CuVSResources.create()) {
+            CagraIndexParams cagraParams = new CagraIndexParams.Builder()
+                .withGraphDegree(4)
+                .withIntermediateGraphDegree(8)
+                .build();
+
+            TieredIndexParams indexParams = new TieredIndexParams.Builder()
+                .minAnnRows(2)
+                .withCagraParams(cagraParams)
+                .build();
+
+            TieredIndex index = TieredIndex.newBuilder(resources)
+                .withDataset(dataset)
+                .withIndexParams(indexParams)
+                .build();
+
+            CagraSearchParams searchParams = new CagraSearchParams.Builder(resources).build();
+
+            // Test WITHOUT prefilter first
+            TieredIndexQuery queryWithoutFilter = new TieredIndexQuery.Builder()
+                .withTopK(3)
+                .withQueryVectors(queryVectors)
+                .withSearchParams(searchParams)
+                .build();
+
+            SearchResults resultsWithoutFilter = index.search(queryWithoutFilter);
+            log.info("Results WITHOUT prefilter: {}", resultsWithoutFilter.getResults());
+
+            // Test WITH prefilter - INCLUDE only indices 1 and 2 (EXCLUDE index 0)
+            BitSet prefilter = new BitSet(4);
+            prefilter.set(1, true); // Include index 1
+            prefilter.set(2, true); // Include index 2
+            // Index 0 and 3 are NOT set, so they should be excluded
+
+            TieredIndexQuery queryWithFilter = new TieredIndexQuery.Builder()
+                .withTopK(3)
+                .withQueryVectors(queryVectors)
+                .withSearchParams(searchParams)
+                .withPrefilter(prefilter, 4)
+                .build();
+
+            SearchResults resultsWithFilter = index.search(queryWithFilter);
+            log.info("Results WITH prefilter: {}", resultsWithFilter.getResults());
+            
+            Map<Integer, Float> result = resultsWithFilter.getResults().get(0);
+            
+            // Verify index 0 is excluded (because it wasn't set in prefilter)
+            assertFalse("Index 0 should be filtered out", result.containsKey(0));
+            // Verify indices 1 and 2 are included (because they were set in prefilter)
+            assertTrue("Index 1 or 2 should be present", result.containsKey(1) || result.containsKey(2));
         }
     }
 

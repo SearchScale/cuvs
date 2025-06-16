@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.BitSet;
 
 import com.nvidia.cuvs.Dataset;
 import com.nvidia.cuvs.SearchResults;
@@ -89,7 +90,9 @@ public class TieredIndexImpl implements TieredIndex {
                     C_INT, // dimensions
                     ADDRESS, // neighbors
                     ADDRESS, // distances
-                    ADDRESS // return_value
+                    ADDRESS, // return_value
+                    ADDRESS, // prefilter_data
+                    C_LONG   // prefilter_data_length
             ));
 
     private static final MethodHandle extendMethodHandle = downcallHandle("extend_tiered_index",
@@ -226,7 +229,7 @@ public class TieredIndexImpl implements TieredIndex {
     public SearchResults search(TieredIndexQuery query) throws Throwable {
         checkNotDestroyed();
         long numQueries = query.getQueryVectors().length;
-        int topK = query.getMapping() != null ? Math.min(query.getMapping().size(), query.getTopK()) : query.getTopK();
+        int topK = query.getMapping() != null ? Math.min(query.getMapping().size(),query.getTopK()) : query.getTopK();
         int dimension = numQueries > 0 ? query.getQueryVectors()[0].length : 0;
         long numBlocks = (long) topK * numQueries;
 
@@ -235,6 +238,15 @@ public class TieredIndexImpl implements TieredIndex {
         MemorySegment neighborsSeg = resources.getArena().allocate(neighborsLayout);
         MemorySegment distancesSeg = resources.getArena().allocate(distancesLayout);
         MemorySegment queriesSeg = Util.buildMemorySegment(resources.getArena(), query.getQueryVectors());
+        
+        MemorySegment prefilterData = MemorySegment.NULL;
+        long prefilterDataLength = 0;
+        
+        if (query.getPrefilter() != null) {
+            long[] longArray = query.getPrefilter().toLongArray();
+            prefilterData = Util.buildMemorySegment(resources.getArena(), longArray);
+            prefilterDataLength = query.getNumDocs();
+        }
 
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment returnValue = arena.allocate(C_INT);
@@ -248,9 +260,13 @@ public class TieredIndexImpl implements TieredIndex {
                     dimension,
                     neighborsSeg,
                     distancesSeg,
-                    returnValue);
+                    returnValue,
+                    prefilterData,
+                    prefilterDataLength
+            );
 
             checkError(returnValue.get(C_INT, 0L), "searchMethodHandle");
+            System.out.println("Native search completed successfully");
         }
         return new TieredSearchResultsImpl(
                 neighborsLayout, distancesLayout, neighborsSeg, distancesSeg, topK, query.getMapping(), numQueries);
