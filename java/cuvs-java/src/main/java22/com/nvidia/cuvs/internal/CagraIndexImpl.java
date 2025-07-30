@@ -302,6 +302,9 @@ public class CagraIndexImpl implements CagraIndex {
         returnValue = cuvsStreamSync(cuvsRes);
         checkCuVSError(returnValue, "cuvsStreamSync");
 
+        // Synchronize access to native cuvsCagraSearch to avoid concurrent access issues
+        // that cause SIGSEGV crashes in the native vector reallocation code
+        // synchronized (CagraIndexImpl.class) {
         returnValue =
             cuvsCagraSearch(
                 cuvsRes,
@@ -312,6 +315,7 @@ public class CagraIndexImpl implements CagraIndex {
                 distancesTensor,
                 prefilter);
         checkCuVSError(returnValue, "cuvsCagraSearch");
+        // }
 
         returnValue = cuvsStreamSync(cuvsRes);
         checkCuVSError(returnValue, "cuvsStreamSync");
