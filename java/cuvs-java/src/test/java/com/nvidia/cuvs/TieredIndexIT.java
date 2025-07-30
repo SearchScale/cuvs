@@ -92,7 +92,7 @@ public class TieredIndexIT extends CuVSTestCase {
           new CagraSearchParams.Builder().withMaxIterations(20).build();
 
       TieredIndexQuery query =
-          new TieredIndexQuery.Builder()
+          TieredIndexQuery.newBuilder(resources)
               .withTopK(3)
               .withQueryVectors(queries)
               .withSearchParams(searchParams)
@@ -159,7 +159,7 @@ public class TieredIndexIT extends CuVSTestCase {
       log.debug("TieredIndex built for K-value testing");
 
       TieredIndexQuery query1 =
-          new TieredIndexQuery.Builder()
+          TieredIndexQuery.newBuilder(resources)
               .withTopK(1)
               .withQueryVectors(queries)
               .withSearchParams(new CagraSearchParams.Builder().withMaxIterations(20).build())
@@ -175,7 +175,7 @@ public class TieredIndexIT extends CuVSTestCase {
       assertEquals("Distance to closest vector should be ~0.02", 0.02f, firstResult.get(0), 0.01f);
 
       TieredIndexQuery query3 =
-          new TieredIndexQuery.Builder()
+          TieredIndexQuery.newBuilder(resources)
               .withTopK(3)
               .withQueryVectors(queries)
               .withSearchParams(new CagraSearchParams.Builder().withMaxIterations(20).build())
@@ -227,7 +227,7 @@ public class TieredIndexIT extends CuVSTestCase {
       log.debug("Created prefilter allowing indices 1 and 2, excluding 0 and 3");
 
       TieredIndexQuery queryWithFilter =
-          new TieredIndexQuery.Builder()
+          TieredIndexQuery.newBuilder(resources)
               .withTopK(3)
               .withQueryVectors(queryVectors)
               .withSearchParams(searchParams)

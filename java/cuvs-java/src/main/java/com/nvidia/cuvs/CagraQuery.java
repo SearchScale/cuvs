@@ -23,9 +23,9 @@ import java.util.function.LongToIntFunction;
 /**
  * CagraQuery holds the CagraSearchParams and the query vectors to be used while
  * invoking search.
- * 
- * <p><strong>Thread Safety:</strong> Each CagraQuery instance should use its own 
- * CuVSResources object that is not shared with other threads. Sharing CuVSResources 
+ *
+ * <p><strong>Thread Safety:</strong> Each CagraQuery instance should use its own
+ * CuVSResources object that is not shared with other threads. Sharing CuVSResources
  * between threads can lead to memory allocation errors or JVM crashes.
  *
  * @since 25.02
@@ -160,9 +160,9 @@ public class CagraQuery {
 
     /**
      * Constructor that requires CuVSResources.
-     * 
-     * <p><strong>Important:</strong> The provided CuVSResources instance should not be 
-     * shared with other threads. Each thread performing searches should create its own 
+     *
+     * <p><strong>Important:</strong> The provided CuVSResources instance should not be
+     * shared with other threads. Each thread performing searches should create its own
      * CuVSResources instance to avoid memory allocation conflicts and potential JVM crashes.
      *
      * @param resources the CuVSResources instance to use for this query (must not be shared between threads)

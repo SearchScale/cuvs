@@ -72,7 +72,7 @@ public class CagraMultiThreadStabilityIT extends CuVSTestCase {
 
     float[][] dataset = generateRandomDataset(dataSize, dimensions);
 
-    try (CuVSResources resources = CuVSResources.create()) {
+    try (CuVSResources resources = CheckedCuVSResources.create()) {
       log.info("Creating CAGRA index for synchronization test...");
 
       CagraIndexParams indexParams =
@@ -112,7 +112,7 @@ public class CagraMultiThreadStabilityIT extends CuVSTestCase {
                     for (int queryId = 0; queryId < queriesPerThread; queryId++) {
                       float[][] queries = generateRandomDataset(queryBatchSize, dimensions);
 
-                      try (CuVSResources threadResources = CuVSResources.create()) {
+                      try (CuVSResources threadResources = CheckedCuVSResources.create()) {
                         CagraSearchParams searchParams = new CagraSearchParams.Builder().build();
                         CagraQuery query =
                             new CagraQuery.Builder(threadResources)
