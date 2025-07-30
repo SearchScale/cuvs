@@ -17,11 +17,16 @@ package com.nvidia.cuvs;
 
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Objects;
 import java.util.function.LongToIntFunction;
 
 /**
  * CagraQuery holds the CagraSearchParams and the query vectors to be used while
  * invoking search.
+ * 
+ * <p><strong>Thread Safety:</strong> Each CagraQuery instance should use its own 
+ * CuVSResources object that is not shared with other threads. Sharing CuVSResources 
+ * between threads can lead to memory allocation errors or JVM crashes.
  *
  * @since 25.02
  */
@@ -151,12 +156,20 @@ public class CagraQuery {
     private int topK = 2;
     private BitSet prefilter;
     private int numDocs;
-    private CuVSResources resources;
+    private final CuVSResources resources;
 
     /**
-     * Default constructor.
+     * Constructor that requires CuVSResources.
+     * 
+     * <p><strong>Important:</strong> The provided CuVSResources instance should not be 
+     * shared with other threads. Each thread performing searches should create its own 
+     * CuVSResources instance to avoid memory allocation conflicts and potential JVM crashes.
+     *
+     * @param resources the CuVSResources instance to use for this query (must not be shared between threads)
      */
-    public Builder() {}
+    public Builder(CuVSResources resources) {
+      this.resources = Objects.requireNonNull(resources, "resources cannot be null");
+    }
 
     /**
      * Sets the instance of configured CagraSearchParams to be passed for search.
@@ -216,17 +229,6 @@ public class CagraQuery {
     public Builder withPrefilter(BitSet prefilter, int numDocs) {
       this.prefilter = prefilter;
       this.numDocs = numDocs;
-      return this;
-    }
-
-    /**
-     * Sets the CuVSResources instance to use for this query.
-     *
-     * @param resources the CuVSResources instance
-     * @return this {@link Builder} instance
-     */
-    public Builder withResources(CuVSResources resources) {
-      this.resources = resources;
       return this;
     }
 

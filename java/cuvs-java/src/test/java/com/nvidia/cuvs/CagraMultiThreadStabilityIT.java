@@ -115,11 +115,10 @@ public class CagraMultiThreadStabilityIT extends CuVSTestCase {
                       try (CuVSResources threadResources = CuVSResources.create()) {
                         CagraSearchParams searchParams = new CagraSearchParams.Builder().build();
                         CagraQuery query =
-                            new CagraQuery.Builder()
+                            new CagraQuery.Builder(threadResources)
                                 .withTopK(topK)
                                 .withSearchParams(searchParams)
                                 .withQueryVectors(queries)
-                                .withResources(threadResources)
                                 .build();
 
                         // This call should now work with per-thread resources
