@@ -393,6 +393,7 @@ public class CagraBuildAndSearchIT extends CuVSTestCase {
               .withSearchParams(searchParams)
               .withQueryVectors(queries)
               .withPrefilter(prefilter, 4)
+              .withResources(resources)
               .build();
 
       SearchResults filteredSearchResults = index.search(filteredQuery);
