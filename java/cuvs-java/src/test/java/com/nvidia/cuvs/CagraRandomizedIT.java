@@ -146,7 +146,8 @@ public class CagraRandomizedIT extends CuVSTestCase {
             new CagraQuery.Builder()
                 .withQueryVectors(queries)
                 .withTopK(topK)
-                .withSearchParams(new CagraSearchParams.Builder(resources).build());
+                .withSearchParams(new CagraSearchParams.Builder().build())
+                .withResources(resources);
 
         if (sharedPrefilter != null) {
           queryBuilder.withPrefilter(sharedPrefilter, datasetSize);

@@ -60,8 +60,8 @@ public class CagraMultiThreadStabilityIT extends CuVSTestCase {
   public void testSynchronizedSearchRequirement() throws Throwable {
     final int dataSize = 10000;
     final int dimensions = 256;
-    final int numThreads = 64; // Very high thread count to increase contention
-    final int queriesPerThread = 50;
+    final int numThreads = 16; // High thread count to increase contention
+    final int queriesPerThread = 500;
     final int queryBatchSize = 1; // Small batch size to increase frequency of calls
     final int topK = 10;
 
@@ -112,22 +112,24 @@ public class CagraMultiThreadStabilityIT extends CuVSTestCase {
                     for (int queryId = 0; queryId < queriesPerThread; queryId++) {
                       float[][] queries = generateRandomDataset(queryBatchSize, dimensions);
 
-                      CagraSearchParams searchParams =
-                          new CagraSearchParams.Builder(resources).build();
-                      CagraQuery query =
-                          new CagraQuery.Builder()
-                              .withTopK(topK)
-                              .withSearchParams(searchParams)
-                              .withQueryVectors(queries)
-                              .build();
+                      try (CuVSResources threadResources = CuVSResources.create()) {
+                        CagraSearchParams searchParams = new CagraSearchParams.Builder().build();
+                        CagraQuery query =
+                            new CagraQuery.Builder()
+                                .withTopK(topK)
+                                .withSearchParams(searchParams)
+                                .withQueryVectors(queries)
+                                .withResources(threadResources)
+                                .build();
 
-                      // This call would fail with RMM errors without synchronization
-                      SearchResults results = index.search(query);
-                      assertNotNull("Query should return results", results);
-                      assertTrue(
-                          "Query should return some results", !results.getResults().isEmpty());
+                        // This call should now work with per-thread resources
+                        SearchResults results = index.search(query);
+                        assertNotNull("Query should return results", results);
+                        assertTrue(
+                            "Query should return some results", !results.getResults().isEmpty());
 
-                      successfulQueries.incrementAndGet();
+                        successfulQueries.incrementAndGet();
+                      }
 
                       // No Thread.yield() - maximize contention
                     }

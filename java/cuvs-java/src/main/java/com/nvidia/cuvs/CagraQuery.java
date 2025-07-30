@@ -33,6 +33,7 @@ public class CagraQuery {
   private final int topK;
   private final BitSet prefilter;
   private final int numDocs;
+  private final CuVSResources resources;
 
   /**
    * Constructs an instance of {@link CagraQuery} using cagraSearchParameters,
@@ -45,6 +46,7 @@ public class CagraQuery {
    * @param topK                  the top k results to return
    * @param prefilter             A single BitSet to use as filter while searching the CAGRA index
    * @param numDocs               Total number of dataset vectors; used to align the prefilter correctly
+   * @param resources             CuVSResources instance to use for this query
    */
   public CagraQuery(
       CagraSearchParams cagraSearchParameters,
@@ -52,7 +54,8 @@ public class CagraQuery {
       LongToIntFunction mapping,
       int topK,
       BitSet prefilter,
-      int numDocs) {
+      int numDocs,
+      CuVSResources resources) {
     super();
     this.cagraSearchParameters = cagraSearchParameters;
     this.queryVectors = queryVectors;
@@ -60,6 +63,7 @@ public class CagraQuery {
     this.topK = topK;
     this.prefilter = prefilter;
     this.numDocs = numDocs;
+    this.resources = resources;
   }
 
   /**
@@ -114,6 +118,15 @@ public class CagraQuery {
     return numDocs;
   }
 
+  /**
+   * Gets the CuVSResources instance for this query.
+   *
+   * @return the CuVSResources instance
+   */
+  public CuVSResources getResources() {
+    return resources;
+  }
+
   @Override
   public String toString() {
     return "CuVSQuery [cagraSearchParameters="
@@ -138,6 +151,7 @@ public class CagraQuery {
     private int topK = 2;
     private BitSet prefilter;
     private int numDocs;
+    private CuVSResources resources;
 
     /**
      * Default constructor.
@@ -206,12 +220,24 @@ public class CagraQuery {
     }
 
     /**
+     * Sets the CuVSResources instance to use for this query.
+     *
+     * @param resources the CuVSResources instance
+     * @return this {@link Builder} instance
+     */
+    public Builder withResources(CuVSResources resources) {
+      this.resources = resources;
+      return this;
+    }
+
+    /**
      * Builds an instance of CuVSQuery.
      *
      * @return an instance of CuVSQuery
      */
     public CagraQuery build() {
-      return new CagraQuery(cagraSearchParams, queryVectors, mapping, topK, prefilter, numDocs);
+      return new CagraQuery(
+          cagraSearchParams, queryVectors, mapping, topK, prefilter, numDocs, resources);
     }
   }
 }
