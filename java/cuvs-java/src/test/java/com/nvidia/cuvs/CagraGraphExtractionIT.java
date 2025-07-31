@@ -225,10 +225,10 @@ public class CagraGraphExtractionIT extends CuVSTestCase {
   private void compareSearchResults(
       CagraIndex index1, CagraIndex index2, float[][] queries, CuVSResources resources)
       throws Throwable {
-    CagraSearchParams searchParams = new CagraSearchParams.Builder(resources).build();
+    CagraSearchParams searchParams = new CagraSearchParams.Builder().build();
 
     CagraQuery query =
-        new CagraQuery.Builder()
+        new CagraQuery.Builder(resources)
             .withTopK(3)
             .withSearchParams(searchParams)
             .withQueryVectors(queries)
