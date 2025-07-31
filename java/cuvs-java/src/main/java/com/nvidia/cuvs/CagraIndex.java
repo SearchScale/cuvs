@@ -150,6 +150,15 @@ public interface CagraIndex {
   CuVSResources getCuVSResources();
 
   /**
+   * Gets the CAGRA graph as a 2D array of integers.
+   * The graph represents the k-nearest neighbor connectivity with shape (size, graph_degree).
+   *
+   * @return a 2D integer array representing the CAGRA graph
+   * @throws Throwable if an error occurs during graph extraction
+   */
+  int[][] getGraph() throws Throwable;
+
+  /**
    * Creates a new Builder with an instance of {@link CuVSResources}.
    *
    * @param cuvsResources an instance of {@link CuVSResources}
@@ -207,6 +216,17 @@ public interface CagraIndex {
      * @return an instance of this Builder
      */
     Builder from(InputStream inputStream);
+
+    /**
+     * Creates a CAGRA index from a pre-existing graph and dataset.
+     * This allows reconstruction of a CAGRA index from previously extracted components.
+     *
+     * @param graph a 2D integer array representing the CAGRA graph with shape (size, graph_degree)
+     * @param dataset a 2D float array representing the dataset with shape (size, dim)
+     * @param metric the distance metric to use for the index
+     * @return an instance of this Builder
+     */
+    Builder from(int[][] graph, float[][] dataset, CagraIndexParams.CuvsDistanceType metric);
 
     /**
      * Sets the dataset vectors for building the {@link CagraIndex}.

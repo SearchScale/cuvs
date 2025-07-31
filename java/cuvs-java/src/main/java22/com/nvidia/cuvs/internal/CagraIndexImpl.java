@@ -20,6 +20,7 @@ import static com.nvidia.cuvs.internal.common.LinkerHelper.C_FLOAT;
 import static com.nvidia.cuvs.internal.common.LinkerHelper.C_FLOAT_BYTE_SIZE;
 import static com.nvidia.cuvs.internal.common.LinkerHelper.C_INT;
 import static com.nvidia.cuvs.internal.common.LinkerHelper.C_INT_BYTE_SIZE;
+import static com.nvidia.cuvs.internal.common.LinkerHelper.C_LONG;
 import static com.nvidia.cuvs.internal.common.Util.CudaMemcpyKind.HOST_TO_DEVICE;
 import static com.nvidia.cuvs.internal.common.Util.CudaMemcpyKind.INFER_DIRECTION;
 import static com.nvidia.cuvs.internal.common.Util.allocateRMMSegment;
@@ -44,6 +45,8 @@ import com.nvidia.cuvs.CuVSResources;
 import com.nvidia.cuvs.SearchResults;
 import com.nvidia.cuvs.internal.common.CloseableHandle;
 import com.nvidia.cuvs.internal.common.CompositeCloseableHandle;
+import com.nvidia.cuvs.internal.panama.DLManagedTensor;
+import com.nvidia.cuvs.internal.panama.DLTensor;
 import com.nvidia.cuvs.internal.panama.cuvsCagraCompressionParams;
 import com.nvidia.cuvs.internal.panama.cuvsCagraIndexParams;
 import com.nvidia.cuvs.internal.panama.cuvsCagraMergeParams;
@@ -121,10 +124,45 @@ public class CagraIndexImpl implements CagraIndex {
     this.destroyed = false;
   }
 
+  /**
+   * Constructor for creating an index from graph and dataset
+   *
+   * @param graph the graph data as 2D integer array
+   * @param dataset the dataset as 2D float array
+   * @param metric the distance metric to use
+   * @param resources an instance of {@link CuVSResources}
+   */
+  private CagraIndexImpl(
+      int[][] graph,
+      float[][] dataset,
+      CagraIndexParams.CuvsDistanceType metric,
+      CuVSResources resources)
+      throws Throwable {
+    this.resources = resources;
+    this.cagraIndexReference = buildFromGraphAndDataset(graph, dataset, metric);
+  }
+
   private void checkNotDestroyed() {
     if (destroyed) {
       throw new IllegalStateException("destroyed");
     }
+  }
+
+  /**
+   * Helper method to build memory segment for 2D int array
+   */
+  private static MemorySegment buildIntMemorySegment(Arena arena, int[][] data) {
+    long rows = data.length;
+    long cols = data[0].length;
+    SequenceLayout layout = MemoryLayout.sequenceLayout(rows * cols, C_INT);
+    MemorySegment segment = arena.allocate(layout);
+
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        segment.setAtIndex(C_INT, i * cols + j, data[i][j]);
+      }
+    }
+    return segment;
   }
 
   /**
@@ -141,6 +179,75 @@ public class CagraIndexImpl implements CagraIndex {
       }
     } finally {
       destroyed = true;
+    }
+  }
+
+  /**
+   * Builds a CAGRA index from graph and dataset arrays
+   *
+   * @param graph the graph data as 2D integer array
+   * @param dataset the dataset as 2D float array
+   * @param metric the distance metric to use
+   * @return an instance of {@link IndexReference} that holds the pointer to the index
+   */
+  private IndexReference buildFromGraphAndDataset(
+      int[][] graph, float[][] dataset, CagraIndexParams.CuvsDistanceType metric) throws Throwable {
+    if (graph == null || dataset == null) {
+      throw new IllegalArgumentException("Graph and dataset cannot be null");
+    }
+    if (graph.length != dataset.length) {
+      throw new IllegalArgumentException("Graph and dataset must have the same number of rows");
+    }
+    if (graph.length == 0 || dataset.length == 0) {
+      throw new IllegalArgumentException("Graph and dataset cannot be empty");
+    }
+
+    long rows = graph.length;
+    long graphDegree = graph[0].length;
+    long cols = dataset[0].length;
+
+    try (var localArena = Arena.ofConfined()) {
+      // Convert graph to host memory segment
+      MemorySegment graphHostData = buildIntMemorySegment(localArena, graph);
+      long graphBytes = rows * graphDegree * C_INT_BYTE_SIZE;
+
+      // Convert dataset to host memory segment
+      MemorySegment datasetHostData = buildMemorySegment(localArena, dataset);
+      long datasetBytes = rows * cols * C_FLOAT_BYTE_SIZE;
+
+      var index = createCagraIndex();
+
+      try (var resourcesAccessor = resources.access()) {
+        var cuvsRes = resourcesAccessor.handle();
+
+        // Allocate device memory and copy data
+        MemorySegment graphDeviceData = allocateRMMSegment(cuvsRes, graphBytes);
+        MemorySegment datasetDeviceData = allocateRMMSegment(cuvsRes, datasetBytes);
+
+        cudaMemcpy(graphDeviceData, graphHostData, graphBytes, HOST_TO_DEVICE);
+        cudaMemcpy(datasetDeviceData, datasetHostData, datasetBytes, HOST_TO_DEVICE);
+
+        // Create tensors from device memory
+        long[] graphShape = {rows, graphDegree};
+        MemorySegment graphTensor =
+            prepareTensor(localArena, graphDeviceData, graphShape, 1, 32, 2, 1); // int32 type
+
+        long[] datasetShape = {rows, cols};
+        MemorySegment datasetTensor =
+            prepareTensor(localArena, datasetDeviceData, datasetShape, 2, 32, 2, 1); // float32 type
+
+        var returnValue = cuvsStreamSync(cuvsRes);
+        checkCuVSError(returnValue, "cuvsStreamSync");
+
+        returnValue =
+            cuvsCagraIndexFromArgs(cuvsRes, metric.value, graphTensor, datasetTensor, index);
+        checkCuVSError(returnValue, "cuvsCagraIndexFromArgs");
+
+        returnValue = cuvsStreamSync(cuvsRes);
+        checkCuVSError(returnValue, "cuvsStreamSync");
+      }
+
+      return new IndexReference(index, null);
     }
   }
 
@@ -473,6 +580,66 @@ public class CagraIndexImpl implements CagraIndex {
   }
 
   /**
+   * Gets the CAGRA graph as a 2D array of integers.
+   * The graph represents the k-nearest neighbor connectivity with shape (size, graph_degree).
+   *
+   * @return a 2D integer array representing the CAGRA graph
+   * @throws Throwable if an error occurs during graph extraction
+   */
+  @Override
+  public int[][] getGraph() throws Throwable {
+    checkNotDestroyed();
+
+    try (var localArena = Arena.ofConfined()) {
+      // Allocate DLManagedTensor for the graph
+      MemorySegment graphTensor = DLManagedTensor.allocate(localArena);
+
+      try (var resourcesAccessor = resources.access()) {
+        var cuvsRes = resourcesAccessor.handle();
+
+        // Get the graph tensor from the index
+        var returnValue =
+            cuvsCagraIndexGetGraph(cagraIndexReference.getMemorySegment(), graphTensor);
+        checkCuVSError(returnValue, "cuvsCagraIndexGetGraph");
+
+        // Extract the DLTensor from DLManagedTensor
+        MemorySegment dlTensor = DLManagedTensor.dl_tensor(graphTensor);
+
+        // Get shape information
+        MemorySegment shapePtr = DLTensor.shape(dlTensor);
+        long rows = shapePtr.getAtIndex(C_LONG, 0);
+        long cols = shapePtr.getAtIndex(C_LONG, 1);
+
+        // Get data pointer
+        MemorySegment dataPtr = DLTensor.data(dlTensor);
+
+        // Copy graph data to host memory
+        long graphBytes = rows * cols * C_INT_BYTE_SIZE;
+        SequenceLayout graphLayout = MemoryLayout.sequenceLayout(rows * cols, C_INT);
+        MemorySegment hostGraphSegment = localArena.allocate(graphLayout);
+
+        cudaMemcpy(hostGraphSegment, dataPtr, graphBytes, INFER_DIRECTION);
+
+        // Convert to Java 2D array
+        int[][] graph = new int[(int) rows][(int) cols];
+        for (int i = 0; i < rows; i++) {
+          for (int j = 0; j < cols; j++) {
+            graph[i][j] = hostGraphSegment.getAtIndex(C_INT, i * cols + j);
+          }
+        }
+
+        // Call deleter if it exists
+        MemorySegment deleter = DLManagedTensor.deleter(graphTensor);
+        if (!deleter.equals(MemorySegment.NULL)) {
+          DLManagedTensor.deleter.invoke(deleter, graphTensor);
+        }
+
+        return graph;
+      }
+    }
+  }
+
+  /**
    * Allocates the native CagraIndexParams data structures and fills the configured index parameters in.
    */
   private static CloseableHandle segmentFromIndexParams(CagraIndexParams params) {
@@ -687,6 +854,9 @@ public class CagraIndexImpl implements CagraIndex {
     private CagraIndexParams cagraIndexParams;
     private final CuVSResources cuvsResources;
     private InputStream inputStream;
+    private int[][] graph;
+    private float[][] graphDataset;
+    private CagraIndexParams.CuvsDistanceType metric;
 
     public Builder(CuVSResources cuvsResources) {
       this.cuvsResources = cuvsResources;
@@ -695,6 +865,15 @@ public class CagraIndexImpl implements CagraIndex {
     @Override
     public Builder from(InputStream inputStream) {
       this.inputStream = inputStream;
+      return this;
+    }
+
+    @Override
+    public Builder from(
+        int[][] graph, float[][] dataset, CagraIndexParams.CuvsDistanceType metric) {
+      this.graph = graph;
+      this.graphDataset = dataset;
+      this.metric = metric;
       return this;
     }
 
@@ -720,6 +899,8 @@ public class CagraIndexImpl implements CagraIndex {
     public CagraIndexImpl build() throws Throwable {
       if (inputStream != null) {
         return new CagraIndexImpl(inputStream, cuvsResources);
+      } else if (graph != null && graphDataset != null && metric != null) {
+        return new CagraIndexImpl(graph, graphDataset, metric, cuvsResources);
       } else {
         return new CagraIndexImpl(cagraIndexParams, dataset, cuvsResources);
       }
