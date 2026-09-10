@@ -227,6 +227,14 @@ public class AcceleratedHNSWUtils {
     return CuVSMatrix.ofArray(remappedAdjacency);
   }
 
+  private static int[] getSortedNodes(NodesIterator nodesOnLevel) {
+    int[] nodes = new int[nodesOnLevel.size()];
+    int consumed = nodesOnLevel.consume(nodes);
+    assert consumed == nodesOnLevel.size();
+    Arrays.sort(nodes);
+    return nodes;
+  }
+
   /**
    * Returns a 2D array of offsets (information written while writing the meta info)
    *
@@ -242,7 +250,7 @@ public class AcceleratedHNSWUtils {
     int[][] offsets = new int[graph.numLevels()][];
     int[] scratch = new int[graph.maxConn() * 2];
     for (int level = 0; level < graph.numLevels(); level++) {
-      int[] sortedNodes = NodesIterator.getSortedNodes(graph.getNodesOnLevel(level));
+      int[] sortedNodes = getSortedNodes(graph.getNodesOnLevel(level));
       offsets[level] = new int[sortedNodes.length];
       int nodeOffsetId = 0;
 
@@ -275,10 +283,7 @@ public class AcceleratedHNSWUtils {
         }
         // Write the size after duplicates are removed
         vectorIndex.writeVInt(actualSize);
-        // Write de-duplicated neighbors
-        for (int i = 0; i < actualSize; i++) {
-          vectorIndex.writeVInt(scratch[i]);
-        }
+        vectorIndex.writeGroupVInts(scratch, actualSize);
         offsets[level][nodeOffsetId++] =
             Math.toIntExact(vectorIndex.getFilePointer() - offsetStart);
       }
